@@ -65,7 +65,7 @@ Starts an asynchronous compliance assessment. Returns immediately with an `asses
 ```
 GET /api/assessment/:id/stream
 ```
-Opens a Server-Sent Events connection for real-time agent progress. The connection sends events as each of the 8 agents starts, completes, logs progress, or encounters errors. Closes automatically after the final `complete` event.
+Opens a Server-Sent Events connection for real-time agent progress. The connection sends events as each of the 9 agents starts, completes, logs progress, or encounters errors. Closes automatically after the final `complete` event.
 
 **Headers:** `Accept: text/event-stream`
 
@@ -366,7 +366,7 @@ Generates a structured executive report from assessment results. The JSON respon
 ```
 GET /api/demo/assessment
 ```
-Returns a complete pre-computed assessment result for "Acme Corp" with all 8 agents' output. Used by the Demo Mode toggle in the UI.
+Returns a complete pre-computed assessment result for "Acme Corp" with all 9 agents' output. Used by the Demo Mode toggle in the UI.
 
 **Response:** Full `AssessmentResult` object (same schema as `/api/assessment/:id/results`), including evidence validation data and remediation actions.
 

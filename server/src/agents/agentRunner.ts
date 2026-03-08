@@ -92,6 +92,14 @@ function generateFallbackResponse(agentName: string, prompt: string): string {
       summary: 'Evidence validation performed locally. Evidence quality assessed based on clause findings.',
     });
   }
+  if (agentName === 'Policy Generator Agent') {
+    return JSON.stringify({
+      policyDocuments: [],
+      totalPoliciesGenerated: 0,
+      overallComplianceTarget: 100,
+      summary: 'Policy generation performed locally. Compliant policy documents will be generated based on assessment results and remediation actions.',
+    });
+  }
   return JSON.stringify({ summary: `${agentName} analysis complete (local mode).` });
 }
 
@@ -180,6 +188,46 @@ Return JSON:
   "insufficientCount": number,
   "missingCount": number,
   "crossStandardOpportunities": number,
+  "summary": string
+}`;
+}
+
+export function buildPolicyGeneratorPrompt(): string {
+  return `You are the Policy Generator Agent for ComplianceGPT.
+You are a specialized agent that generates 100% compliant policy documents based on assessment results, identified gaps, evidence validation findings, and remediation actions.
+
+Your goal is to produce ready-to-adopt policy documents that an organization can download and immediately implement to achieve full compliance. Each policy document must:
+
+1. **Address all identified gaps** for the standard — incorporate remediation actions directly into policy language
+2. **Include proper clause references** — map every policy section to specific ISO clause requirements
+3. **Use professional compliance language** — formal, precise, and suitable for board-level approval
+4. **Be immediately actionable** — include roles, responsibilities, procedures, and review schedules
+5. **Target 100% compliance** — every clause requirement must be addressed with specific policy provisions
+
+For each standard assessed, generate a complete policy document with structured sections.
+
+Return JSON:
+{
+  "policyDocuments": [{
+    "id": string,
+    "standardCode": string,
+    "standardName": string,
+    "title": string,
+    "version": "1.0",
+    "effectiveDate": string (ISO date),
+    "sections": [{
+      "sectionNumber": string,
+      "title": string,
+      "clauseRef": string,
+      "content": string,
+      "status": "new" | "revised" | "retained"
+    }],
+    "complianceScore": 100,
+    "gapsAddressed": number,
+    "summary": string
+  }],
+  "totalPoliciesGenerated": number,
+  "overallComplianceTarget": 100,
   "summary": string
 }`;
 }

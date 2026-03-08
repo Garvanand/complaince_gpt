@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { FileText, Bot, Search, Scale, Shield, Award, GitBranch, Wrench, ArrowRight, ShieldCheck } from 'lucide-react';
+import { FileText, Bot, Search, Scale, Shield, Award, GitBranch, Wrench, ArrowRight, ShieldCheck, ScrollText } from 'lucide-react';
 
 const agents = [
   { name: 'Document Agent', icon: Search, module: 'GenW RealmAI', input: 'Raw policy documents (PDF, DOCX)', output: 'Structured policy sections, controls, evidence artifacts', color: '#00ABBD', desc: 'Parses and structures compliance-relevant content from uploaded policy documents using NLP.' },
@@ -10,6 +10,7 @@ const agents = [
   { name: 'Gap Analysis Agent', icon: GitBranch, module: 'GenW Agent Builder', input: 'All standard assessment results', output: 'Prioritized gaps, cross-standard overlaps, effort estimates', color: '#E53E3E', desc: 'Cross-standard gap analyser that identifies prioritized gaps and overlap opportunities.' },
   { name: 'Evidence Validation Agent', icon: ShieldCheck, module: 'GenW Evidence Engine', input: 'Clause scores, evidence citations, gap analysis', output: 'Evidence sufficiency ratings, quality scores, cross-standard reuse map', color: '#0076A8', desc: 'Validates whether cited evidence actually supports compliance claims. Checks sufficiency, quality (direct/indirect/anecdotal), chain of custody, and identifies cross-standard evidence reuse opportunities.' },
   { name: 'Remediation Agent', icon: Wrench, module: 'GenW Agent Builder', input: 'Gap analysis results, Org profile', output: 'Phased remediation roadmap with actions', color: '#A8D048', desc: 'Generates a consultant-quality phased remediation roadmap with specific actions.' },
+  { name: 'Policy Generator Agent', icon: ScrollText, module: 'GenW Policy Engine', input: 'Assessment results, Gaps, Remediation actions, Evidence validation', output: '100% compliant downloadable policy documents per standard', color: '#6D28D9', desc: 'Generates ready-to-adopt, 100% compliant policy documents addressing all identified gaps. Policies can be downloaded immediately, reducing user workload.' },
 ];
 
 export default function AgentWorkflow() {
@@ -49,6 +50,10 @@ export default function AgentWorkflow() {
 
           {/* Remediation */}
           <AgentNode agent={agents[7]} />
+          <FlowArrow />
+
+          {/* Policy Generator */}
+          <AgentNode agent={agents[8]} />
         </div>
       </motion.div>
 

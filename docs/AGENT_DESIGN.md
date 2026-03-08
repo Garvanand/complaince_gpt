@@ -2,7 +2,7 @@
 
 ## Multi-Agent Architecture
 
-ComplianceGPT employs a **sequential-parallel orchestration pattern** where **8 specialized agents** work together to produce a comprehensive compliance assessment. This is not a single LLM call — it is a coordinated team of domain experts, each with distinct prompts, inputs, outputs, and error handling.
+ComplianceGPT employs a **sequential-parallel orchestration pattern** where **9 specialized agents** work together to produce a comprehensive compliance assessment. This is not a single LLM call — it is a coordinated team of domain experts, each with distinct prompts, inputs, outputs, and error handling.
 
 ## Agent Pipeline
 
@@ -36,6 +36,12 @@ ComplianceGPT employs a **sequential-parallel orchestration pattern** where **8 
                     ┌────────┴────────┐
                     │  Remediation    │  Step 5: Phased roadmap
                     │  Agent          │
+                    └────────┬────────┘
+                             │
+                    ┌────────┴────────┐
+                    │  Policy         │  Step 6: Generate 100%
+                    │  Generator      │         compliant policies
+                    │  Agent (NOVEL)  │         for download
                     └─────────────────┘
 ```
 
@@ -105,9 +111,21 @@ ComplianceGPT employs a **sequential-parallel orchestration pattern** where **8 
   - Phase 3 (Long-term): Continuous improvement and monitoring
 - **GenW.AI Module**: Remediation Planning Engine
 
+### 9. Policy Generator Agent *(Novel Feature)*
+- **Purpose**: Generate 100% compliant, ready-to-adopt policy documents that address all identified gaps
+- **Input**: All standard assessment results, gaps, evidence validation findings, remediation actions, org profile
+- **Output**: Per-standard policy documents with:
+  - **Structured Sections**: Numbered sections mapped to specific clause references
+  - **Section Status**: `new` (created to fill gap) | `revised` (updated existing) | `retained` (kept as-is)
+  - **Compliance Score**: 100% target for every generated policy
+  - **Gaps Addressed**: Count of gaps resolved by this policy
+  - **Executive Summary**: Overview of policy scope and coverage
+- **Download**: Users can download individual or all policy documents as formatted text files
+- **GenW.AI Module**: Policy Generation Engine
+
 ## Orchestration Logic
 
-The orchestrator (`server/src/agents/orchestrator.ts`) implements a 5-step pipeline:
+The orchestrator (`server/src/agents/orchestrator.ts`) implements a 6-step pipeline:
 
 1. **Step 1 — Sequential Start**: Document Agent parses all uploaded documents. Must complete before others start because all subsequent agents depend on structured document content.
 
@@ -118,6 +136,8 @@ The orchestrator (`server/src/agents/orchestrator.ts`) implements a 5-step pipel
 4. **Step 4 — Evidence Validation**: Evidence Validation Agent receives all clause scores and gap analysis, and validates the sufficiency and quality of cited evidence for each clause.
 
 5. **Step 5 — Remediation Planning**: Remediation Agent receives gap analysis output and generates a phased, prioritized action plan.
+
+6. **Step 6 — Policy Generation**: Policy Generator Agent receives all assessment data (gaps, remediation actions, evidence validation) and generates 100% compliant policy documents for each standard that users can download immediately.
 
 ### Streaming
 All agent lifecycle events (start, complete, error, log) are emitted via SSE to the connected client in real-time. The client UI updates progressively as each agent completes.

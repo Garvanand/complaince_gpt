@@ -8,10 +8,10 @@ This addresses a critical gap in compliance assessment: organizations often cite
 
 ## Position in Pipeline
 
-The Evidence Validation Agent runs as **Step 4** in the 5-step orchestration pipeline, after Gap Analysis and before Remediation:
+The Evidence Validation Agent runs as **Step 4** in the 6-step orchestration pipeline, after Gap Analysis and before Remediation:
 
 ```
-Document Agent → 4 Standard Agents → Gap Analysis → [Evidence Validation] → Remediation
+Document Agent → 4 Standard Agents → Gap Analysis → [Evidence Validation] → Remediation → Policy Generator
 ```
 
 This positioning is intentional:

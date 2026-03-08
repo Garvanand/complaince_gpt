@@ -13,6 +13,7 @@ import ClauseHeatmap from '../components/analytics/ClauseHeatmap';
 import RemediationTimeline from '../components/reports/RemediationTimeline';
 import GapPriorityMatrix from '../components/analytics/GapPriorityMatrix';
 import EvidenceValidationPanel from '../components/reports/EvidenceValidationPanel';
+import PolicyGeneratorPanel from '../components/reports/PolicyGeneratorPanel';
 import { StatusBadge, ScoreBadge, SectionHeader, EmptyState } from '../components/ui/EnterpriseComponents';
 import { useAppStore } from '../store/useAppStore';
 import { formatDate } from '../utils/helpers';
@@ -369,6 +370,18 @@ export default function Dashboard() {
           </div>
           <div className="card-body" style={{ paddingTop: 8 }}>
             <EvidenceValidationPanel data={a.evidenceValidation} />
+          </div>
+        </div>
+      )}
+
+      {/* Policy Generator */}
+      {a.policyDocuments && a.policyDocuments.length > 0 && (
+        <div className="card">
+          <div className="card-header">
+            <SectionHeader label="Policy Intelligence" title="Generated Compliant Policies" description="AI-generated 100% compliant policy documents ready for download and adoption" />
+          </div>
+          <div className="card-body" style={{ paddingTop: 8 }}>
+            <PolicyGeneratorPanel documents={a.policyDocuments} />
           </div>
         </div>
       )}

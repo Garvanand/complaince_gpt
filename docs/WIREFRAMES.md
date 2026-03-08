@@ -9,7 +9,7 @@ Landing (/)
     │                              │
     │                              ├─ Step 0: Org Profile
     │                              ├─ Step 1: Document Upload
-    │                              ├─ Step 2: AI Processing (8-Agent Animation)
+    │                              ├─ Step 2: AI Processing (9-Agent Animation)
     │                              └─ Step 3: Results Summary
     │                                         │
     │                                         ▼
@@ -87,6 +87,11 @@ Landing (/)
 │  t   │  │ Remediation Timeline        │             │
 │      │  └─────────────────────────────┘             │
 │  t   │                                               │
+│  e   │  ┌─────────────────────────────┐             │
+│  x   │  │ Policy Generator Panel      │             │
+│  t   │  │ 6 KPIs + Policy Cards +     │             │
+│      │  │ Download Buttons             │             │
+│  t   │  └─────────────────────────────┘             │
 │  e   │                          ┌──────────┐        │
 │  a   │                          │ Chat FAB │        │
 │  l   │                          └──────────┘        │
@@ -120,11 +125,11 @@ Step 1: Document Upload
 │              [Back] [Next pill] │
 └─────────────────────────────────┘
 
-Step 2: AI Processing (8 Agents)
+Step 2: AI Processing (9 Agents)
 ┌─────────────────────────────────┐
 │  Agent Flow Visualization       │
 │  [Doc] → [Brib][Gov][Sec][Qual]│
-│       → [Gap] → [Evid] → [Rem]│
+│       → [Gap] → [Evid] → [Rem] → [Pol]│
 │                                  │
 │  Log Panel (SSE-driven):         │
 │  [10:00] 🔍 Document Agent...  │
@@ -168,8 +173,9 @@ Step 3: Results
 │      │  [Evidence Validation]  ← NOVEL               │
 │      │         ▼                                     │
 │      │  [Remediation]                                │
+│      │  [Policy Generator]                            │
 │      │                                               │
-│      │  Agent Detail Cards (8 × 2-col grid)          │
+│      │  Agent Detail Cards (9 × 2-col grid)          │
 │      │  Each card: icon, name, GenW.AI module,       │
 │      │  input spec, output spec, description         │
 └──────┴──────────────────────────────────────────────┘

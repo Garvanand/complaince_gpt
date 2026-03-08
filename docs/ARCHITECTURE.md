@@ -78,7 +78,7 @@ All 8 pages are loaded via `React.lazy()` with `<Suspense>` fallbacks, wrapped i
 ### State Management
 The Zustand store (`client/src/store/`) manages:
 - Assessment results, per-standard scores, gaps, evidence validation, remediation actions
-- Agent status tracking (8 agents: idle → processing → complete/error)
+- Agent status tracking (9 agents: idle → processing → complete/error)
 - Agent log entries (timestamped, typed)
 - Chat message history
 - Demo mode toggle
@@ -129,8 +129,8 @@ Dashboard
 ### Agent Layer
 | File | Purpose |
 |---|---|
-| `agents/agentRunner.ts` | Prompt builders for all 8 agents + generic `runAgent()` that calls Claude |
-| `agents/orchestrator.ts` | 5-step orchestration pipeline, SSE event emission, result aggregation |
+| `agents/agentRunner.ts` | Prompt builders for all 9 agents + generic `runAgent()` that calls Claude |
+| `agents/orchestrator.ts` | 6-step orchestration pipeline, SSE event emission, result aggregation |
 
 ---
 
@@ -144,12 +144,13 @@ Dashboard
 4. Client POSTs to /api/assessment/start
    └── Server returns { assessmentId, status: "processing" }
 5. Client connects to /api/assessment/:id/stream via EventSource (SSE)
-6. Orchestrator runs 5-step pipeline:
+6. Orchestrator runs 6-step pipeline:
    a. Document Agent — parse & structure documents
    b. 4 Standard Agents — HybridScoringService scores each standard
    c. Gap Analysis Agent — cross-standard gap identification
    d. Evidence Validation Agent — validate evidence sufficiency & quality
    e. Remediation Agent — generate phased roadmap
+   f. Policy Generator Agent — generate 100% compliant downloadable policies
 7. Each agent start/complete/error event streamed to client in real-time
 8. Final AssessmentResult stored in-memory and sent via SSE "complete" event
 9. Client renders Dashboard with full results

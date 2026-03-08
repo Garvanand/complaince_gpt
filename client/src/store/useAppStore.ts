@@ -68,6 +68,7 @@ const defaultAgentStatuses: AgentStatus[] = [
   { name: 'Gap Analysis Agent', status: 'idle', progress: 0, currentAction: '' },
   { name: 'Evidence Validation Agent', status: 'idle', progress: 0, currentAction: '' },
   { name: 'Remediation Agent', status: 'idle', progress: 0, currentAction: '' },
+  { name: 'Policy Generator Agent', status: 'idle', progress: 0, currentAction: '' },
 ];
 
 export const useAppStore = create<AppState>()(

@@ -5,6 +5,7 @@ import {
   buildGapAnalysisPrompt,
   buildEvidenceValidationPrompt,
   buildRemediationPrompt,
+  buildPolicyGeneratorPrompt,
 } from './agentRunner';
 import { isoStandards } from '../data/standards';
 import { scoreAllStandards } from '../services/HybridScoringService';
@@ -41,6 +42,34 @@ export interface EvidenceValidationResult {
   summary: string;
 }
 
+export interface PolicySection {
+  sectionNumber: string;
+  title: string;
+  clauseRef: string;
+  content: string;
+  status: 'new' | 'revised' | 'retained';
+}
+
+export interface PolicyDocument {
+  id: string;
+  standardCode: string;
+  standardName: string;
+  title: string;
+  version: string;
+  effectiveDate: string;
+  sections: PolicySection[];
+  complianceScore: number;
+  gapsAddressed: number;
+  summary: string;
+}
+
+export interface PolicyGeneratorResult {
+  policyDocuments: PolicyDocument[];
+  totalPoliciesGenerated: number;
+  overallComplianceTarget: number;
+  summary: string;
+}
+
 export interface AssessmentResult {
   id: string;
   orgProfile: { company: string; industry: string; employees: string; scope: string };
@@ -50,6 +79,7 @@ export interface AssessmentResult {
   gaps: Gap[];
   evidenceValidation: EvidenceValidationResult;
   remediationActions: RemediationAction[];
+  policyDocuments: PolicyDocument[];
   timestamp: string;
 }
 
@@ -222,6 +252,34 @@ Organization context: ${orgProfile.company}, ${orgProfile.industry}`;
   allActions = (remParsed?.actions as RemediationAction[]) || [];
   callbacks.onLog(`🛠️ Remediation Agent — Generated ${allActions.length}-action roadmap`);
 
+  // Step 6: Policy Generator Agent
+  callbacks.onAgentStart('Policy Generator Agent');
+  callbacks.onLog('📝 Policy Generator Agent — Generating 100% compliant policy documents...');
+  const policyPrompt = `Generate complete, 100% compliant policy documents for each standard based on the assessment results, gaps, evidence validation, and remediation actions:
+
+Assessment Results:
+${standardAssessments.map((sa) => `${sa.standard} (${sa.name}): Overall ${sa.overallScore}%, ${sa.clauseScores.length} clauses assessed`).join('\n')}
+
+Gaps Identified (${allGaps.length} total):
+${JSON.stringify(allGaps, null, 2)}
+
+Remediation Actions (${allActions.length} total):
+${JSON.stringify(allActions, null, 2)}
+
+Evidence Validation Summary: ${evidenceValidation.summary}
+
+Organization: ${orgProfile.company}, ${orgProfile.industry}, ${orgProfile.employees} employees
+Scope: ${orgProfile.scope}
+
+Generate a complete, ready-to-adopt policy document for each standard that addresses ALL identified gaps and achieves 100% compliance.`;
+
+  const policyResult = await runAgent('Policy Generator Agent', buildPolicyGeneratorPrompt(), policyPrompt, callbacks.onLog);
+  callbacks.onAgentComplete('Policy Generator Agent', policyResult);
+
+  const policyParsed = safeParseJSON(policyResult);
+  const policyDocuments: PolicyDocument[] = (policyParsed?.policyDocuments as PolicyDocument[]) || [];
+  callbacks.onLog(`📝 Policy Generator Agent — Generated ${policyDocuments.length} compliant policy documents targeting 100% compliance`);
+
   // Compute overall
   const overallScore = standardAssessments.length > 0
     ? Math.round(standardAssessments.reduce((sum, sa) => sum + sa.overallScore, 0) / standardAssessments.length)
@@ -236,6 +294,7 @@ Organization context: ${orgProfile.company}, ${orgProfile.industry}`;
     gaps: allGaps,
     evidenceValidation,
     remediationActions: allActions,
+    policyDocuments,
     timestamp: new Date().toISOString(),
   };
 

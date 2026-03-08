@@ -13,15 +13,16 @@
 
 ## Overview
 
-ComplianceGPT is a **production-grade enterprise web application** that transforms how organizations approach regulatory compliance. Clients upload policy documents and receive **instant readiness scores, gap analysis, evidence validation, maturity levels, and phased remediation roadmaps** across multiple ISO standards simultaneously — powered by 8 specialized AI agents and a 3-tier hybrid scoring engine.
+ComplianceGPT is a **production-grade enterprise web application** that transforms how organizations approach regulatory compliance. Clients upload policy documents and receive **instant readiness scores, gap analysis, evidence validation, maturity levels, and phased remediation roadmaps** across multiple ISO standards simultaneously — powered by 9 specialized AI agents and a 3-tier hybrid scoring engine.
 
 ### What Makes It Novel
 
 | Differentiator | Description |
 |---|---|
-| **8-Agent Orchestrated Pipeline** | Not a single LLM prompt — a coordinated team of specialized AI agents, each with domain expertise, that hand off context through a structured pipeline |
+| **9-Agent Orchestrated Pipeline** | Not a single LLM prompt — a coordinated team of specialized AI agents, each with domain expertise, that hand off context through a structured pipeline |
 | **3-Tier Hybrid Scoring Engine** | ML semantic scoring (sentence-transformers) → Claude AI enhancement → keyword fallback. Gracefully degrades so it always works |
 | **Evidence Validation Agent** | Industry-first: validates whether cited evidence actually supports compliance claims. Checks sufficiency, quality (direct/indirect/anecdotal), chain of custody, and cross-standard evidence reuse |
+| **Policy Generator Agent** | Generates 100% compliant, ready-to-adopt policy documents addressing all identified gaps — users download updated policies instantly, reducing workload |
 | **Cross-Standard Synergy Detection** | Identifies where a single remediation action satisfies requirements across multiple ISO standards, reducing cost |
 | **Real-Time Agent Streaming** | SSE-based live progress as each agent works, not a black-box "processing…" spinner |
 | **GenW.AI Platform Integration** | Architected for Deloitte's GenW.AI infrastructure with a clean bridge layer for production deployment |
@@ -33,7 +34,7 @@ ComplianceGPT is a **production-grade enterprise web application** that transfor
 - **ISO 9001:2015** — Quality Management Systems
 
 ### Key Features
-- **8 Specialized AI Agents** orchestrated via sequential-parallel multi-agent architecture
+- **9 Specialized AI Agents** orchestrated via sequential-parallel multi-agent architecture
 - **3-Tier Hybrid Scoring** — ML → Claude AI → Keyword fallback with graceful degradation
 - **Evidence Validation** — AI-powered evidence sufficiency and quality assessment
 - **Real-time Visual Dashboard** with radar charts, heatmaps, and gap priority matrices
@@ -102,7 +103,7 @@ compliancegpt/
 │   └── index.html
 ├── server/                         # Express 5 backend
 │   └── src/
-│       ├── agents/                 # Agent runner + orchestrator (8 agents)
+│       ├── agents/                 # Agent runner + orchestrator (9 agents)
 │       ├── routes/                 # 6 API route modules
 │       ├── services/               # HybridScoringService, DocumentParser, GenWAIBridge
 │       ├── middleware/             # File upload middleware
@@ -173,7 +174,7 @@ python app.py
 
 ### Demo Mode
 
-Click the **"Try Demo"** pill button in the navbar to instantly load a complete sample assessment (Acme Corp) with all 8 agents' output pre-computed — no API key or document uploads required.
+Click the **"Try Demo"** pill button in the navbar to instantly load a complete sample assessment (Acme Corp) with all 9 agents' output pre-computed — no API key or document uploads required.
 
 ---
 
@@ -185,7 +186,7 @@ Click the **"Try Demo"** pill button in the navbar to instantly load a complete 
 | Dashboard | `/dashboard` | KPI cards, radar chart, compliance heatmap, gap priority matrix, evidence validation panel, remediation timeline, chat assistant |
 | Assessment | `/assessment` | 4-step wizard: org profile → document upload → AI processing (live) → results |
 | Standards | `/standards` | Standards library browser with clause-level detail and keyword tags |
-| Agent Workflow | `/agents` | Visual 8-agent orchestration diagram with IO specifications |
+| Agent Workflow | `/agents` | Visual 9-agent orchestration diagram with IO specifications |
 | Analytics | `/analytics` | Maturity trends, industry benchmarks, cross-standard analysis |
 | Reports | `/reports` | Executive report builder with PDF export |
 | Settings | `/settings` | API key configuration, ML service health, preferences |
@@ -194,7 +195,7 @@ Click the **"Try Demo"** pill button in the navbar to instantly load a complete 
 
 ## AI Agent Architecture
 
-ComplianceGPT employs a **sequential-parallel orchestration pattern** with **8 specialized agents**:
+ComplianceGPT employs a **sequential-parallel orchestration pattern** with **9 specialized agents**:
 
 ```
 ┌──────────────────┐
@@ -221,6 +222,11 @@ ComplianceGPT employs a **sequential-parallel orchestration pattern** with **8 s
           │
   ┌───────┴────────┐
   │ Remediation     │  Step 5 — Phased roadmap generation
+  └───────┬────────┘
+          │
+  ┌───────┴────────┐
+  │ Policy          │  Step 6 — Generate 100% compliant
+  │ Generator       │         downloadable policies (NOVEL)
   └────────────────┘
 ```
 
@@ -234,6 +240,7 @@ ComplianceGPT employs a **sequential-parallel orchestration pattern** with **8 s
 | 6 | Gap Analysis Agent | Cross-standard analysis | Compliance Knowledge Graph |
 | 7 | Evidence Validation Agent | Evidence sufficiency & quality | Evidence Validation Engine |
 | 8 | Remediation Agent | Phased roadmap planning | Remediation Planning Engine |
+| 9 | Policy Generator Agent | 100% compliant policy generation | Policy Generation Engine |
 
 > See [docs/AGENT_DESIGN.md](docs/AGENT_DESIGN.md) for full agent specifications.
 
@@ -311,7 +318,7 @@ ComplianceGPT uses a **Deloitte-inspired professional design system**:
 | Document | Description |
 |---|---|
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture, data flow, design decisions |
-| [AGENT_DESIGN.md](docs/AGENT_DESIGN.md) | 8-agent pipeline specification and orchestration logic |
+| [AGENT_DESIGN.md](docs/AGENT_DESIGN.md) | 9-agent pipeline specification and orchestration logic |
 | [SCORING_ENGINE.md](docs/SCORING_ENGINE.md) | 3-tier hybrid scoring engine deep-dive |
 | [EVIDENCE_VALIDATION.md](docs/EVIDENCE_VALIDATION.md) | Evidence Validation Agent specification |
 | [API_REFERENCE.md](docs/API_REFERENCE.md) | Complete REST API reference with schemas |

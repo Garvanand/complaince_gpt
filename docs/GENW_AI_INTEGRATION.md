@@ -14,6 +14,7 @@ ComplianceGPT integrates with Deloitte's **GenW.AI™** (Generative Workforce AI
 | **Remediation Planning Engine** | `genw-remediation` | Remediation Agent | Phased roadmap generation, resource estimation, priority optimization |
 | **Audit Trail** | `genw-audit` | All Agents | Immutable logging of all agent actions, decisions, and scoring rationale |
 | **Evidence Validation Engine** | `genw-evidence` | Evidence Validation Agent | AI-powered evidence sufficiency analysis, chain-of-custody verification, cross-standard reuse detection |
+| **Policy Generation Engine** | `genw-policy` | Policy Generator Agent | AI-powered compliant policy document generation with clause-level coverage and download capability |
 
 ## Integration Architecture
 
@@ -23,6 +24,7 @@ ComplianceGPT integrates with Deloitte's **GenW.AI™** (Generative Workforce AI
 │                                                      │
 │  Doc Agent → Bribery → Governance → Security         │
 │  Quality → Gap Analysis → Evidence Val. → Remediation│
+│  → Policy Generator                                  │
 └──────────────────────┬──────────────────────────────┘
                        │
                        ▼
@@ -31,13 +33,13 @@ ComplianceGPT integrates with Deloitte's **GenW.AI™** (Generative Workforce AI
 │                                                      │
 │  ┌─────────────────────────────────────────────┐    │
 │  │  Module Registry                             │    │
-│  │  6 modules with IDs, names, capabilities,    │    │
+│  │  7 modules with IDs, names, capabilities,    │    │
 │  │  and API endpoints                           │    │
 │  └─────────────────────────────────────────────┘    │
 │                                                      │
 │  ┌─────────────────────────────────────────────┐    │
 │  │  Agent-Module Mappings                       │    │
-│  │  8 agent → module mappings with descriptions │    │
+│  │  9 agent → module mappings with descriptions │    │
 │  └─────────────────────────────────────────────┘    │
 │                                                      │
 │  ┌─────────────────────────────────────────────┐    │
@@ -56,6 +58,7 @@ ComplianceGPT integrates with Deloitte's **GenW.AI™** (Generative Workforce AI
 │  /api/genw/remediation                               │
 │  /api/genw/audit-trail                               │
 │  /api/genw/evidence-validation                       │
+│  /api/genw/policy-generation                          │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -71,13 +74,14 @@ ComplianceGPT integrates with Deloitte's **GenW.AI™** (Generative Workforce AI
 | Gap Analysis Agent | Compliance Knowledge Graph | Cross-references all standards via GenW.AI Knowledge Graph |
 | Evidence Validation Agent | Evidence Validation Engine | Validates evidence sufficiency and quality via GenW.AI Evidence Validation Engine |
 | Remediation Agent | Remediation Planning Engine | Generates phased roadmaps via GenW.AI Remediation Planning Engine |
+| Policy Generator Agent | Policy Generation Engine | Generates 100% compliant policy documents via GenW.AI Policy Generation Engine |
 
 ## Current Implementation (Hackathon)
 
 For the hackathon demo, the GenW.AI Bridge provides:
 
-- **Module Registry**: Defines all 6 GenW.AI modules with their IDs, names, capabilities, and API endpoints
-- **Agent-Module Mapping**: Maps each of the 8 ComplianceGPT agents to its corresponding GenW.AI module
+- **Module Registry**: Defines all 7 GenW.AI modules with their IDs, names, capabilities, and API endpoints
+- **Agent-Module Mapping**: Maps each of the 9 ComplianceGPT agents to its corresponding GenW.AI module
 - **Module Resolution**: `getGenWAIModuleForAgent()` function resolves any agent name to its GenW.AI module configuration
 - **Fallback to Claude**: When GenW.AI endpoints are not available (as in the hackathon environment), agents use Claude claude-sonnet-4-20250514 directly via the Anthropic SDK
 
@@ -93,6 +97,7 @@ The bridge is designed for zero-friction migration — when GenW.AI endpoints ar
 | **Phase 4** | Evidence Validation Engine | Enterprise-grade evidence chain-of-custody verification |
 | **Phase 5** | Audit Trail integration | Immutable compliance-grade logging for regulatory audit |
 | **Phase 6** | Remediation Planning Engine | ML-optimized roadmaps with organizational context learning |
+| **Phase 7** | Policy Generation Engine | AI-generated compliant policy documents with organizational context |
 
 ## Benefits of GenW.AI Integration
 

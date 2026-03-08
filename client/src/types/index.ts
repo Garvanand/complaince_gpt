@@ -99,6 +99,34 @@ export interface EvidenceValidation {
   summary: string;
 }
 
+export interface PolicySection {
+  sectionNumber: string;
+  title: string;
+  clauseRef: string;
+  content: string;
+  status: 'new' | 'revised' | 'retained';
+}
+
+export interface PolicyDocument {
+  id: string;
+  standardCode: string;
+  standardName: string;
+  title: string;
+  version: string;
+  effectiveDate: string;
+  sections: PolicySection[];
+  complianceScore: number;
+  gapsAddressed: number;
+  summary: string;
+}
+
+export interface PolicyGeneratorResult {
+  policyDocuments: PolicyDocument[];
+  totalPoliciesGenerated: number;
+  overallComplianceTarget: number;
+  summary: string;
+}
+
 export interface AssessmentResult {
   id: string;
   orgProfile: OrgProfile;
@@ -110,6 +138,7 @@ export interface AssessmentResult {
   gaps: Gap[];
   evidenceValidation: EvidenceValidation;
   remediation: RemediationAction[];
+  policyDocuments?: PolicyDocument[];
   executiveSummary: string;
 }
 

@@ -47,6 +47,12 @@ export const genWAIModules: Record<string, GenWAIModule> = {
     capability: 'AI-powered evidence sufficiency analysis and chain-of-custody verification',
     endpoint: '/api/genw/evidence-validation',
   },
+  policyGenerator: {
+    id: 'genw-policy',
+    name: 'Policy Generation Engine',
+    capability: 'AI-powered compliant policy document generation with clause-level coverage and download capability',
+    endpoint: '/api/genw/policy-generation',
+  },
 };
 
 export interface GenWAIAgentMapping {
@@ -64,6 +70,7 @@ export const agentModuleMappings: GenWAIAgentMapping[] = [
   { agentName: 'Gap Analysis Agent', genWAIModule: 'complianceKnowledge', description: 'Cross-references all standards via GenW.AI Knowledge Graph' },
   { agentName: 'Remediation Agent', genWAIModule: 'remediationEngine', description: 'Generates phased roadmaps via GenW.AI Remediation Planning Engine' },
   { agentName: 'Evidence Validation Agent', genWAIModule: 'evidenceValidator', description: 'Validates evidence sufficiency and quality via GenW.AI Evidence Validation Engine' },
+  { agentName: 'Policy Generator Agent', genWAIModule: 'policyGenerator', description: 'Generates 100% compliant policy documents via GenW.AI Policy Generation Engine' },
 ];
 
 /**
