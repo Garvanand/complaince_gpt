@@ -1,144 +1,163 @@
-import { motion } from 'framer-motion';
-import { FileText, Bot, Search, Scale, Shield, Award, GitBranch, Wrench, ArrowRight, ShieldCheck, ScrollText } from 'lucide-react';
+import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowRight, Bot, FileText, GitBranch, ScrollText, Search, ShieldCheck, Wrench } from 'lucide-react';
+import { useAppStore } from '../store/useAppStore';
+import { EmptyWorkspace, MetricCard, PageHero, Panel } from '../components/ui/EnterpriseLayout';
 
-const agents = [
-  { name: 'Document Agent', icon: Search, module: 'GenW RealmAI', input: 'Raw policy documents (PDF, DOCX)', output: 'Structured policy sections, controls, evidence artifacts', color: '#00ABBD', desc: 'Parses and structures compliance-relevant content from uploaded policy documents using NLP.' },
-  { name: 'Bribery Risk Agent', icon: Scale, module: 'GenW Agent Builder', input: 'Parsed document content, Org profile', output: 'ISO 37001 clause scores, evidence, gaps', color: '#DD6B20', desc: 'Specialist agent for ISO 37001:2025 Anti-Bribery Management Systems assessment.' },
-  { name: 'Governance Agent', icon: Shield, module: 'GenW Agent Builder', input: 'Parsed document content, Org profile', output: 'ISO 37301 clause scores, evidence, gaps', color: '#86BC25', desc: 'Evaluates compliance management systems against ISO 37301:2021 requirements.' },
-  { name: 'Security Agent', icon: Shield, module: 'GenW Agent Builder', input: 'Parsed document content, Org profile', output: 'ISO 27001 clause scores, evidence, gaps', color: '#00ABBD', desc: 'Assesses information security management against ISO 27001:2022 controls.' },
-  { name: 'Quality Agent', icon: Award, module: 'GenW Agent Builder', input: 'Parsed document content, Org profile', output: 'ISO 9001 clause scores, evidence, gaps', color: '#FFD32A', desc: 'Reviews quality management systems against ISO 9001:2015 requirements.' },
-  { name: 'Gap Analysis Agent', icon: GitBranch, module: 'GenW Agent Builder', input: 'All standard assessment results', output: 'Prioritized gaps, cross-standard overlaps, effort estimates', color: '#E53E3E', desc: 'Cross-standard gap analyser that identifies prioritized gaps and overlap opportunities.' },
-  { name: 'Evidence Validation Agent', icon: ShieldCheck, module: 'GenW Evidence Engine', input: 'Clause scores, evidence citations, gap analysis', output: 'Evidence sufficiency ratings, quality scores, cross-standard reuse map', color: '#0076A8', desc: 'Validates whether cited evidence actually supports compliance claims. Checks sufficiency, quality (direct/indirect/anecdotal), chain of custody, and identifies cross-standard evidence reuse opportunities.' },
-  { name: 'Remediation Agent', icon: Wrench, module: 'GenW Agent Builder', input: 'Gap analysis results, Org profile', output: 'Phased remediation roadmap with actions', color: '#A8D048', desc: 'Generates a consultant-quality phased remediation roadmap with specific actions.' },
-  { name: 'Policy Generator Agent', icon: ScrollText, module: 'GenW Policy Engine', input: 'Assessment results, Gaps, Remediation actions, Evidence validation', output: '100% compliant downloadable policy documents per standard', color: '#6D28D9', desc: 'Generates ready-to-adopt, 100% compliant policy documents addressing all identified gaps. Policies can be downloaded immediately, reducing user workload.' },
+const stages = [
+  { key: 'document', title: 'Document intelligence', description: 'Parses uploaded source material and extracts evidence candidates.', icon: Search, agents: ['Document Agent'] },
+  { key: 'assessment', title: 'Standard specialists', description: 'Runs the domain-specific ISO assessment agents in parallel.', icon: Bot, agents: ['Bribery Risk Agent', 'Governance Agent', 'Security Agent', 'Quality Agent'] },
+  { key: 'gap', title: 'Gap analysis', description: 'Consolidates standard outputs into cross-standard control gaps.', icon: GitBranch, agents: ['Gap Analysis Agent'] },
+  { key: 'evidence', title: 'Evidence validation', description: 'Tests evidence sufficiency and cross-standard reuse.', icon: ShieldCheck, agents: ['Evidence Validation Agent'] },
+  { key: 'remediation', title: 'Remediation planning', description: 'Builds a phased action plan with owners and success metrics.', icon: Wrench, agents: ['Remediation Agent'] },
+  { key: 'policy', title: 'Policy generation', description: 'Generates policy outputs to close the identified gaps.', icon: ScrollText, agents: ['Policy Generator Agent'] },
 ];
 
 export default function AgentWorkflow() {
+  const navigate = useNavigate();
+  const { currentAssessment, agentStatuses, agentLog, isAssessing } = useAppStore();
+
+  const stageStates = useMemo(() => {
+    return stages.map((stage) => {
+      const members = agentStatuses.filter((agent) => stage.agents.includes(agent.name));
+      const hasError = members.some((agent) => agent.status === 'error');
+      const isActive = members.some((agent) => agent.status === 'processing');
+      const isComplete = members.length > 0 && members.every((agent) => agent.status === 'complete');
+      const avgProgress = members.length > 0 ? Math.round(members.reduce((sum, agent) => sum + agent.progress, 0) / members.length) : 0;
+
+      return {
+        ...stage,
+        state: hasError ? 'error' : isActive ? 'active' : isComplete ? 'complete' : 'idle',
+        avgProgress,
+      };
+    });
+  }, [agentStatuses]);
+
+  if (!currentAssessment && agentLog.length === 0 && !isAssessing) {
+    return (
+      <EmptyWorkspace
+        title="Workflow intelligence appears after execution begins"
+        description="Run an assessment to populate stage progress, outputs, and runtime logs for the orchestration pipeline."
+        action={<button onClick={() => navigate('/assessment')} className="btn btn-primary">Start assessment</button>}
+      />
+    );
+  }
+
   return (
-    <div className="space-y-8">
-      {/* Flow diagram */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="glass-card"
-      >
-        <span className="section-label">Agent Orchestration</span>
-        <h2 className="font-display text-2xl font-bold mb-8" style={{ color: 'var(--color-text-primary)' }}>
-          Multi-Agent Workflow
-        </h2>
-
-        <div className="flex flex-col items-center gap-4">
-          {/* Document Agent */}
-          <AgentNode agent={agents[0]} />
-          <FlowArrow />
-
-          {/* Parallel agents */}
-          <div className="flex flex-wrap justify-center gap-4">
-            {agents.slice(1, 5).map((a) => (
-              <AgentNode key={a.name} agent={a} />
-            ))}
+    <div className="space-y-6">
+      <PageHero
+        eyebrow="Agent orchestration"
+        title="Workflow and execution output"
+        description="The multi-agent pipeline converts uploaded evidence into standards findings, remediation actions, and policy outputs."
+        actions={<button onClick={() => navigate('/agent-monitoring')} className="btn btn-secondary">Open monitoring</button>}
+        aside={
+          <div className="hero-stat-stack">
+            <div className="hero-stat-label">Runtime mode</div>
+            <div className="hero-stat-value">{isAssessing ? 'Running' : 'Complete'}</div>
+            <div className="hero-stat-copy">The workflow view summarizes orchestration stages rather than raw logs.</div>
           </div>
-          <FlowArrow />
+        }
+      />
 
-          {/* Gap Analysis */}
-          <AgentNode agent={agents[5]} />
-          <FlowArrow />
+      <div className="metric-grid">
+        <MetricCard label="Stages" value={stages.length} caption="Pipeline checkpoints in the orchestration design" tone="brand" />
+        <MetricCard label="Agents" value={agentStatuses.length} caption="Specialized services participating in the workflow" />
+        <MetricCard label="Gap outputs" value={currentAssessment?.gaps.length || 0} caption="Findings produced by the assessment workflow" tone="warn" />
+        <MetricCard label="Policies" value={currentAssessment?.policyDocuments?.length || 0} caption="Generated policy outputs from the workflow" tone="success" />
+      </div>
 
-          {/* Evidence Validation */}
-          <AgentNode agent={agents[6]} />
-          <FlowArrow />
-
-          {/* Remediation */}
-          <AgentNode agent={agents[7]} />
-          <FlowArrow />
-
-          {/* Policy Generator */}
-          <AgentNode agent={agents[8]} />
-        </div>
-      </motion.div>
-
-      {/* Agent cards */}
-      <div>
-        <span className="section-label">Agent Details</span>
-        <h2 className="font-display text-2xl font-bold mb-6" style={{ color: 'var(--color-text-primary)' }}>
-          Specialized AI Agents
-        </h2>
-        <div className="grid md:grid-cols-2 gap-6">
-          {agents.map((agent, i) => (
-            <motion.div
-              key={agent.name}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className="glass-card"
-            >
-              <div className="flex items-start gap-4">
-                <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: `${agent.color}15`, color: agent.color }}
-                >
-                  <agent.icon size={22} />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>{agent.name}</h3>
-                  <p className="text-sm mt-1 mb-3" style={{ color: 'var(--color-text-secondary)' }}>{agent.desc}</p>
-
-                  <div className="space-y-2">
-                    <InfoRow label="GenW.AI Module" value={agent.module} />
-                    <InfoRow label="Input" value={agent.input} />
-                    <InfoRow label="Output" value={agent.output} />
-                    <InfoRow label="Model" value="claude-opus-4-5" />
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Status:</span>
-                      <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(134, 188, 37, 0.15)', color: 'var(--color-accent-500)' }}>
-                        Ready
-                      </span>
-                    </div>
-                  </div>
-                </div>
+      <Panel label="Stage map" title="End-to-end orchestration" description="Each stage rolls up the runtime state of the agents assigned to that segment of the workflow.">
+        <div className="workflow-stage-grid">
+          {stageStates.map((stage) => (
+            <div key={stage.key} className={`workflow-stage-card workflow-stage-${stage.state}`}>
+              <div className="workflow-stage-head">
+                <div className="workflow-stage-icon"><stage.icon size={18} /></div>
+                <span className={`badge badge-${stage.state === 'error' ? 'critical' : stage.state === 'active' ? 'medium' : stage.state === 'complete' ? 'compliant' : 'pending'}`}>{stage.state}</span>
               </div>
-            </motion.div>
+              <div className="workflow-stage-title">{stage.title}</div>
+              <div className="workflow-stage-copy">{stage.description}</div>
+              <div className="benchmark-bar" style={{ marginTop: 12 }}>
+                <div className="benchmark-bar-fill" style={{ width: `${stage.avgProgress}%` }} />
+              </div>
+              <div className="insight-tags" style={{ marginTop: 12 }}>
+                {stage.agents.map((agent) => (
+                  <span key={agent} className="badge badge-pending">{agent}</span>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
+      </Panel>
+
+      <div className="enterprise-two-column">
+        <Panel label="Runtime output" title="What the workflow produced" description="Current outputs from the latest assessment execution.">
+          <div className="insight-list">
+            <div className="insight-row">
+              <div className="insight-kicker">Clauses</div>
+              <div>
+                <div className="insight-title">{currentAssessment?.standards.reduce((sum, standard) => sum + standard.clauseScores.length, 0) || 0} clause assessments</div>
+                <div className="insight-copy">Clause-level scores and findings generated by the standard specialist agents.</div>
+              </div>
+            </div>
+            <div className="insight-row">
+              <div className="insight-kicker">Gaps</div>
+              <div>
+                <div className="insight-title">{currentAssessment?.gaps.length || 0} prioritized gaps</div>
+                <div className="insight-copy">Cross-standard deficiency set produced after consolidation.</div>
+              </div>
+            </div>
+            <div className="insight-row">
+              <div className="insight-kicker">Evidence</div>
+              <div>
+                <div className="insight-title">{currentAssessment?.evidenceValidation?.evidenceItems.length || 0} evidence checks</div>
+                <div className="insight-copy">Evidence sufficiency and reuse validation completed by the evidence agent.</div>
+              </div>
+            </div>
+            <div className="insight-row">
+              <div className="insight-kicker">Policies</div>
+              <div>
+                <div className="insight-title">{currentAssessment?.policyDocuments?.length || 0} generated policy packs</div>
+                <div className="insight-copy">Output documents ready for report packaging and adoption review.</div>
+              </div>
+            </div>
+          </div>
+        </Panel>
+
+        <Panel label="Latest activity" title="Recent execution log" description="Short operational summary from the most recent agent events.">
+          <div className="insight-list">
+            {[...agentLog].slice(-8).reverse().map((entry) => (
+              <div key={entry.id} className="insight-row">
+                <div className="insight-kicker">{entry.agentName}</div>
+                <div>
+                  <div className="insight-title">{entry.message}</div>
+                  <div className="insight-copy">{new Date(entry.timestamp).toLocaleString()}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Panel>
       </div>
-    </div>
-  );
-}
 
-function AgentNode({ agent }: { agent: typeof agents[number] }) {
-  return (
-    <div
-      className="flex items-center gap-3 px-5 py-3 rounded-2xl transition-all hover:scale-105"
-      style={{
-        background: `${agent.color}10`,
-        border: `1px solid ${agent.color}30`,
-      }}
-    >
-      <div
-        className="w-10 h-10 rounded-xl flex items-center justify-center"
-        style={{ background: `${agent.color}20`, color: agent.color }}
-      >
-        <agent.icon size={18} />
-      </div>
-      <span className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{agent.name}</span>
-    </div>
-  );
-}
-
-function FlowArrow() {
-  return (
-    <div className="flex flex-col items-center">
-      <div className="w-px h-6" style={{ background: 'var(--color-accent-500)', opacity: 0.4 }} />
-      <ArrowRight size={14} className="rotate-90" style={{ color: 'var(--color-accent-500)', opacity: 0.6 }} />
-    </div>
-  );
-}
-
-function InfoRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-start gap-2">
-      <span className="text-xs flex-shrink-0" style={{ color: 'var(--color-text-muted)' }}>{label}:</span>
-      <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{value}</span>
+      <Panel label="Operational handoff" title="Recommended next steps" description="Move from orchestration output to action planning and evidence-backed reporting.">
+        <div className="insight-list">
+          <div className="insight-row">
+            <div className="insight-kicker"><FileText size={14} /></div>
+            <div>
+              <div className="insight-title">Generate executive report</div>
+              <div className="insight-copy">Use the report pack to package findings, evidence, and remediation into a board-ready output.</div>
+            </div>
+            <button onClick={() => navigate('/reports')} className="btn btn-ghost">Open reports <ArrowRight size={14} /></button>
+          </div>
+          <div className="insight-row">
+            <div className="insight-kicker"><Wrench size={14} /></div>
+            <div>
+              <div className="insight-title">Operationalize remediation</div>
+              <div className="insight-copy">Move prioritized actions into the tracker to align delivery owners and time horizons.</div>
+            </div>
+            <button onClick={() => navigate('/remediation-tracker')} className="btn btn-ghost">Open tracker <ArrowRight size={14} /></button>
+          </div>
+        </div>
+      </Panel>
     </div>
   );
 }

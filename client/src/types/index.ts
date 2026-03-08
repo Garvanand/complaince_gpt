@@ -3,6 +3,8 @@ export interface OrgProfile {
   industrySector: string;
   employeeCount: string;
   assessmentScope: 'full' | 'quick' | 'targeted';
+  jurisdiction?: string;
+  currentMaturity?: 'initial' | 'developing' | 'defined' | 'managed' | 'optimizing';
 }
 
 export interface ClauseData {
@@ -35,6 +37,8 @@ export interface ClauseScore {
   evidence: string;
   gap: string;
   remediation: string;
+  finding?: string;
+  confidence?: number;
 }
 
 export interface StandardAssessment {
@@ -45,6 +49,8 @@ export interface StandardAssessment {
   maturityLabel: string;
   clauseScores: ClauseScore[];
   summary: string;
+  scoringMethod?: string;
+  confidence?: number;
 }
 
 export interface Gap {
@@ -59,6 +65,7 @@ export interface Gap {
   effortScore: number; // 1-10
   crossStandardOverlap: string[];
   category: 'policy' | 'process' | 'training' | 'technology' | 'documentation';
+  legalSeverity?: string;
 }
 
 export interface RemediationAction {
@@ -73,6 +80,7 @@ export interface RemediationAction {
   priority: 'critical' | 'high' | 'medium' | 'low';
   successMetric: string;
   description: string;
+  gapIds?: string[];
 }
 
 export interface EvidenceValidationItem {
@@ -140,6 +148,155 @@ export interface AssessmentResult {
   remediation: RemediationAction[];
   policyDocuments?: PolicyDocument[];
   executiveSummary: string;
+}
+
+export interface BackendClauseScore {
+  clauseId: string;
+  score: number;
+  finding: string;
+}
+
+export interface BackendStandardAssessment {
+  standard: string;
+  name: string;
+  overallScore: number;
+  maturityLevel: number;
+  clauseScores: BackendClauseScore[];
+  scoringMethod?: string;
+  confidence?: number;
+}
+
+export interface BackendGap {
+  id: string;
+  title: string;
+  severity: string;
+  standard: string;
+  clauseRef: string;
+  impactScore: number;
+  effortScore: number;
+  description: string;
+}
+
+export interface BackendRemediationAction {
+  id: string;
+  title: string;
+  description: string;
+  priority: string;
+  phase: number;
+  effortDays: number;
+  standard: string;
+  responsible: string;
+}
+
+export interface BackendAssessmentResult {
+  id: string;
+  orgProfile: { company: string; industry: string; employees: string; scope: string };
+  overallScore: number;
+  maturityLevel: number;
+  standardAssessments: BackendStandardAssessment[];
+  gaps: BackendGap[];
+  evidenceValidation: EvidenceValidation;
+  remediationActions: BackendRemediationAction[];
+  policyDocuments: PolicyDocument[];
+  timestamp: string;
+}
+
+export interface StandardLibraryItem {
+  code: string;
+  name: string;
+  fullName: string;
+  version: string;
+  clauseCount: number;
+  questionnaireAvailable: boolean;
+  totalQuestions: number;
+  mandatoryQuestions: number;
+  categories: string[];
+  clauseCategories: string[];
+}
+
+export interface GovernanceLibraryItem {
+  code: string;
+  name: string;
+  scope: string;
+  year: number;
+  totalQuestions: number;
+  categories: string[];
+  keyPrinciples: string[];
+}
+
+export interface AuditQuestion {
+  id: string;
+  clauseRef: string;
+  category: string;
+  question: string;
+  legalBasis: string;
+  severity: 'mandatory' | 'recommended';
+  evidenceRequired: string[];
+  failureConsequence: string;
+  scoringCriteria: {
+    full: string;
+    partial: string;
+    nonCompliant: string;
+  };
+}
+
+export interface QuestionnaireResponse {
+  type: 'questionnaire' | 'governance';
+  standardCode?: string;
+  standardName?: string;
+  code?: string;
+  name?: string;
+  version?: string;
+  effectiveDate?: string;
+  year?: number;
+  scope?: string;
+  totalMandatoryRequirements?: number;
+  totalQuestions: number;
+  mandatoryQuestions?: number;
+  categories: string[];
+  keyPrinciples?: string[];
+  questions: AuditQuestion[];
+}
+
+export interface IndustryBenchmark {
+  industry: string;
+  averageScores: Record<string, number>;
+  commonGaps: string[];
+  regulatoryPressure: 'low' | 'medium' | 'high' | 'very-high';
+}
+
+export interface KnowledgeBaseOverview {
+  industryBenchmark: IndustryBenchmark;
+  maturityModel: Array<{
+    level: number;
+    name: string;
+    description: string;
+    characteristics: string[];
+    scoreRange: [number, number];
+  }>;
+  legalFrameworkReferences: Record<string, Array<Record<string, string | number>>>;
+  legalSeverityMatrix: Record<string, {
+    description: string;
+    examples: string[];
+    recommendedAction: string;
+    timeframe: string;
+  }>;
+  commonAuditFindings: Array<{
+    clauseCategory: string;
+    standardCode: string;
+    commonFindings: string[];
+    remediationGuidance: string[];
+    typicalScore: number;
+    criticality: string;
+  }>;
+  crossStandardMappings: Array<{
+    sourceStandard: string;
+    sourceClause: string;
+    targetStandard: string;
+    targetClause: string;
+    relationship: string;
+    rationale: string;
+  }>;
 }
 
 export interface AgentStatus {

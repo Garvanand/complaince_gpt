@@ -1,11 +1,13 @@
-import { motion } from 'framer-motion';
-import { FileText, Download, ArrowRight } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../store/useAppStore';
-import { formatDate, getRiskColor } from '../utils/helpers';
+import { formatDate } from '../utils/helpers';
 import { generateReport } from '../utils/generateReport';
+import { EmptyWorkspace, MetricCard, PageHero, Panel } from '../components/ui/EnterpriseLayout';
 import RemediationTimeline from '../components/reports/RemediationTimeline';
-import EvidenceMapper from '../components/EvidenceMapper';
+import EvidenceValidationPanel from '../components/reports/EvidenceValidationPanel';
+import PolicyGeneratorPanel from '../components/reports/PolicyGeneratorPanel';
+import { getStandardLabel, getStandardStatus, sortGapsByPriority } from '../utils/enterpriseData';
 
 export default function Reports() {
   const navigate = useNavigate();
@@ -13,139 +15,131 @@ export default function Reports() {
 
   if (!currentAssessment) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          <FileText size={48} className="mx-auto mb-4" style={{ color: 'var(--color-text-muted)' }} />
-          <h2 className="font-display text-2xl font-bold mb-3" style={{ color: 'var(--color-text-primary)' }}>No Reports</h2>
-          <p className="text-sm mb-6" style={{ color: 'var(--color-text-secondary)' }}>Complete an assessment to generate compliance reports.</p>
-          <div className="flex gap-4 justify-center">
-            <button onClick={() => navigate('/assessment')} className="btn-glow flex items-center gap-2">Start Assessment <ArrowRight size={18} /></button>
-            <button onClick={loadDemoData} className="btn-ghost">Load Demo</button>
-          </div>
-        </motion.div>
-      </div>
+      <EmptyWorkspace
+        title="No report pack available"
+        description="Complete an assessment to generate an executive compliance pack with findings, evidence, and remediation priorities."
+        action={
+          <>
+            <button onClick={() => navigate('/assessment')} className="btn btn-primary">Start assessment</button>
+            <button onClick={loadDemoData} className="btn btn-secondary">Load demo dataset</button>
+          </>
+        }
+      />
     );
   }
 
-  const a = currentAssessment;
+  const criticalGaps = sortGapsByPriority(currentAssessment.gaps).filter((gap) => gap.impact === 'critical');
 
   return (
-    <div className="space-y-8">
-      {/* Report card */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card">
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <span className="section-label">Latest Report</span>
-            <h2 className="font-display text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
-              {a.orgProfile.companyName} — Compliance Assessment
-            </h2>
-            <div className="flex items-center gap-4 mt-2 text-sm" style={{ color: 'var(--color-text-muted)' }}>
-              <span>{formatDate(a.timestamp)}</span>
-              <span>{a.standards.length} Standards</span>
-              <span
-                className="px-2 py-0.5 rounded-full text-xs font-bold"
-                style={{ background: 'rgba(134, 188, 37, 0.15)', color: 'var(--color-accent-500)' }}
-              >
-                Ready
-              </span>
-            </div>
+    <div className="space-y-6">
+      <PageHero
+        eyebrow="Executive reporting"
+        title={`${currentAssessment.orgProfile.companyName} compliance report pack`}
+        description={`Assessment date ${formatDate(currentAssessment.timestamp)} · ${currentAssessment.standards.length} assessed standards · ${currentAssessment.gaps.length} open gaps.`}
+        actions={<button onClick={() => generateReport(currentAssessment)} className="btn btn-primary"><Download size={14} /> Download PDF</button>}
+        aside={
+          <div className="hero-stat-stack">
+            <div className="hero-stat-label">Overall maturity</div>
+            <div className="hero-stat-value">{currentAssessment.overallMaturity}</div>
+            <div className="hero-stat-copy">{currentAssessment.overallMaturityLabel}</div>
           </div>
-          <button onClick={() => generateReport(a)} className="btn-glow flex items-center gap-2">
-            <Download size={16} /> Download PDF
-          </button>
-        </div>
+        }
+      />
 
-        <div className="grid md:grid-cols-4 gap-4 mb-6">
-          <div className="p-4 rounded-xl text-center" style={{ background: 'var(--color-primary-700)' }}>
-            <div className="score-display text-2xl font-bold" style={{ color: getRiskColor(a.overallScore) }}>{a.overallScore}%</div>
-            <div className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>Overall Score</div>
+      <div className="metric-grid">
+        <MetricCard label="Overall score" value={`${currentAssessment.overallScore}%`} caption="Cross-standard compliance position" tone="brand" />
+        <MetricCard label="Critical gaps" value={criticalGaps.length} caption="Items requiring immediate action" tone="danger" />
+        <MetricCard label="Evidence items" value={currentAssessment.evidenceValidation?.evidenceItems.length || 0} caption="Validated evidence references in the report" tone="success" />
+        <MetricCard label="Policy outputs" value={currentAssessment.policyDocuments?.length || 0} caption="Generated policy documents linked to the assessment" />
+      </div>
+
+      <div className="enterprise-two-column">
+        <Panel label="Executive summary" title="AI narrative" description="Board-level summary generated from the latest assessment output.">
+          <p style={{ color: 'var(--slate-700)', lineHeight: 1.8 }}>{currentAssessment.executiveSummary}</p>
+        </Panel>
+
+        <Panel label="Standards summary" title="Scorecard" description="Latest overall position by standard.">
+          <div className="insight-list">
+            {currentAssessment.standards.map((standard) => {
+              const status = getStandardStatus(standard.overallScore);
+              return (
+                <div key={standard.standardCode} className="insight-row">
+                  <div className="insight-kicker">{getStandardLabel(standard.standardCode)}</div>
+                  <div>
+                    <div className="insight-title">{standard.overallScore}% overall score</div>
+                    <div className="insight-copy">{standard.summary}</div>
+                  </div>
+                  <span className={`badge badge-${status === 'non-compliant' ? 'critical' : status}`}>{status}</span>
+                </div>
+              );
+            })}
           </div>
-          {a.standards.map((s) => (
-            <div key={s.standardCode} className="p-4 rounded-xl text-center" style={{ background: 'var(--color-primary-700)' }}>
-              <div className="score-display text-2xl font-bold" style={{ color: getRiskColor(s.overallScore) }}>{s.overallScore}%</div>
-              <div className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>{s.standardCode.replace('ISO', 'ISO ')}</div>
-            </div>
-          ))}
-        </div>
-      </motion.div>
+        </Panel>
+      </div>
 
-      {/* Executive Summary */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card">
-        <span className="section-label">Executive Summary</span>
-        <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--color-text-primary)' }}>AI-Generated Narrative</h3>
-        <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>{a.executiveSummary}</p>
-      </motion.div>
-
-      {/* Clause findings */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-card">
-        <span className="section-label">Clause-Level Findings</span>
-        <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--color-text-primary)' }}>Detailed Assessment</h3>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+      <Panel label="Clause findings" title="Detailed assessment register" description="Clause-level scores, status, and narrative findings.">
+        <div style={{ overflowX: 'auto' }}>
+          <table className="data-table">
             <thead>
-              <tr style={{ borderBottom: '1px solid var(--glass-border)' }}>
-                {['Standard', 'Clause', 'Title', 'Score', 'Status', 'Gap'].map((h) => (
-                  <th key={h} className="text-left py-3 px-3 text-xs font-semibold uppercase" style={{ color: 'var(--color-text-muted)' }}>{h}</th>
-                ))}
+              <tr>
+                <th>Standard</th>
+                <th>Clause</th>
+                <th>Title</th>
+                <th>Score</th>
+                <th>Status</th>
+                <th>Gap narrative</th>
               </tr>
             </thead>
             <tbody>
-              {a.standards.flatMap((s) =>
-                s.clauseScores.map((c, i) => (
-                  <tr
-                    key={`${s.standardCode}-${c.clauseId}`}
-                    className="transition-colors hover:bg-[var(--color-primary-700)]"
-                    style={{ borderBottom: '1px solid var(--glass-border)', background: i % 2 === 0 ? 'transparent' : 'rgba(15, 22, 41, 0.3)' }}
-                  >
-                    <td className="py-2.5 px-3" style={{ color: 'var(--color-text-secondary)' }}>{s.standardCode.replace('ISO', 'ISO ')}</td>
-                    <td className="py-2.5 px-3 score-display font-bold" style={{ color: 'var(--color-accent-500)' }}>{c.clauseId}</td>
-                    <td className="py-2.5 px-3" style={{ color: 'var(--color-text-primary)' }}>{c.clauseTitle}</td>
-                    <td className="py-2.5 px-3">
-                      <span className="score-display font-bold" style={{ color: getRiskColor(c.score) }}>{c.score}%</span>
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <span className="text-xs px-2 py-0.5 rounded-full capitalize" style={{ background: `${getRiskColor(c.score)}15`, color: getRiskColor(c.score) }}>
-                        {c.status}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3 max-w-[200px] truncate" style={{ color: 'var(--color-text-muted)' }}>{c.gap || '—'}</td>
-                  </tr>
-                ))
+              {currentAssessment.standards.flatMap((standard) =>
+                standard.clauseScores.map((clause) => {
+                  const status = getStandardStatus(clause.score);
+                  return (
+                    <tr key={`${standard.standardCode}-${clause.clauseId}`}>
+                      <td>{getStandardLabel(standard.standardCode)}</td>
+                      <td>{clause.clauseId}</td>
+                      <td>{clause.clauseTitle}</td>
+                      <td>{clause.score}%</td>
+                      <td><span className={`badge badge-${status === 'non-compliant' ? 'critical' : status}`}>{status}</span></td>
+                      <td>{clause.gap || clause.finding || 'No gap narrative recorded.'}</td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
-      </motion.div>
+      </Panel>
 
-      {/* Critical gaps */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="glass-card">
-        <span className="section-label">Critical Gaps</span>
-        <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--color-text-primary)' }}>Immediate Attention Required</h3>
-        <div className="grid md:grid-cols-2 gap-4">
-          {a.gaps.filter((g) => g.impact === 'critical').map((gap) => (
-            <div key={gap.id} className="p-4 rounded-xl" style={{ background: 'rgba(255, 71, 87, 0.05)', border: '1px solid rgba(255, 71, 87, 0.2)' }}>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full" style={{ background: 'rgba(255, 71, 87, 0.2)', color: 'var(--color-risk-critical)' }}>Critical</span>
-                <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{gap.standardCode.replace('ISO', 'ISO ')}</span>
+      {criticalGaps.length > 0 && (
+        <Panel label="Critical findings" title="Immediate attention required" description="Highest-severity gaps extracted from the current report pack.">
+          <div className="enterprise-two-column">
+            {criticalGaps.map((gap) => (
+              <div key={gap.id} className="insight-card">
+                <div className="insight-kicker insight-kicker-critical">{getStandardLabel(gap.standardCode)} clause {gap.clauseId}</div>
+                <div className="insight-title">{gap.title}</div>
+                <div className="insight-copy">{gap.description}</div>
               </div>
-              <h4 className="text-sm font-semibold mb-1" style={{ color: 'var(--color-text-primary)' }}>{gap.title}</h4>
-              <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{gap.description}</p>
-            </div>
-          ))}
-        </div>
-      </motion.div>
+            ))}
+          </div>
+        </Panel>
+      )}
 
-      {/* Evidence Mapper */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
-        <EvidenceMapper />
-      </motion.div>
+      {currentAssessment.evidenceValidation && currentAssessment.evidenceValidation.evidenceItems.length > 0 && (
+        <Panel label="Evidence validation" title="Evidence sufficiency review" description="Assessment evidence tested for quality, sufficiency, and reuse opportunities.">
+          <EvidenceValidationPanel data={currentAssessment.evidenceValidation} />
+        </Panel>
+      )}
 
-      {/* Remediation roadmap */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="glass-card">
-        <span className="section-label">Remediation Roadmap</span>
-        <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--color-text-primary)' }}>Phased Action Plan</h3>
-        <RemediationTimeline actions={a.remediation} />
-      </motion.div>
+      <Panel label="Remediation roadmap" title="Generated action plan" description="Phased sequence of actions linked to identified gaps.">
+        <RemediationTimeline actions={currentAssessment.remediation} />
+      </Panel>
+
+      {currentAssessment.policyDocuments && currentAssessment.policyDocuments.length > 0 && (
+        <Panel label="Policy outputs" title="Generated policy documents" description="Download-ready policy artifacts generated by the policy agent.">
+          <PolicyGeneratorPanel documents={currentAssessment.policyDocuments} />
+        </Panel>
+      )}
     </div>
   );
 }

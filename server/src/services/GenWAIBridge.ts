@@ -75,7 +75,7 @@ export const agentModuleMappings: GenWAIAgentMapping[] = [
 
 /**
  * In production, this would call GenW.AI APIs.
- * For the hackathon demo, agents use Claude directly.
+ * For the hackathon demo, agents use the Groq-backed compliance agents directly.
  */
 export function getGenWAIModuleForAgent(agentName: string): GenWAIModule | undefined {
   const mapping = agentModuleMappings.find((m) => m.agentName === agentName);

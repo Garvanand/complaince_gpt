@@ -5,7 +5,7 @@
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)
 ![React](https://img.shields.io/badge/React-19-61dafb)
-![Anthropic](https://img.shields.io/badge/Claude-Sonnet%204-purple)
+![Groq](https://img.shields.io/badge/Groq-openai%2Fgpt--oss--120b-orange)
 ![Express](https://img.shields.io/badge/Express-5-green)
 ![License](https://img.shields.io/badge/License-Proprietary-red)
 
@@ -15,12 +15,14 @@
 
 ComplianceGPT is a **production-grade enterprise web application** that transforms how organizations approach regulatory compliance. Clients upload policy documents and receive **instant readiness scores, gap analysis, evidence validation, maturity levels, and phased remediation roadmaps** across multiple ISO standards simultaneously — powered by 9 specialized AI agents and a 3-tier hybrid scoring engine.
 
+The current assessment stack uses **Groq Cloud with `openai/gpt-oss-120b`** plus a structured ISO questionnaire knowledge base covering legal-grade audit questions, governance guidance, and recent governance and ethics standards including ISO 37000 and ISO 37002.
+
 ### What Makes It Novel
 
 | Differentiator | Description |
 |---|---|
 | **9-Agent Orchestrated Pipeline** | Not a single LLM prompt — a coordinated team of specialized AI agents, each with domain expertise, that hand off context through a structured pipeline |
-| **3-Tier Hybrid Scoring Engine** | ML semantic scoring (sentence-transformers) → Claude AI enhancement → keyword fallback. Gracefully degrades so it always works |
+| **3-Tier Hybrid Scoring Engine** | ML semantic scoring (sentence-transformers) → Groq AI enhancement → keyword+NLP fallback. Gracefully degrades so it always works |
 | **Evidence Validation Agent** | Industry-first: validates whether cited evidence actually supports compliance claims. Checks sufficiency, quality (direct/indirect/anecdotal), chain of custody, and cross-standard evidence reuse |
 | **Policy Generator Agent** | Generates 100% compliant, ready-to-adopt policy documents addressing all identified gaps — users download updated policies instantly, reducing workload |
 | **Cross-Standard Synergy Detection** | Identifies where a single remediation action satisfies requirements across multiple ISO standards, reducing cost |
@@ -32,15 +34,18 @@ ComplianceGPT is a **production-grade enterprise web application** that transfor
 - **ISO 37301:2021** — Compliance Management Systems
 - **ISO 27001:2022** — Information Security Management Systems
 - **ISO 9001:2015** — Quality Management Systems
+- **ISO 37000:2021** — Governance of Organizations guidance
+- **ISO 37002:2021** — Whistleblowing Management Systems guidance
 
 ### Key Features
 - **9 Specialized AI Agents** orchestrated via sequential-parallel multi-agent architecture
-- **3-Tier Hybrid Scoring** — ML → Claude AI → Keyword fallback with graceful degradation
+- **3-Tier Hybrid Scoring** — ML → Groq AI → keyword+NLP fallback with graceful degradation
 - **Evidence Validation** — AI-powered evidence sufficiency and quality assessment
 - **Real-time Visual Dashboard** with radar charts, heatmaps, and gap priority matrices
 - **Multi-format Document Processing** (PDF, DOCX, TXT) with structural understanding
 - **Cross-standard Gap Analysis** with synergy detection and overlap mapping
 - **Phased Remediation Roadmaps** with effort estimates and responsible functions
+- **Structured ISO Questionnaires** translating ISO clauses into auditable legal-style questions
 - **AI-Powered Chat Assistant** for interactive compliance guidance
 - **Executive Report Generation** with PDF export
 - **Demo Mode** for instant exploration without API keys
@@ -66,7 +71,7 @@ ComplianceGPT is a **production-grade enterprise web application** that transfor
 | Technology | Purpose |
 |---|---|
 | Node.js + Express 5 | API server with TypeScript |
-| Anthropic SDK | Claude claude-sonnet-4-20250514 integration |
+| Groq SDK | `openai/gpt-oss-120b` integration via Groq Cloud |
 | pdf-parse + mammoth | PDF and DOCX document parsing |
 | Multer | Multi-file upload handling (max 10 × 20MB) |
 | SSE (Server-Sent Events) | Real-time agent progress streaming |
@@ -75,9 +80,10 @@ ComplianceGPT is a **production-grade enterprise web application** that transfor
 ### AI & Scoring
 | Component | Role |
 |---|---|
-| Claude claude-sonnet-4-20250514 | Agent analysis, scoring enhancement, chat |
+| Groq `openai/gpt-oss-120b` | Agent analysis, scoring enhancement, chat |
 | sentence-transformers (Python) | Tier 1 ML semantic similarity scoring |
 | HybridScoringService | 3-tier orchestration with graceful degradation |
+| ISO Questionnaire Knowledge Base | Legal-grade structured audit questions and evidence requirements |
 
 ---
 
@@ -127,7 +133,7 @@ compliancegpt/
 ### Prerequisites
 - Node.js ≥ 18
 - npm ≥ 9
-- Anthropic API key (optional — demo mode and keyword scoring work without it)
+- Groq API key (optional — demo mode and keyword+NLP scoring work without it)
 - Python 3.9+ with sentence-transformers (optional — for Tier 1 ML scoring)
 
 ### Installation
@@ -146,8 +152,8 @@ npm install
 
 # Configure environment
 cd ..
-cp .env.example server/.env
-# Edit server/.env and add your ANTHROPIC_API_KEY
+cp .env.example .env
+# Edit .env and add your GROQ_API_KEY
 ```
 
 ### Development
@@ -253,13 +259,13 @@ The `HybridScoringService` implements a novel multi-tiered scoring approach that
 | Tier | Method | Confidence | Requirements |
 |---|---|---|---|
 | **Tier 1** | ML semantic similarity (sentence-transformers) | High | Python ML microservice running |
-| **Tier 2** | Claude AI enhancement | High | Anthropic API key configured |
-| **Tier 3** | Keyword-based fallback | Medium-Low | None (always available) |
+| **Tier 2** | Groq AI enhancement | High | Groq API key configured |
+| **Tier 3** | Keyword+NLP fallback | Medium-Low | None (always available) |
 
 **Scoring Flow:**
-1. Try ML scoring → if available, enhance with Claude → return `ml+claude` scores
-2. If ML unavailable → try keyword scoring enhanced by Claude → return `claude-only` scores
-3. If Claude unavailable → return `keyword-fallback` scores
+1. Try ML scoring → if available, enhance with Groq → return `ml+groq` scores
+2. If ML unavailable → try keyword+NLP scoring enhanced by Groq → return `groq-enhanced` scores
+3. If Groq unavailable → return `keyword+nlp` scores
 
 > See [docs/SCORING_ENGINE.md](docs/SCORING_ENGINE.md) for complete scoring documentation.
 

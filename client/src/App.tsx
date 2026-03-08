@@ -10,6 +10,11 @@ const Assessment = lazy(() => import('./pages/Assessment'))
 const Standards = lazy(() => import('./pages/Standards'))
 const AgentWorkflow = lazy(() => import('./pages/AgentWorkflow'))
 const Analytics = lazy(() => import('./pages/Analytics'))
+const KnowledgeBase = lazy(() => import('./pages/KnowledgeBase'))
+const RiskIntelligence = lazy(() => import('./pages/RiskIntelligence'))
+const ControlLibrary = lazy(() => import('./pages/ControlLibrary'))
+const RemediationTracker = lazy(() => import('./pages/RemediationTracker'))
+const AgentMonitoring = lazy(() => import('./pages/AgentMonitoring'))
 const Reports = lazy(() => import('./pages/Reports'))
 const Settings = lazy(() => import('./pages/Settings'))
 
@@ -61,6 +66,31 @@ function AnimatedRoutes() {
           <Route path="/analytics" element={
             <Suspense fallback={<PageLoader />}>
               <PageTransition><Analytics /></PageTransition>
+            </Suspense>
+          } />
+          <Route path="/knowledge-base" element={
+            <Suspense fallback={<PageLoader />}>
+              <PageTransition><KnowledgeBase /></PageTransition>
+            </Suspense>
+          } />
+          <Route path="/risk-intelligence" element={
+            <Suspense fallback={<PageLoader />}>
+              <PageTransition><RiskIntelligence /></PageTransition>
+            </Suspense>
+          } />
+          <Route path="/control-library" element={
+            <Suspense fallback={<PageLoader />}>
+              <PageTransition><ControlLibrary /></PageTransition>
+            </Suspense>
+          } />
+          <Route path="/remediation-tracker" element={
+            <Suspense fallback={<PageLoader />}>
+              <PageTransition><RemediationTracker /></PageTransition>
+            </Suspense>
+          } />
+          <Route path="/agent-monitoring" element={
+            <Suspense fallback={<PageLoader />}>
+              <PageTransition><AgentMonitoring /></PageTransition>
             </Suspense>
           } />
           <Route path="/reports" element={

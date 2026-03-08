@@ -1,5 +1,13 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import type {
+  BackendAssessmentResult,
+  KnowledgeBaseOverview,
+  QuestionnaireResponse,
+  StandardCode,
+  GovernanceLibraryItem,
+  StandardLibraryItem,
+} from '../types';
 
 const apiClient = axios.create({
   baseURL: '/api',
@@ -28,5 +36,60 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+export const assessmentApi = {
+  async uploadDocuments(files: File[]): Promise<string[]> {
+    if (files.length === 0) {
+      return [];
+    }
+
+    const formData = new FormData();
+    files.forEach((file) => formData.append('files', file));
+
+    const response = await apiClient.post('/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+
+    return response.data.files.map((file: { savedPath: string }) => file.savedPath);
+  },
+
+  async startAssessment(payload: {
+    filePaths: string[];
+    standards: StandardCode[];
+    orgProfile: { company: string; industry: string; employees: string; scope: string };
+  }): Promise<{ assessmentId: string; status: string }> {
+    const response = await apiClient.post('/assessment/start', payload);
+    return response.data;
+  },
+
+  async getResults(assessmentId: string): Promise<{ status: string; result?: BackendAssessmentResult }> {
+    const response = await apiClient.get(`/assessment/${assessmentId}/results`);
+    return response.data;
+  },
+};
+
+export const standardsApi = {
+  async getLibrary(): Promise<{ standards: StandardLibraryItem[]; governance: GovernanceLibraryItem[] }> {
+    const response = await apiClient.get('/standards/library');
+    return response.data;
+  },
+
+  async getClauses(code: string): Promise<{ code: string; name: string; fullName?: string; version?: string; clauses: Array<{ id: string; title: string; description: string; category: string; weight?: number }> }> {
+    const response = await apiClient.get(`/standards/${code}/clauses`);
+    return response.data;
+  },
+
+  async getQuestionnaire(code: string): Promise<QuestionnaireResponse> {
+    const response = await apiClient.get(`/standards/${code}/questionnaire`);
+    return response.data;
+  },
+
+  async getKnowledgeBase(industry: string): Promise<KnowledgeBaseOverview> {
+    const response = await apiClient.get('/standards/knowledge-base/overview', {
+      params: { industry },
+    });
+    return response.data;
+  },
+};
 
 export default apiClient;

@@ -1,177 +1,288 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Search, ChevronRight, ChevronDown, BookOpen } from 'lucide-react';
-import standardsData from '../data/iso-standards.json';
-import type { StandardsLibrary, StandardCode } from '../types';
+import { useEffect, useMemo, useState } from 'react';
+import { RefreshCw } from 'lucide-react';
+import type { KnowledgeBaseOverview, QuestionnaireResponse, StandardCode, StandardLibraryItem } from '../types';
 import { useAppStore } from '../store/useAppStore';
-import { getRiskColor } from '../utils/helpers';
+import { standardsApi } from '../utils/apiClient';
+import { EmptyWorkspace, MetricCard, PageHero, Panel } from '../components/ui/EnterpriseLayout';
+import { getStandardLabel, getStandardStatus, standardColors } from '../utils/enterpriseData';
 
-const data = standardsData as unknown as StandardsLibrary;
-const standardCodes: StandardCode[] = ['ISO37001', 'ISO37301', 'ISO27001', 'ISO9001'];
-const codeColors: Record<string, string> = { ISO37001: '#DD6B20', ISO37301: '#86BC25', ISO27001: '#00ABBD', ISO9001: '#FFD32A' };
+const supportedStandards: StandardCode[] = ['ISO37001', 'ISO37301', 'ISO27001', 'ISO9001'];
 
 export default function Standards() {
+  const { currentAssessment, orgProfile } = useAppStore();
   const [selected, setSelected] = useState<StandardCode>('ISO37001');
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(['Context', 'Leadership', 'Planning', 'Support', 'Operations', 'Evaluation', 'Improvement']));
+  const [library, setLibrary] = useState<StandardLibraryItem[]>([]);
+  const [clauses, setClauses] = useState<Array<{ id: string; title: string; description: string; category: string; weight?: number }>>([]);
+  const [questionnaire, setQuestionnaire] = useState<QuestionnaireResponse | null>(null);
+  const [knowledgeBase, setKnowledgeBase] = useState<KnowledgeBaseOverview | null>(null);
+  const [libraryLoading, setLibraryLoading] = useState(true);
+  const [detailLoading, setDetailLoading] = useState(true);
+  const [detailError, setDetailError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const { currentAssessment } = useAppStore();
 
-  const std = data[selected];
-  const color = codeColors[selected];
+  const industry = currentAssessment?.orgProfile.industrySector || orgProfile.industrySector || 'Other';
 
-  const toggleCategory = (cat: string) => {
-    setExpandedCategories((prev) => {
-      const next = new Set(prev);
-      if (next.has(cat)) next.delete(cat); else next.add(cat);
-      return next;
-    });
+  useEffect(() => {
+    let active = true;
+    setLibraryLoading(true);
+    standardsApi.getLibrary()
+      .then((response) => {
+        if (!active) return;
+        setLibrary(response.standards);
+      })
+      .catch(() => {
+        if (!active) return;
+        setLibrary([]);
+      })
+      .finally(() => {
+        if (active) setLibraryLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const loadStandardDetails = () => {
+    setDetailLoading(true);
+    setDetailError(null);
+
+    Promise.all([
+      standardsApi.getClauses(selected),
+      standardsApi.getQuestionnaire(selected),
+      standardsApi.getKnowledgeBase(industry),
+    ])
+      .then(([clauseResponse, questionnaireResponse, knowledgeResponse]) => {
+        setClauses(clauseResponse.clauses);
+        setQuestionnaire(questionnaireResponse);
+        setKnowledgeBase(knowledgeResponse);
+      })
+      .catch((error) => {
+        setClauses([]);
+        setQuestionnaire(null);
+        setDetailError(error instanceof Error ? error.message : 'Unable to load standards content.');
+      })
+      .finally(() => {
+        setDetailLoading(false);
+      });
   };
 
-  const categories = [...new Set(std.clauses.map((c) => c.category))];
+  useEffect(() => {
+    loadStandardDetails();
+  }, [selected, industry]);
 
-  const filteredClauses = std.clauses.filter(
-    (c) =>
-      c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.id.includes(searchQuery) ||
-      c.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const selectedLibrary = library.find((item) => item.code === selected);
+  const standardOverlay = currentAssessment?.standards.find((standard) => standard.standardCode === selected);
 
-  const getClauseScore = (clauseId: string): number | null => {
-    if (!currentAssessment) return null;
-    const stdResult = currentAssessment.standards.find((s) => s.standardCode === selected);
-    if (!stdResult) return null;
-    const clause = stdResult.clauseScores.find((c) => c.clauseId === clauseId);
-    return clause ? clause.score : null;
-  };
+  const filteredClauses = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return clauses;
+    return clauses.filter((clause) => [clause.id, clause.title, clause.description, clause.category].some((value) => value.toLowerCase().includes(query)));
+  }, [clauses, searchQuery]);
+
+  const filteredQuestions = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return questionnaire?.questions || [];
+    return (questionnaire?.questions || []).filter((question) =>
+      [question.question, question.category, question.legalBasis, question.clauseRef, question.failureConsequence]
+        .some((value) => value.toLowerCase().includes(query))
+    );
+  }, [questionnaire, searchQuery]);
+
+  const groupedClauses = useMemo(() => {
+    return Object.entries(
+      filteredClauses.reduce<Record<string, typeof filteredClauses>>((accumulator, clause) => {
+        if (!accumulator[clause.category]) accumulator[clause.category] = [];
+        accumulator[clause.category].push(clause);
+        return accumulator;
+      }, {})
+    );
+  }, [filteredClauses]);
+
+  const groupedQuestions = useMemo(() => {
+    return Object.entries(
+      filteredQuestions.reduce<Record<string, typeof filteredQuestions>>((accumulator, question) => {
+        if (!accumulator[question.category]) accumulator[question.category] = [];
+        accumulator[question.category].push(question);
+        return accumulator;
+      }, {})
+    );
+  }, [filteredQuestions]);
+
+  const commonFindings = knowledgeBase?.commonAuditFindings.filter((finding) => finding.standardCode === selected) || [];
+  const benchmark = knowledgeBase?.industryBenchmark.averageScores[selected];
+
+  if (libraryLoading && !selectedLibrary) {
+    return <div className="skeleton" style={{ height: 480 }} />;
+  }
+
+  if (!selectedLibrary && library.length === 0 && !libraryLoading) {
+    return (
+      <EmptyWorkspace
+        title="Standards library unavailable"
+        description="The standards service did not return library metadata. Verify the backend is running and retry."
+        action={<button onClick={() => window.location.reload()} className="btn btn-primary">Retry</button>}
+      />
+    );
+  }
 
   return (
-    <div className="flex gap-6 min-h-[calc(100vh-160px)]">
-      {/* Left sidebar */}
-      <div className="w-64 flex-shrink-0 glass-card h-fit sticky top-24">
-        <h3 className="text-sm font-semibold mb-4" style={{ color: 'var(--color-text-primary)' }}>ISO Standards</h3>
-        <div className="space-y-1">
-          {standardCodes.map((code) => {
-            const s = data[code];
-            return (
-              <button
-                key={code}
-                onClick={() => setSelected(code)}
-                className="w-full text-left p-3 rounded-xl transition-all"
-                style={{
-                  background: selected === code ? `${codeColors[code]}10` : 'transparent',
-                  border: `1px solid ${selected === code ? codeColors[code] + '40' : 'transparent'}`,
-                }}
-              >
-                <div className="text-sm font-bold" style={{ color: codeColors[code] }}>{s.code}</div>
-                <div className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                  {s.clauses.length} clauses
-                </div>
-              </button>
-            );
-          })}
-        </div>
+    <div className="space-y-6">
+      <PageHero
+        eyebrow="Standards intelligence"
+        title={`${getStandardLabel(selected)} clause and questionnaire workspace`}
+        description={selectedLibrary?.fullName || selectedLibrary?.name || 'Live standards library and compliance overlay'}
+        actions={<button onClick={loadStandardDetails} className="btn btn-secondary"><RefreshCw size={14} /> Refresh content</button>}
+        aside={
+          <div className="hero-stat-stack">
+            <div className="hero-stat-label">Assessment overlay</div>
+            <div className="hero-stat-value">{standardOverlay ? `${standardOverlay.overallScore}%` : 'Not assessed'}</div>
+            <div className="hero-stat-copy">Latest score for this standard in the active assessment.</div>
+          </div>
+        }
+      />
+
+      <div className="metric-grid">
+        <MetricCard label="Clauses" value={selectedLibrary?.clauseCount || clauses.length} caption="Current clause inventory" tone="brand" />
+        <MetricCard label="Audit questions" value={questionnaire?.totalQuestions || 0} caption="Live questionnaire entries" />
+        <MetricCard label="Mandatory questions" value={questionnaire?.mandatoryQuestions || selectedLibrary?.mandatoryQuestions || 0} caption="Questions tagged as mandatory" tone="warn" />
+        <MetricCard label="Benchmark" value={benchmark ? `${benchmark}%` : 'n/a'} caption={`Industry average for ${industry}`} tone="success" />
       </div>
 
-      {/* Main content */}
-      <div className="flex-1 space-y-6">
-        {/* Header */}
-        <motion.div
-          key={selected}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="glass-card"
-        >
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="font-display text-3xl font-bold" style={{ color }}>{std.code}</div>
-              <h2 className="text-lg font-semibold mt-1" style={{ color: 'var(--color-text-primary)' }}>{std.name}</h2>
-              <div className="flex items-center gap-4 mt-2">
-                <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Edition: {std.edition}</span>
-                <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{std.clauses.length} Clauses</span>
-                <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{categories.length} Categories</span>
-              </div>
-            </div>
-            <BookOpen size={32} style={{ color }} />
-          </div>
-        </motion.div>
-
-        {/* Search */}
-        <div className="flex items-center gap-2 px-4 py-3 rounded-xl" style={{ background: 'var(--color-primary-800)', border: '1px solid var(--glass-border)' }}>
-          <Search size={18} style={{ color: 'var(--color-text-muted)' }} />
-          <input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search clauses across all standards..."
-            className="bg-transparent border-none outline-none text-sm flex-1"
-            style={{ color: 'var(--color-text-primary)' }}
-          />
+      <Panel label="Standard selector" title="Switch library context" description="The standards workspace is fully backed by the live standards routes.">
+        <div className="filter-row">
+          {supportedStandards.map((code) => (
+            <button key={code} className={`filter-chip ${selected === code ? 'active' : ''}`} onClick={() => setSelected(code)}>
+              {getStandardLabel(code)}
+            </button>
+          ))}
         </div>
+      </Panel>
 
-        {/* Clauses by category */}
-        {categories.map((cat) => {
-          const catClauses = filteredClauses.filter((c) => c.category === cat);
-          if (catClauses.length === 0) return null;
-          const expanded = expandedCategories.has(cat);
+      <Panel label="Search" title="Clause and questionnaire search" description="Filter clauses, legal basis text, and questionnaire prompts for the selected standard.">
+        <input
+          className="form-input"
+          placeholder="Search clause id, title, category, or legal basis"
+          value={searchQuery}
+          onChange={(event) => setSearchQuery(event.target.value)}
+        />
+      </Panel>
 
-          return (
-            <div key={cat}>
-              <button
-                onClick={() => toggleCategory(cat)}
-                className="flex items-center gap-2 mb-3 group"
-              >
-                {expanded ? (
-                  <ChevronDown size={18} style={{ color: 'var(--color-text-muted)' }} />
-                ) : (
-                  <ChevronRight size={18} style={{ color: 'var(--color-text-muted)' }} />
-                )}
-                <span className="text-sm font-semibold uppercase tracking-wider" style={{ color }}>
-                  {cat}
-                </span>
-                <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                  ({catClauses.length})
-                </span>
-              </button>
+      {detailError ? (
+        <EmptyWorkspace
+          title="Standards content could not be loaded"
+          description={detailError}
+          action={<button onClick={loadStandardDetails} className="btn btn-primary">Retry standard load</button>}
+        />
+      ) : detailLoading ? (
+        <div className="skeleton" style={{ height: 360 }} />
+      ) : (
+        <>
+          <div className="enterprise-two-column">
+            <Panel label="Clause categories" title="Control architecture" description="Browse categories and the current assessment overlay at clause level.">
+              <div className="enterprise-three-column">
+                {groupedClauses.map(([category, items]) => {
+                  const scored = items
+                    .map((clause) => standardOverlay?.clauseScores.find((score) => score.clauseId === clause.id)?.score)
+                    .filter((score): score is number => typeof score === 'number');
+                  const average = scored.length > 0 ? Math.round(scored.reduce((sum, score) => sum + score, 0) / scored.length) : null;
+                  return (
+                    <div key={category} className="insight-card">
+                      <div className="insight-kicker">{category}</div>
+                      <div className="insight-title">{items.length} clauses</div>
+                      <div className="insight-copy">{average !== null ? `Average overlay score ${average}%` : 'No current assessment overlay for this category.'}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Panel>
 
-              {expanded && (
-                <div className="space-y-2 ml-6">
-                  {catClauses.map((clause) => {
-                    const score = getClauseScore(clause.id);
+            <Panel label="Risk context" title="Benchmark and audit intelligence" description="Knowledge-base guidance associated with the selected standard.">
+              <div className="insight-list">
+                <div className="insight-row">
+                  <div className="insight-kicker">Benchmark</div>
+                  <div>
+                    <div className="insight-title">Industry average {benchmark ? `${benchmark}%` : 'not available'}</div>
+                    <div className="insight-copy">Use benchmark context to frame reporting, but keep clause-level evidence as the primary source of truth.</div>
+                  </div>
+                </div>
+                {commonFindings.slice(0, 4).map((finding, index) => (
+                  <div key={`${finding.clauseCategory}-${index}`} className="insight-row">
+                    <div className="insight-kicker">{finding.criticality}</div>
+                    <div>
+                      <div className="insight-title">{finding.clauseCategory}</div>
+                      <div className="insight-copy">{finding.commonFindings[0] || 'Common audit issue available in the knowledge base.'}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Panel>
+          </div>
+
+          <Panel label="Clause breakdown" title="Detailed clause register" description="Each row shows the live library content and the latest assessment overlay status.">
+            <div style={{ overflowX: 'auto' }}>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Clause</th>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Score</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredClauses.map((clause) => {
+                    const overlay = standardOverlay?.clauseScores.find((item) => item.clauseId === clause.id);
+                    const status = overlay ? getStandardStatus(overlay.score) : null;
                     return (
-                      <motion.div
-                        key={clause.id}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="p-4 rounded-xl transition-all hover:scale-[1.01]"
-                        style={{ background: 'var(--color-primary-800)', border: '1px solid var(--glass-border)' }}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="score-display text-sm font-bold" style={{ color }}>{clause.id}</span>
-                              <span className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{clause.title}</span>
-                            </div>
-                            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{clause.description}</p>
-                          </div>
-                          {score !== null && (
-                            <div className="ml-4 flex-shrink-0">
-                              <span
-                                className="score-display text-sm font-bold px-3 py-1 rounded-lg"
-                                style={{ background: `${getRiskColor(score)}15`, color: getRiskColor(score) }}
-                              >
-                                {score}%
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </motion.div>
+                      <tr key={clause.id}>
+                        <td>
+                          <div style={{ fontWeight: 700, color: standardColors[selected] || 'var(--teal)' }}>{clause.id}</div>
+                          <div style={{ color: 'var(--slate-900)' }}>{clause.title}</div>
+                        </td>
+                        <td>{clause.category}</td>
+                        <td>{clause.description}</td>
+                        <td>{status ? <span className={`badge badge-${status === 'non-compliant' ? 'critical' : status}`}>{status}</span> : 'Not assessed'}</td>
+                        <td>{overlay ? `${overlay.score}%` : '—'}</td>
+                      </tr>
                     );
                   })}
-                </div>
-              )}
+                </tbody>
+              </table>
             </div>
-          );
-        })}
-      </div>
+          </Panel>
+
+          <Panel label="Questionnaire" title="Audit prompts, legal basis, and consequences" description="The questionnaire section is fully expanded and searchable to avoid hidden or empty content states.">
+            <div className="space-y-4">
+              {groupedQuestions.map(([category, questions]) => (
+                <section key={category} className="insight-card" style={{ padding: 20 }}>
+                  <div className="insight-kicker">{category}</div>
+                  <div className="insight-title" style={{ marginBottom: 12 }}>{questions.length} questions</div>
+                  <div className="space-y-3">
+                    {questions.map((question) => (
+                      <div key={question.id} className="question-card">
+                        <div className="question-card-meta">
+                          <span>{question.clauseRef}</span>
+                          <span className={`badge badge-${question.severity === 'mandatory' ? 'critical' : 'medium'}`}>{question.severity}</span>
+                        </div>
+                        <div className="question-card-title">{question.question}</div>
+                        <div className="question-card-copy">{question.legalBasis}</div>
+                        <div className="question-card-copy"><strong>Failure impact:</strong> {question.failureConsequence}</div>
+                        <div className="insight-tags">
+                          {question.evidenceRequired.map((item) => (
+                            <span key={item} className="badge badge-pending">{item}</span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          </Panel>
+        </>
+      )}
     </div>
   );
 }

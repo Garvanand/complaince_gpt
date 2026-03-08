@@ -26,7 +26,9 @@ export default function AppLayout() {
       <div className="app-content">
         <Navbar />
         <main className="app-main">
-          <Outlet />
+          <div className="page-stack">
+            <Outlet />
+          </div>
         </main>
       </div>
       <ChatAssistant />

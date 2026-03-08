@@ -172,7 +172,7 @@ export default function ChatAssistant() {
                     Compliance Assistant
                   </h3>
                   <span className="text-xs" style={{ color: 'var(--color-accent-500)' }}>
-                    Powered by Claude
+                    Powered by Groq
                   </span>
                 </div>
               </div>

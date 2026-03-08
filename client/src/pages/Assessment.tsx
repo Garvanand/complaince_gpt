@@ -9,8 +9,9 @@ import toast from 'react-hot-toast';
 import { useAppStore } from '../store/useAppStore';
 import { demoAssessmentResult } from '../data/demo-data';
 import { useAssessmentStream } from '../hooks/useAssessmentStream';
-import apiClient from '../utils/apiClient';
-import type { StandardCode } from '../types';
+import { assessmentApi } from '../utils/apiClient';
+import { adaptAssessmentResult } from '../utils/assessmentAdapter';
+import type { AssessmentResult, OrgProfile, StandardCode } from '../types';
 
 /* ── Static data ─────────────────────────────────────── */
 const industries = [
@@ -25,7 +26,7 @@ const jurisdictions = [
   'United Kingdom', 'United States', 'Other',
 ];
 
-const maturityOptions = [
+const maturityOptions: Array<{ value: NonNullable<OrgProfile['currentMaturity']>; label: string; desc: string }> = [
   { value: 'initial',     label: 'Initial (Level 1)',     desc: 'Ad-hoc processes, no formal program' },
   { value: 'developing',  label: 'Developing (Level 2)',  desc: 'Some documented policies, inconsistent' },
   { value: 'defined',     label: 'Defined (Level 3)',     desc: 'Formal program established and maintained' },
@@ -49,11 +50,15 @@ const steps = [
 ];
 
 const agentNodes = [
-  { name: 'Document Parser',      task: 'Parsing and extracting policy content' },
-  { name: 'Clause Mapper',        task: 'Mapping content to ISO clause structure' },
-  { name: 'Gap Analyzer',         task: 'Identifying compliance gaps and findings' },
-  { name: 'Risk Scorer',          task: 'Calculating risk impact and severity' },
-  { name: 'Remediation Planner',  task: 'Generating phased remediation roadmap' },
+  { name: 'Document Agent', task: 'Parsing uploaded policies and extracting control evidence' },
+  { name: 'Bribery Risk Agent', task: 'Scoring ISO 37001 controls against anti-bribery evidence' },
+  { name: 'Governance Agent', task: 'Assessing ISO 37301 governance and compliance obligations' },
+  { name: 'Security Agent', task: 'Evaluating ISO 27001 information security controls' },
+  { name: 'Quality Agent', task: 'Assessing ISO 9001 quality management controls' },
+  { name: 'Gap Analysis Agent', task: 'Synthesizing legal, control, and certification gaps' },
+  { name: 'Evidence Validation Agent', task: 'Testing evidence sufficiency and cross-standard reuse' },
+  { name: 'Remediation Agent', task: 'Generating a phased remediation program' },
+  { name: 'Policy Generator Agent', task: 'Drafting policy artifacts for weak control areas' },
 ];
 
 /* ── Step Progress Header ─────────────────────────────── */
@@ -135,6 +140,7 @@ export default function Assessment() {
   const [logs, setLogs] = useState<string[]>([]);
   const [done, setDone] = useState(false);
   const [finalScore, setFinalScore] = useState(62);
+  const [completedAssessment, setCompletedAssessment] = useState<AssessmentResult | null>(null);
 
   const toggleStandard = (code: StandardCode) => {
     setSelectedStandards(
@@ -157,17 +163,18 @@ export default function Assessment() {
 
   const runDemoSimulation = async () => {
     setProcessing(true);
+    setDone(false);
+    setCompletedAssessment(null);
     const sequence = [
-      { idx: 0, msg: 'Document Parser — Extracting content from uploaded policy documents...' },
-      { idx: 0, msg: 'Document Parser — Identified 42 policy sections, 18 control categories' },
-      { idx: 1, msg: 'Clause Mapper — Aligning content against ISO clause structure...' },
-      { idx: 1, msg: 'Clause Mapper — Mapped 113 clauses across 4 standards' },
-      { idx: 2, msg: 'Gap Analyzer — Running cross-standard gap identification...' },
-      { idx: 2, msg: 'Gap Analyzer — Identified 12 compliance gaps, 5 critical severity' },
-      { idx: 3, msg: 'Risk Scorer — Calculating impact and effort scoring...' },
-      { idx: 3, msg: 'Risk Scorer — Risk matrix complete: 5 critical, 4 high, 3 medium' },
-      { idx: 4, msg: 'Remediation Planner — Generating phased remediation roadmap...' },
-      { idx: 4, msg: 'Remediation Planner — 9-action roadmap generated across 3 phases' },
+      { idx: 0, msg: 'Document Agent — Extracting content from uploaded policy documents...' },
+      { idx: 1, msg: 'Bribery Risk Agent — Evaluating anti-bribery control evidence...' },
+      { idx: 2, msg: 'Governance Agent — Reviewing obligations register and governance structure...' },
+      { idx: 3, msg: 'Security Agent — Mapping security controls to ISO 27001 clauses...' },
+      { idx: 4, msg: 'Quality Agent — Assessing process consistency and ownership evidence...' },
+      { idx: 5, msg: 'Gap Analysis Agent — Identified 12 compliance gaps, 5 critical severity...' },
+      { idx: 6, msg: 'Evidence Validation Agent — Testing sufficiency and reuse potential...' },
+      { idx: 7, msg: 'Remediation Agent — Building a phased remediation roadmap...' },
+      { idx: 8, msg: 'Policy Generator Agent — Drafting policies for missing controls...' },
     ];
 
     for (let i = 0; i < sequence.length; i++) {
@@ -183,28 +190,33 @@ export default function Assessment() {
 
     setAgentStates(prev => prev.map(a => ({ ...a, status: 'complete' as const })));
     setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Assessment complete — Overall Score: 62%`]);
+    setCompletedAssessment({
+      ...demoAssessmentResult,
+      orgProfile: { ...demoAssessmentResult.orgProfile, ...orgProfile },
+      timestamp: new Date().toISOString(),
+      overallScore: 62,
+    });
     setProcessing(false);
     setDone(true);
+    setFinalScore(62);
   };
 
   const startAnalysis = async () => {
     setProcessing(true);
+    setDone(false);
+    setLogs([]);
+    setCompletedAssessment(null);
+    setAgentStates(agentNodes.map((agent) => ({ ...agent, status: 'idle' as const, progress: 0 })));
     if (!isDemoMode) {
       try {
-        let filePaths: string[] = [];
-        if (files.length > 0) {
-          const formData = new FormData();
-          files.forEach(f => formData.append('files', f));
-          const uploadRes = await apiClient.post('/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-          filePaths = uploadRes.data.files.map((f: { savedPath: string }) => f.savedPath);
-        }
-        const res = await apiClient.post('/assessment/start', {
+        const filePaths = await assessmentApi.uploadDocuments(files);
+        const res = await assessmentApi.startAssessment({
           filePaths,
           standards: selectedStandards,
           orgProfile: { company: orgProfile.companyName, industry: orgProfile.industrySector, employees: orgProfile.employeeCount, scope: orgProfile.assessmentScope },
         });
         startStream(
-          res.data.assessmentId,
+          res.assessmentId,
           (event) => {
             if (event.type === 'agent-start' && event.agent) {
               setAgentStates(prev => prev.map(a => a.name === event.agent ? { ...a, status: 'processing' as const } : a));
@@ -217,22 +229,27 @@ export default function Assessment() {
             }
           },
           (result) => {
+            const normalizedResult = adaptAssessmentResult(result);
             setAgentStates(prev => prev.map(a => ({ ...a, status: 'complete' as const })));
-            setFinalScore(result.overallScore || 62);
+            setCompletedAssessment(normalizedResult);
+            setFinalScore(normalizedResult.overallScore || 62);
             setProcessing(false);
             setDone(true);
             toast.success('Assessment complete');
-            addNotification({ type: 'success', title: 'Assessment Complete', message: `Overall score: ${result.overallScore}%` });
+            addNotification({ type: 'success', title: 'Assessment Complete', message: `Overall score: ${normalizedResult.overallScore}%` });
           },
           (error) => {
             setProcessing(false);
-            toast.error(`Assessment failed: ${error}. Running demo simulation.`);
-            runDemoSimulation();
+            setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Assessment failed: ${error}`]);
+            toast.error(`Assessment failed: ${error}`);
+            addNotification({ type: 'error', title: 'Assessment Failed', message: String(error) });
           }
         );
-      } catch {
+      } catch (error) {
         setProcessing(false);
-        runDemoSimulation();
+        const message = error instanceof Error ? error.message : 'Unable to start assessment';
+        toast.error(message);
+        addNotification({ type: 'error', title: 'Assessment Failed', message });
       }
       return;
     }
@@ -240,14 +257,19 @@ export default function Assessment() {
   };
 
   const finishAssessment = () => {
-    setAssessment({ ...demoAssessmentResult, orgProfile: { ...orgProfile }, timestamp: new Date().toISOString(), overallScore: finalScore });
+    if (!completedAssessment) {
+      toast.error('No completed assessment is available to save.');
+      return;
+    }
+
+    setAssessment(completedAssessment);
     addNotification({ type: 'success', title: 'Assessment Saved', message: `Score: ${finalScore}%` });
     navigate('/dashboard');
   };
 
   const canProceed = () => {
     if (step === 0) return !!(orgProfile.companyName && orgProfile.industrySector);
-    if (step === 1) return files.length > 0;
+    if (step === 1) return true;
     if (step === 2) return selectedStandards.length > 0;
     if (step === 3) return done;
     return true;
@@ -255,6 +277,10 @@ export default function Assessment() {
 
   const scoreColor = finalScore >= 75 ? 'var(--status-compliant)' : finalScore >= 50 ? 'var(--risk-medium)' : 'var(--risk-critical)';
   const scoreLabel = finalScore >= 75 ? 'Compliant' : finalScore >= 50 ? 'Partially Compliant' : 'Non-Compliant';
+  const criticalGapCount = completedAssessment?.gaps.filter((gap) => gap.impact === 'critical').length || 0;
+  const highGapCount = completedAssessment?.gaps.filter((gap) => gap.impact === 'high').length || 0;
+  const remediationCount = completedAssessment?.remediation.length || 0;
+  const assessedStandardsCount = completedAssessment?.standards.length || selectedStandards.length || 0;
 
   return (
     <div style={{ maxWidth: 800, margin: '0 auto' }}>
@@ -316,6 +342,8 @@ export default function Assessment() {
                 <Field label="Jurisdiction">
                   <div style={{ position: 'relative' }}>
                     <select
+                      value={orgProfile.jurisdiction || ''}
+                      onChange={e => setOrgProfile({ jurisdiction: e.target.value })}
                       className="form-select"
                     >
                       <option value="">Select jurisdiction...</option>
@@ -332,18 +360,18 @@ export default function Assessment() {
                         <button
                           key={m.value}
                           type="button"
-                          onClick={() => setOrgProfile({ assessmentScope: m.value })}
+                          onClick={() => setOrgProfile({ currentMaturity: m.value })}
                           style={{
                             padding: '10px 8px',
                             borderRadius: 'var(--radius-md)',
-                            border: `2px solid ${orgProfile.assessmentScope === m.value ? 'var(--blue-700)' : 'var(--border)'}`,
-                            background: orgProfile.assessmentScope === m.value ? 'var(--blue-50)' : 'var(--white)',
+                            border: `2px solid ${orgProfile.currentMaturity === m.value ? 'var(--blue-700)' : 'var(--border)'}`,
+                            background: orgProfile.currentMaturity === m.value ? 'var(--blue-50)' : 'var(--white)',
                             cursor: 'pointer',
                             textAlign: 'left',
                             transition: 'all 120ms ease',
                           }}
                         >
-                          <div style={{ fontSize: 12, fontWeight: 700, color: orgProfile.assessmentScope === m.value ? 'var(--blue-800)' : 'var(--slate-700)', marginBottom: 2 }}>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: orgProfile.currentMaturity === m.value ? 'var(--blue-800)' : 'var(--slate-700)', marginBottom: 2 }}>
                             {m.label}
                           </div>
                           <div style={{ fontSize: 10, color: 'var(--slate-500)', lineHeight: 1.3 }}>{m.desc}</div>
@@ -452,7 +480,7 @@ export default function Assessment() {
               color: 'var(--blue-800)',
             }}>
               <AlertCircle size={14} style={{ flexShrink: 0 }} />
-              If no documents are uploaded, the assessment will run in demo simulation mode using sample data.
+              Real assessments can run without uploaded files, but document evidence produces materially better clause scoring and remediation outputs.
             </div>
           </div>
         </div>
@@ -677,10 +705,10 @@ export default function Assessment() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   {[
-                    { label: 'Critical Gaps', value: '5', color: 'var(--risk-critical)' },
-                    { label: 'High Gaps', value: '4', color: 'var(--risk-high)' },
-                    { label: 'Standards Assessed', value: String(selectedStandards.length || 4), color: 'var(--blue-700)' },
-                    { label: 'Remediation Actions', value: '9', color: 'var(--status-partial)' },
+                    { label: 'Critical Gaps', value: String(criticalGapCount), color: 'var(--risk-critical)' },
+                    { label: 'High Gaps', value: String(highGapCount), color: 'var(--risk-high)' },
+                    { label: 'Standards Assessed', value: String(assessedStandardsCount), color: 'var(--blue-700)' },
+                    { label: 'Remediation Actions', value: String(remediationCount), color: 'var(--status-partial)' },
                   ].map(stat => (
                     <div key={stat.label} style={{
                       padding: '14px',
@@ -694,6 +722,17 @@ export default function Assessment() {
                   ))}
                 </div>
               </div>
+
+              {completedAssessment && (
+                <div style={{ marginTop: 18, padding: 16, borderRadius: 'var(--radius-lg)', background: 'var(--blue-50)', border: '1px solid var(--blue-100)' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--blue-800)', marginBottom: 8 }}>
+                    Executive Summary
+                  </div>
+                  <div style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--slate-700)' }}>
+                    {completedAssessment.executiveSummary}
+                  </div>
+                </div>
+              )}
             </div>
             <div className="card-footer" style={{ display: 'flex', gap: 10 }}>
               <button onClick={finishAssessment} className="btn btn-primary">

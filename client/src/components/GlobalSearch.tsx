@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, FileText, AlertTriangle, BookOpen, ArrowRight, Command } from 'lucide-react';
+import { Search, FileText, AlertTriangle, BookOpen, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Fuse from 'fuse.js';
 import { useAppStore } from '../store/useAppStore';
+import { navigationItems } from '../config/navigation';
 
 interface SearchItem {
   id: string;
@@ -14,15 +15,13 @@ interface SearchItem {
   meta?: string;
 }
 
-const staticPages: SearchItem[] = [
-  { id: 'p-dash', type: 'page', title: 'Dashboard', description: 'Overview of compliance scores and KPIs', path: '/dashboard' },
-  { id: 'p-assess', type: 'page', title: 'Assessment', description: 'Start a new compliance assessment', path: '/assessment' },
-  { id: 'p-standards', type: 'page', title: 'Standards Library', description: 'Browse ISO 37001, 37301, 27001, 9001', path: '/standards' },
-  { id: 'p-agents', type: 'page', title: 'Agent Workflow', description: 'View AI agent orchestration', path: '/agents' },
-  { id: 'p-analytics', type: 'page', title: 'Analytics', description: 'Trends, benchmarks, and maturity simulation', path: '/analytics' },
-  { id: 'p-reports', type: 'page', title: 'Reports', description: 'Generate and download compliance reports', path: '/reports' },
-  { id: 'p-settings', type: 'page', title: 'Settings', description: 'Configure API keys and preferences', path: '/settings' },
-];
+const staticPages: SearchItem[] = navigationItems.map((item) => ({
+  id: `page-${item.path}`,
+  type: 'page',
+  title: item.label,
+  description: item.description,
+  path: item.path,
+}));
 
 const typeIcons = {
   clause: BookOpen,
@@ -182,17 +181,17 @@ export default function GlobalSearch() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="fixed top-[15%] left-1/2 -translate-x-1/2 w-[560px] max-w-[90vw] z-[61] rounded-2xl overflow-hidden"
+            className="fixed top-[12%] left-1/2 -translate-x-1/2 w-[640px] max-w-[92vw] z-[61] rounded-2xl overflow-hidden"
             style={{
-              background: 'var(--color-primary-800)',
-              border: '1px solid var(--glass-border)',
-              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.6)',
+              background: 'var(--white)',
+              border: '1px solid var(--border)',
+              boxShadow: 'var(--shadow-xl)',
             }}
           >
             {/* Input */}
             <div
               className="flex items-center gap-3 px-5 py-4"
-              style={{ borderBottom: '1px solid var(--glass-border)' }}
+              style={{ borderBottom: '1px solid var(--border)' }}
             >
               <Search size={20} style={{ color: 'var(--color-text-muted)' }} />
               <input
@@ -202,11 +201,11 @@ export default function GlobalSearch() {
                 onKeyDown={handleKeyDown}
                 placeholder="Search clauses, gaps, standards, pages..."
                 className="flex-1 bg-transparent border-none outline-none text-base"
-                style={{ color: 'var(--color-text-primary)' }}
+                style={{ color: 'var(--slate-900)' }}
               />
               <kbd
                 className="text-[10px] font-mono px-1.5 py-0.5 rounded"
-                style={{ background: 'var(--color-primary-700)', color: 'var(--color-text-muted)', border: '1px solid var(--glass-border)' }}
+                style={{ background: 'var(--slate-100)', color: 'var(--slate-500)', border: '1px solid var(--border)' }}
               >
                 ESC
               </kbd>
@@ -228,7 +227,7 @@ export default function GlobalSearch() {
                     onMouseEnter={() => setSelectedIndex(i)}
                     className="w-full flex items-center gap-3 px-5 py-3 text-left transition-colors"
                     style={{
-                      background: i === selectedIndex ? 'var(--color-primary-700)' : 'transparent',
+                      background: i === selectedIndex ? 'var(--slate-50)' : 'transparent',
                     }}
                   >
                     <div
@@ -259,7 +258,7 @@ export default function GlobalSearch() {
             {/* Footer */}
             <div
               className="flex items-center justify-between px-5 py-2.5 text-[10px]"
-              style={{ borderTop: '1px solid var(--glass-border)', color: 'var(--color-text-muted)' }}
+              style={{ borderTop: '1px solid var(--border)', color: 'var(--color-text-muted)', background: 'var(--slate-50)' }}
             >
               <span>↑↓ Navigate &nbsp; ↵ Select &nbsp; ESC Close</span>
               <span>{searchItems.length} items indexed</span>
@@ -277,15 +276,15 @@ export function SearchTrigger({ onClick }: { onClick: () => void }) {
     <button
       onClick={onClick}
       className="flex items-center gap-2 px-4 py-2 rounded-xl transition-all"
-      style={{ background: 'var(--color-primary-700)', border: '1px solid var(--glass-border)' }}
+      style={{ background: 'var(--white)', border: '1px solid var(--border)' }}
     >
       <Search size={16} style={{ color: 'var(--color-text-muted)' }} />
       <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Search...</span>
       <kbd
         className="text-[10px] font-mono px-1.5 py-0.5 rounded ml-4"
-        style={{ background: 'var(--color-primary-600)', color: 'var(--color-text-muted)', border: '1px solid var(--glass-border)' }}
+        style={{ background: 'var(--slate-100)', color: 'var(--color-text-muted)', border: '1px solid var(--border)' }}
       >
-        <Command size={10} className="inline" /> K
+        Ctrl K
       </kbd>
     </button>
   );

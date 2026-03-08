@@ -1,7 +1,9 @@
 import { Router, Request, Response } from 'express';
-import Anthropic from '@anthropic-ai/sdk';
+import Groq from 'groq-sdk';
 
 export const chatRouter = Router();
+
+const GROQ_MODEL = 'openai/gpt-oss-120b';
 
 // Streaming chat endpoint
 chatRouter.post('/stream', async (req: Request, res: Response) => {
@@ -12,7 +14,7 @@ chatRouter.post('/stream', async (req: Request, res: Response) => {
     return;
   }
 
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!process.env.GROQ_API_KEY) {
     // Return simulated response as SSE for demo mode
     const simulated = getSimulatedResponse(message);
     res.setHeader('Content-Type', 'text/event-stream');
@@ -33,10 +35,11 @@ chatRouter.post('/stream', async (req: Request, res: Response) => {
   }
 
   try {
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-    const systemPrompt = `You are ComplianceGPT Assistant, an AI expert in ISO compliance standards (ISO 37001, 37301, 27001, 9001).
+    const systemPrompt = `You are ComplianceGPT Assistant, an AI expert in ISO compliance standards (ISO 37001, 37301, 27001, 9001, 37000, 37002).
 You help users understand compliance requirements, assessment results, and remediation strategies.
+You operate with the rigor of a legal compliance advisor. All guidance must be precise and reference specific ISO clauses.
 ${context ? `Current assessment context: ${JSON.stringify(context)}` : ''}
 Keep responses concise and actionable. Use markdown formatting for lists and emphasis.`;
 
@@ -45,16 +48,21 @@ Keep responses concise and actionable. Use markdown formatting for lists and emp
     res.setHeader('Connection', 'keep-alive');
     res.flushHeaders();
 
-    const stream = client.messages.stream({
-      model: 'claude-sonnet-4-20250514',
+    const stream = await client.chat.completions.create({
+      model: GROQ_MODEL,
       max_tokens: 1024,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: message }],
+      temperature: 0.3,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: message },
+      ],
+      stream: true,
     });
 
-    for await (const event of stream) {
-      if (event.type === 'content_block_delta' && 'delta' in event && 'text' in (event.delta as any)) {
-        res.write(`data: ${JSON.stringify({ type: 'delta', text: (event.delta as any).text })}\n\n`);
+    for await (const chunk of stream) {
+      const delta = chunk.choices?.[0]?.delta?.content;
+      if (delta) {
+        res.write(`data: ${JSON.stringify({ type: 'delta', text: delta })}\n\n`);
       }
     }
 
@@ -76,31 +84,32 @@ chatRouter.post('/', async (req: Request, res: Response) => {
   }
 
   // If no API key, return a simulated response
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!process.env.GROQ_API_KEY) {
     const simulated = getSimulatedResponse(message);
     res.json({ response: simulated });
     return;
   }
 
   try {
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-    const systemPrompt = `You are ComplianceGPT Assistant, an AI expert in ISO compliance standards (ISO 37001, 37301, 27001, 9001).
+    const systemPrompt = `You are ComplianceGPT Assistant, an AI expert in ISO compliance standards (ISO 37001, 37301, 27001, 9001, 37000, 37002).
 You help users understand compliance requirements, assessment results, and remediation strategies.
+You operate with the rigor of a legal compliance advisor. All guidance must be precise and reference specific ISO clauses.
 ${context ? `Current assessment context: ${JSON.stringify(context)}` : ''}
 Keep responses concise and actionable.`;
 
-    const response = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+    const response = await client.chat.completions.create({
+      model: GROQ_MODEL,
       max_tokens: 1024,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: message }],
+      temperature: 0.3,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: message },
+      ],
     });
 
-    const text = response.content
-      .filter((block): block is Anthropic.TextBlock => block.type === 'text')
-      .map((block) => block.text)
-      .join('\n');
+    const text = response.choices?.[0]?.message?.content || '';
 
     res.json({ response: text });
   } catch (error) {

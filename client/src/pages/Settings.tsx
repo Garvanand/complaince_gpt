@@ -17,10 +17,10 @@ export default function Settings() {
         </div>
         <div className="space-y-4">
           <div>
-            <label className="text-sm font-medium mb-2 block" style={{ color: 'var(--color-text-secondary)' }}>Anthropic API Key</label>
+            <label className="text-sm font-medium mb-2 block" style={{ color: 'var(--color-text-secondary)' }}>Groq API Key</label>
             <input
               type="password"
-              placeholder="sk-ant-..."
+              placeholder="gsk_..."
               className="w-full px-4 py-3 rounded-xl text-sm outline-none"
               style={{ background: 'var(--color-primary-700)', border: '1px solid var(--glass-border)', color: 'var(--color-text-primary)' }}
             />
@@ -68,7 +68,7 @@ export default function Settings() {
         </div>
         <div className="space-y-2 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
           <p>Version: 1.0.0</p>
-          <p>AI Model: claude-opus-4-5</p>
+          <p>AI Model: openai/gpt-oss-120b</p>
           <p>Platform: Deloitte GenW.AI™</p>
           <p>Built for Hacksplosion 2026</p>
         </div>

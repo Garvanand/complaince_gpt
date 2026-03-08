@@ -142,7 +142,7 @@ function EmptyDashboard() {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { currentAssessment, isDemoMode } = useAppStore();
+  const { currentAssessment, assessmentHistory, isDemoMode } = useAppStore();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -155,6 +155,8 @@ export default function Dashboard() {
   const a = currentAssessment;
   const criticalGaps = a.gaps.filter((g) => g.impact === 'critical').length;
   const highGaps = a.gaps.filter((g) => g.impact === 'high').length;
+  const previousAssessment = [...assessmentHistory].reverse().find((entry) => entry.id !== a.id);
+  const trendDelta = previousAssessment ? a.overallScore - previousAssessment.overallScore : 0;
 
   if (loading) {
     return (
@@ -215,7 +217,7 @@ export default function Dashboard() {
           icon={<Shield size={15} />}
           color="var(--blue-700)"
           subtitle={`Maturity Level ${a.overallMaturity} — ${a.overallMaturityLabel}`}
-          trend={{ value: 4, label: 'vs. last assessment' }}
+          trend={previousAssessment ? { value: trendDelta, label: 'vs. last assessment' } : undefined}
         />
         <KPICard
           title="Standards Assessed"

@@ -1,28 +1,17 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   LineChart, Line, Legend, PieChart, Pie, Cell,
 } from 'recharts';
-import { useAppStore } from '../store/useAppStore';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, TrendingUp } from 'lucide-react';
-import { historicalTrend, industryBenchmarks } from '../data/demo-data';
-
-const gapDistribution = [
-  { name: 'Process', value: 6, color: '#DD6B20' },
-  { name: 'Training', value: 2, color: '#FFD32A' },
-  { name: 'Technology', value: 1, color: '#00ABBD' },
-  { name: 'Documentation', value: 1, color: '#A8D048' },
-  { name: 'Policy', value: 2, color: '#E53E3E' },
-];
-
-const maturityStackData = [
-  { standard: 'ISO 37001', level1: 12, level2: 25, level3: 17, level4: 0, level5: 0 },
-  { standard: 'ISO 37301', level1: 8, level2: 16, level3: 30, level4: 7, level5: 0 },
-  { standard: 'ISO 27001', level1: 15, level2: 22, level3: 18, level4: 3, level5: 0 },
-  { standard: 'ISO 9001', level1: 5, level2: 10, level3: 35, level4: 20, level5: 4 },
-];
+import { AlertTriangle, ArrowRight, Scale, TrendingUp } from 'lucide-react';
+import { useAppStore } from '../store/useAppStore';
+import type { AssessmentResult, KnowledgeBaseOverview } from '../types';
+import { standardsApi } from '../utils/apiClient';
+import OrganizationalRiskHeatmap from '../components/analytics/OrganizationalRiskHeatmap';
+import { EmptyWorkspace, MetricCard, PageHero, Panel } from '../components/ui/EnterpriseLayout';
+import { getAssessmentNarrative, getRiskDistribution, getStandardLabel } from '../utils/enterpriseData';
 
 const tooltipStyle = {
   contentStyle: {
@@ -34,229 +23,523 @@ const tooltipStyle = {
   },
 };
 
+const gapColors: Record<string, string> = {
+  process: '#DD6B20',
+  training: '#FFD32A',
+  technology: '#00ABBD',
+  documentation: '#A8D048',
+  policy: '#E53E3E',
+};
+
+const renderGapLabel = (props: any) => `${props?.name || ''} ${(((props?.percent as number | undefined) || 0) * 100).toFixed(0)}%`;
+
+function buildTrendData(history: AssessmentResult[], current: AssessmentResult) {
+  const items = [...history];
+  if (!items.find((entry) => entry.id === current.id)) {
+    items.push(current);
+  }
+
+  const recent = items.slice(-6);
+  return recent.map((assessment, index) => {
+    const point: Record<string, string | number> = {
+      label: recent.length === 1 ? 'Current' : new Date(assessment.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      overall: assessment.overallScore,
+      order: index,
+    };
+
+    assessment.standards.forEach((standard) => {
+      point[standard.standardCode] = standard.overallScore;
+    });
+
+    return point;
+  });
+}
+
 export default function Analytics() {
   const navigate = useNavigate();
-  const { currentAssessment, loadDemoData } = useAppStore();
+  const { currentAssessment, assessmentHistory, loadDemoData } = useAppStore();
+  const [knowledgeBase, setKnowledgeBase] = useState<KnowledgeBaseOverview | null>(null);
+
+  useEffect(() => {
+    if (!currentAssessment) {
+      return;
+    }
+
+    let active = true;
+    standardsApi
+      .getKnowledgeBase(currentAssessment.orgProfile.industrySector || 'Other')
+      .then((data) => {
+        if (active) {
+          setKnowledgeBase(data);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setKnowledgeBase(null);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [currentAssessment]);
+
+  const benchmarkData = useMemo(() => {
+    if (!currentAssessment) return [];
+
+    const averages = knowledgeBase?.industryBenchmark.averageScores || {};
+    return currentAssessment.standards.map((standard) => ({
+      standard: standard.standardCode.replace('ISO', 'ISO '),
+      yours: standard.overallScore,
+      benchmark: averages[standard.standardCode] || 0,
+    }));
+  }, [currentAssessment, knowledgeBase]);
+
+  const maturityData = useMemo(() => {
+    if (!currentAssessment) return [];
+
+    return currentAssessment.standards.map((standard) => {
+      const distribution = { level1: 0, level2: 0, level3: 0, level4: 0, level5: 0 };
+      standard.clauseScores.forEach((clause) => {
+        if (clause.score >= 80) distribution.level5 += 1;
+        else if (clause.score >= 65) distribution.level4 += 1;
+        else if (clause.score >= 50) distribution.level3 += 1;
+        else if (clause.score >= 35) distribution.level2 += 1;
+        else distribution.level1 += 1;
+      });
+
+      return {
+        standard: standard.standardCode.replace('ISO', 'ISO '),
+        ...distribution,
+      };
+    });
+  }, [currentAssessment]);
+
+  const gapDistribution = useMemo(() => {
+    if (!currentAssessment) return [];
+
+    const counts = currentAssessment.gaps.reduce<Record<string, number>>((accumulator, gap) => {
+      accumulator[gap.category] = (accumulator[gap.category] || 0) + 1;
+      return accumulator;
+    }, {});
+
+    return Object.entries(counts).map(([name, value]) => ({
+      name: name[0].toUpperCase() + name.slice(1),
+      value,
+      color: gapColors[name] || '#94A3B8',
+    }));
+  }, [currentAssessment]);
+
+  const trendData = useMemo(() => {
+    if (!currentAssessment) return [];
+    return buildTrendData(assessmentHistory, currentAssessment);
+  }, [assessmentHistory, currentAssessment]);
+
+  const overlapCards = useMemo(() => {
+    if (!currentAssessment) return [];
+
+    const pairCounts = new Map<string, number>();
+    currentAssessment.gaps.forEach((gap) => {
+      gap.crossStandardOverlap.forEach((overlap) => {
+        const pair = [gap.standardCode, overlap].sort().join(' ↔ ');
+        pairCounts.set(pair, (pairCounts.get(pair) || 0) + 1);
+      });
+    });
+
+    return [...pairCounts.entries()]
+      .sort((left, right) => right[1] - left[1])
+      .slice(0, 3)
+      .map(([pair, count]) => ({
+        pair: pair.replace(/ISO/g, 'ISO '),
+        overlaps: count,
+        savings: `${count * 2} person-days`,
+      }));
+  }, [currentAssessment]);
+
+  const riskDistribution = useMemo(() => {
+    if (!currentAssessment) {
+      return { critical: 0, high: 0, medium: 0, low: 0 };
+    }
+
+    return getRiskDistribution(currentAssessment.gaps);
+  }, [currentAssessment]);
+
+  const weakestStandard = useMemo(() => {
+    if (!currentAssessment) return null;
+    return [...currentAssessment.standards].sort((left, right) => left.overallScore - right.overallScore)[0] || null;
+  }, [currentAssessment]);
+
+  const strongestStandard = useMemo(() => {
+    if (!currentAssessment) return null;
+    return [...currentAssessment.standards].sort((left, right) => right.overallScore - left.overallScore)[0] || null;
+  }, [currentAssessment]);
+
+  const benchmarkGaps = useMemo(() => {
+    if (!currentAssessment) return [];
+
+    const averages = knowledgeBase?.industryBenchmark.averageScores || {};
+    return currentAssessment.standards
+      .map((standard) => ({
+        code: standard.standardCode,
+        label: getStandardLabel(standard.standardCode),
+        delta: standard.overallScore - (averages[standard.standardCode] || 0),
+      }))
+      .sort((left, right) => left.delta - right.delta);
+  }, [currentAssessment, knowledgeBase]);
+
+  const topThemes = useMemo(() => {
+    if (!currentAssessment) return [];
+
+    const counts = currentAssessment.gaps.reduce<Record<string, number>>((accumulator, gap) => {
+      accumulator[gap.category] = (accumulator[gap.category] || 0) + 1;
+      return accumulator;
+    }, {});
+
+    return Object.entries(counts)
+      .sort((left, right) => right[1] - left[1])
+      .slice(0, 3)
+      .map(([name, count]) => ({
+        name: name[0].toUpperCase() + name.slice(1),
+        count,
+      }));
+  }, [currentAssessment]);
 
   if (!currentAssessment) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          <h2 className="font-display text-2xl font-bold mb-3" style={{ color: 'var(--color-text-primary)' }}>No Data Available</h2>
-          <p className="text-sm mb-6" style={{ color: 'var(--color-text-secondary)' }}>Complete an assessment or load demo data to view analytics.</p>
-          <div className="flex gap-4 justify-center">
-            <button onClick={() => navigate('/assessment')} className="btn-glow flex items-center gap-2">Start Assessment <ArrowRight size={18} /></button>
-            <button onClick={loadDemoData} className="btn-ghost">Load Demo</button>
-          </div>
-        </motion.div>
-      </div>
+      <EmptyWorkspace
+        title="Analytics activates after an assessment"
+        description="Run a live assessment or load demo data to unlock posture trends, benchmark comparisons, and the risk intelligence surface."
+        action={
+          <>
+            <button onClick={() => navigate('/assessment')} className="btn btn-primary">Start assessment</button>
+            <button onClick={loadDemoData} className="btn btn-secondary">Load demo</button>
+          </>
+        }
+      />
     );
   }
 
-  const benchmarkData = currentAssessment.standards.map((s) => ({
-    standard: s.standardCode.replace('ISO', 'ISO '),
-    yours: s.overallScore,
-    benchmark: industryBenchmarks[s.standardCode] || 70,
-  }));
-
   return (
-    <div className="space-y-8">
-      {/* Row 1: Maturity stacked bars */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card">
-        <span className="section-label">Standards Coverage</span>
-        <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--color-text-primary)' }}>Maturity Level Distribution</h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={maturityStackData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-primary-600)" />
-            <XAxis dataKey="standard" tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }} />
-            <YAxis tick={{ fill: 'var(--color-text-muted)', fontSize: 10 }} />
-            <Tooltip {...tooltipStyle} />
-            <Legend wrapperStyle={{ fontSize: 11, color: 'var(--color-text-secondary)' }} />
-            <Bar dataKey="level1" stackId="a" fill="#E53E3E" name="Level 1" radius={[0, 0, 0, 0]} />
-            <Bar dataKey="level2" stackId="a" fill="#DD6B20" name="Level 2" />
-            <Bar dataKey="level3" stackId="a" fill="#FFD32A" name="Level 3" />
-            <Bar dataKey="level4" stackId="a" fill="#86BC25" name="Level 4" />
-            <Bar dataKey="level5" stackId="a" fill="#A8D048" name="Level 5" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
+    <div className="space-y-6 analytics-page">
+      <PageHero
+        eyebrow="Portfolio analytics"
+        title="Compliance posture, exposure, and readiness trends"
+        description={getAssessmentNarrative(currentAssessment)}
+        actions={
+          <>
+            <button onClick={() => navigate('/risk-intelligence')} className="btn btn-primary">Open risk intelligence</button>
+            <button onClick={() => navigate('/reports')} className="btn btn-secondary">Open report pack</button>
+          </>
+        }
+        aside={
+          <div className="hero-stat-stack analytics-hero-aside">
+            <div className="hero-stat-label">Executive signal</div>
+            <div className="hero-stat-value">{weakestStandard ? getStandardLabel(weakestStandard.standardCode) : 'n/a'}</div>
+            <div className="hero-stat-copy">Weakest standards domain currently sits at {weakestStandard?.overallScore ?? 0}% and should anchor remediation sequencing.</div>
+          </div>
+        }
+      />
+
+      <div className="metric-grid">
+        <MetricCard label="Overall posture" value={`${currentAssessment.overallScore}%`} caption="Current cross-standard compliance score" tone="brand" />
+        <MetricCard label="Critical exposures" value={riskDistribution.critical} caption="Immediate executive intervention items" tone="danger" />
+        <MetricCard label="Benchmark pressure" value={knowledgeBase?.industryBenchmark.regulatoryPressure || 'n/a'} caption="Industry regulatory intensity signal" tone="warn" />
+        <MetricCard label="Reuse opportunities" value={overlapCards.reduce((sum, card) => sum + card.overlaps, 0)} caption="Gap overlaps that can reduce delivery effort" tone="success" />
+      </div>
+
+      <div className="enterprise-two-column analytics-takeaways-grid">
+        <Panel label="Executive takeaways" title="What needs attention now" description="Condensed analytics narrative to make the page easier to read at a glance.">
+          <div className="enterprise-three-column analytics-takeaways-cards">
+            <div className="insight-card analytics-feature-card analytics-feature-card-critical">
+              <div className="insight-kicker insight-kicker-critical">Primary risk</div>
+              <div className="insight-title">{weakestStandard ? getStandardLabel(weakestStandard.standardCode) : 'No risk flagged'}</div>
+              <div className="insight-copy">{weakestStandard ? `${weakestStandard.overallScore}% current score with the largest delivery gap against target state.` : 'No standards assessment available.'}</div>
+            </div>
+            <div className="insight-card analytics-feature-card analytics-feature-card-neutral">
+              <div className="insight-kicker">Best position</div>
+              <div className="insight-title">{strongestStandard ? getStandardLabel(strongestStandard.standardCode) : 'No benchmark'}</div>
+              <div className="insight-copy">{strongestStandard ? `${strongestStandard.overallScore}% current score with the strongest evidence-backed control position.` : 'No standards assessment available.'}</div>
+            </div>
+            <div className="insight-card analytics-feature-card analytics-feature-card-brand">
+              <div className="insight-kicker">Dominant theme</div>
+              <div className="insight-title">{topThemes[0]?.name || 'No gap theme'}</div>
+              <div className="insight-copy">{topThemes[0] ? `${topThemes[0].count} open gaps are concentrated in this remediation domain.` : 'No open gaps found in the current assessment.'}</div>
+            </div>
+          </div>
+        </Panel>
+
+        <Panel label="Benchmark delta" title="Below-industry pressure points" description="The biggest negative benchmark deltas should guide board-level questions and sequencing.">
+          <div className="insight-list">
+            {benchmarkGaps.slice(0, 4).map((item) => (
+              <div key={item.code} className="insight-row">
+                <div className="insight-kicker">{item.label}</div>
+                <div style={{ flex: 1 }}>
+                  <div className="insight-title">{item.delta >= 0 ? 'Above sector baseline' : 'Below sector baseline'}</div>
+                  <div className="insight-copy">{item.delta >= 0 ? `Outperforming benchmark by ${item.delta} points.` : `Trailing benchmark by ${Math.abs(item.delta)} points.`}</div>
+                </div>
+                <div className={`delta-pill ${item.delta < 0 ? 'delta-pill-negative' : 'delta-pill-positive'}`}>
+                  {item.delta > 0 ? '+' : ''}{item.delta} pts
+                </div>
+              </div>
+            ))}
+          </div>
+        </Panel>
+      </div>
+
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+        <Panel
+          label="Core feature"
+          title="Organizational risk heatmap"
+          description="The matrix now surfaces selected-bucket context and a more decision-oriented risk rail instead of a raw event list."
+          action={<div className="analytics-panel-callout"><Scale size={14} /> Exposure model includes control weakness, evidence sufficiency, and industry pressure.</div>}
+        >
+          <OrganizationalRiskHeatmap
+            assessment={currentAssessment}
+            regulatoryPressure={knowledgeBase?.industryBenchmark.regulatoryPressure}
+          />
+        </Panel>
       </motion.div>
 
-      {/* Row 2: Trend + Gap donut */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card">
-          <span className="section-label">Compliance Trend</span>
-          <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--color-text-primary)' }}>Score Over Time</h3>
-          <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={historicalTrend}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-primary-600)" />
-              <XAxis dataKey="month" tick={{ fill: 'var(--color-text-secondary)', fontSize: 11 }} />
-              <YAxis domain={[0, 100]} tick={{ fill: 'var(--color-text-muted)', fontSize: 10 }} />
-              <Tooltip {...tooltipStyle} />
-              <Legend wrapperStyle={{ fontSize: 11, color: 'var(--color-text-secondary)' }} />
-              <Line type="monotone" dataKey="ISO37001" stroke="#DD6B20" strokeWidth={2} dot={{ r: 3 }} name="ISO 37001" />
-              <Line type="monotone" dataKey="ISO37301" stroke="#86BC25" strokeWidth={2} dot={{ r: 3 }} name="ISO 37301" />
-              <Line type="monotone" dataKey="ISO27001" stroke="#00ABBD" strokeWidth={2} dot={{ r: 3 }} name="ISO 27001" />
-              <Line type="monotone" dataKey="ISO9001" stroke="#FFD32A" strokeWidth={2} dot={{ r: 3 }} name="ISO 9001" />
-            </LineChart>
-          </ResponsiveContainer>
+      <div className="enterprise-two-column">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <Panel label="Standards coverage" title="Clause maturity distribution" description="Shows where clauses cluster across maturity bands for each assessed standard.">
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={maturityData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-primary-600)" />
+                <XAxis dataKey="standard" tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }} />
+                <YAxis tick={{ fill: 'var(--color-text-muted)', fontSize: 10 }} />
+                <Tooltip {...tooltipStyle} />
+                <Legend wrapperStyle={{ fontSize: 11, color: 'var(--color-text-secondary)' }} />
+                <Bar dataKey="level1" stackId="a" fill="#E53E3E" name="Level 1" />
+                <Bar dataKey="level2" stackId="a" fill="#DD6B20" name="Level 2" />
+                <Bar dataKey="level3" stackId="a" fill="#FFD32A" name="Level 3" />
+                <Bar dataKey="level4" stackId="a" fill="#86BC25" name="Level 4" />
+                <Bar dataKey="level5" stackId="a" fill="#A8D048" name="Level 5" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </Panel>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-card">
-          <span className="section-label">Gap Distribution</span>
-          <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--color-text-primary)' }}>By Category</h3>
-          <ResponsiveContainer width="100%" height={280}>
-            <PieChart>
-              <Pie
-                data={gapDistribution}
-                cx="50%" cy="50%"
-                innerRadius={70} outerRadius={100}
-                paddingAngle={3}
-                dataKey="value"
-                label={({ name, percent }: { name: string; percent: number }) => `${name} ${(percent * 100).toFixed(0)}%`}
-              >
-                {gapDistribution.map((entry) => (
-                  <Cell key={entry.name} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip {...tooltipStyle} />
-            </PieChart>
-          </ResponsiveContainer>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
+          <Panel label="Gap composition" title="Remediation domain distribution" description="Shows whether the gap load is concentrated in policy, process, training, technology, or documentation work.">
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={gapDistribution}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={70}
+                  outerRadius={100}
+                  paddingAngle={3}
+                  dataKey="value"
+                  label={renderGapLabel}
+                >
+                  {gapDistribution.map((entry) => (
+                    <Cell key={entry.name} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip {...tooltipStyle} />
+              </PieChart>
+            </ResponsiveContainer>
+          </Panel>
         </motion.div>
       </div>
 
-      {/* Row 3: Benchmark comparison */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="glass-card">
-        <span className="section-label">Industry Benchmark</span>
-        <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--color-text-primary)' }}>Your Score vs Industry Average</h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={benchmarkData} barGap={8}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-primary-600)" />
-            <XAxis dataKey="standard" tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }} />
-            <YAxis domain={[0, 100]} tick={{ fill: 'var(--color-text-muted)', fontSize: 10 }} />
-            <Tooltip {...tooltipStyle} />
-            <Legend wrapperStyle={{ fontSize: 11, color: 'var(--color-text-secondary)' }} />
-            <Bar dataKey="yours" fill="var(--color-accent-500)" name="Your Score" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="benchmark" fill="var(--color-primary-600)" name="Industry Avg" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </motion.div>
+      <div className="enterprise-two-column">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+          <Panel label="Assessment history" title="Score trend" description="Trendline across recent assessments, including overall score and per-standard movement.">
+            <ResponsiveContainer width="100%" height={280}>
+              <LineChart data={trendData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-primary-600)" />
+                <XAxis dataKey="label" tick={{ fill: 'var(--color-text-secondary)', fontSize: 11 }} />
+                <YAxis domain={[0, 100]} tick={{ fill: 'var(--color-text-muted)', fontSize: 10 }} />
+                <Tooltip {...tooltipStyle} />
+                <Legend wrapperStyle={{ fontSize: 11, color: 'var(--color-text-secondary)' }} />
+                <Line type="monotone" dataKey="overall" stroke="var(--color-accent-500)" strokeWidth={2.5} dot={{ r: 3 }} name="Overall" />
+                <Line type="monotone" dataKey="ISO37001" stroke="#DD6B20" strokeWidth={2} dot={{ r: 2 }} name="ISO 37001" />
+                <Line type="monotone" dataKey="ISO37301" stroke="#86BC25" strokeWidth={2} dot={{ r: 2 }} name="ISO 37301" />
+                <Line type="monotone" dataKey="ISO27001" stroke="#00ABBD" strokeWidth={2} dot={{ r: 2 }} name="ISO 27001" />
+                <Line type="monotone" dataKey="ISO9001" stroke="#FFD32A" strokeWidth={2} dot={{ r: 2 }} name="ISO 9001" />
+              </LineChart>
+            </ResponsiveContainer>
+          </Panel>
+        </motion.div>
 
-      {/* Row 4: Maturity Progression Simulator */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="glass-card">
-        <div className="flex items-center gap-2 mb-1">
-          <TrendingUp size={18} style={{ color: 'var(--color-accent-500)' }} />
-          <span className="section-label">Innovative Feature</span>
-        </div>
-        <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--color-text-primary)' }}>Maturity Progression Simulator</h3>
-        <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
-          Simulate how your compliance scores will improve as you implement remediation phases.
-        </p>
-        <MaturitySimulator standards={currentAssessment.standards} />
-      </motion.div>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+          <Panel label="Benchmark view" title="Your score vs industry average" description="Combines standard-level benchmark deltas with the sector-level pressure narrative.">
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={benchmarkData} barGap={8}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-primary-600)" />
+                <XAxis dataKey="standard" tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }} />
+                <YAxis domain={[0, 100]} tick={{ fill: 'var(--color-text-muted)', fontSize: 10 }} />
+                <Tooltip {...tooltipStyle} />
+                <Legend wrapperStyle={{ fontSize: 11, color: 'var(--color-text-secondary)' }} />
+                <Bar dataKey="yours" fill="var(--color-accent-500)" name="Your Score" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="benchmark" fill="var(--color-primary-600)" name="Industry Avg" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+            {knowledgeBase?.industryBenchmark && (
+              <div className="analytics-benchmark-footnotes">
+                <div className="analytics-footnote-card">
+                  <div className="hero-stat-label">Regulatory pressure</div>
+                  <div className="insight-title" style={{ marginBottom: 0 }}>{knowledgeBase.industryBenchmark.regulatoryPressure.replace('-', ' ')}</div>
+                </div>
+                <div className="analytics-footnote-card">
+                  <div className="hero-stat-label">Recurring sector gaps</div>
+                  <div className="insight-copy">{knowledgeBase.industryBenchmark.commonGaps.slice(0, 2).join(' • ')}</div>
+                </div>
+              </div>
+            )}
+          </Panel>
+        </motion.div>
+      </div>
 
-      {/* Row 5: Cross-standard overlaps */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="glass-card">
-        <span className="section-label">Cross-Standard Analysis</span>
-        <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--color-text-primary)' }}>Clause Overlap Opportunities</h3>
-        <div className="grid md:grid-cols-3 gap-4">
-          {[
-            { pair: 'ISO 37001 ↔ ISO 37301', overlaps: 14, savings: '23 person-days' },
-            { pair: 'ISO 37001 ↔ ISO 27001', overlaps: 8, savings: '12 person-days' },
-            { pair: 'ISO 37301 ↔ ISO 9001', overlaps: 11, savings: '16 person-days' },
-          ].map((item) => (
-            <div key={item.pair} className="p-4 rounded-xl" style={{ background: 'var(--color-primary-700)', border: '1px solid var(--glass-border)' }}>
-              <div className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text-primary)' }}>{item.pair}</div>
-              <div className="score-display text-2xl font-bold" style={{ color: 'var(--color-accent-500)' }}>{item.overlaps}</div>
-              <div className="text-xs" style={{ color: 'var(--color-text-muted)' }}>overlapping clauses</div>
-              <div className="text-xs mt-2" style={{ color: 'var(--color-accent-400)' }}>Potential savings: {item.savings}</div>
+      <div className="enterprise-two-column">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          <Panel label="Cross-standard analysis" title="Overlap opportunities" description="Shared workstreams that can remove duplicate remediation effort across standards.">
+            <div className="analytics-overlap-grid">
+              {overlapCards.length > 0 ? overlapCards.map((item) => (
+                <div key={item.pair} className="insight-card analytics-overlap-card">
+                  <div className="insight-kicker">Overlap set</div>
+                  <div className="insight-title">{item.pair}</div>
+                  <div className="metric-card-value score-display" style={{ fontSize: 26, marginTop: 10 }}>{item.overlaps}</div>
+                  <div className="insight-copy">Potential savings: {item.savings}</div>
+                </div>
+              )) : (
+                <div className="insight-card">
+                  <div className="insight-title">No overlap opportunities detected</div>
+                  <div className="insight-copy">This assessment set does not currently show reusable cross-standard gap clusters.</div>
+                </div>
+              )}
             </div>
-          ))}
-        </div>
+          </Panel>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+          <Panel label="Executive cues" title="How to read this page" description="Short guidance so the page feels instructive instead of visually dense.">
+            <div className="insight-list">
+              <div className="insight-row">
+                <div className="insight-kicker"><AlertTriangle size={14} /></div>
+                <div>
+                  <div className="insight-title">Start with the heatmap</div>
+                  <div className="insight-copy">Use the highest exposure bucket to identify where legal and operational risk are clustering together.</div>
+                </div>
+              </div>
+              <div className="insight-row">
+                <div className="insight-kicker"><TrendingUp size={14} /></div>
+                <div>
+                  <div className="insight-title">Then compare to benchmark</div>
+                  <div className="insight-copy">Negative benchmark deltas tell you where the organization is lagging sector expectations, even if internal trendlines look stable.</div>
+                </div>
+              </div>
+              <div className="insight-row">
+                <div className="insight-kicker"><Scale size={14} /></div>
+                <div>
+                  <div className="insight-title">Use the simulator last</div>
+                  <div className="insight-copy">The maturity simulator helps estimate payoff after you know which themes and standards deserve priority investment.</div>
+                </div>
+              </div>
+            </div>
+          </Panel>
+        </motion.div>
+      </div>
+
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+        <Panel label="Scenario planning" title="Maturity progression simulator" description="Model the likely score improvement from closing selected gaps or executing early remediation phases.">
+          <MaturitySimulator assessment={currentAssessment} />
+        </Panel>
       </motion.div>
     </div>
   );
 }
 
-/* Maturity Progression Simulator — Gap-based "What If" Analysis */
-function MaturitySimulator({ standards }: { standards: { standardCode: string; overallScore: number }[] }) {
-  const { currentAssessment } = useAppStore();
-  const gaps = currentAssessment?.gaps ?? [];
-  const remediations = currentAssessment?.remediation ?? [];
+function MaturitySimulator({ assessment }: { assessment: AssessmentResult }) {
   const [selectedGapIds, setSelectedGapIds] = useState<Set<string>>(new Set());
 
   const toggleGap = (id: string) => {
-    setSelectedGapIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
+    setSelectedGapIds((previous) => {
+      const next = new Set(previous);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   };
 
-  const selectPhase = (phase: 'immediate' | 'short-term' | 'medium-term') => {
-    const phaseOrder = { immediate: 1, 'short-term': 2, 'medium-term': 3 };
+  const selectPhase = (phase: 1 | 2 | 3) => {
     const ids = new Set<string>();
-    remediations.forEach((r) => {
-      if (phaseOrder[r.phase as keyof typeof phaseOrder] <= phaseOrder[phase]) {
-        ids.add(r.gapId);
+    assessment.remediation.forEach((action) => {
+      if (action.phase <= phase) {
+        if (action.gapIds && action.gapIds.length > 0) {
+          action.gapIds.forEach((id) => ids.add(id));
+        } else {
+          assessment.gaps
+            .filter((gap) => action.standards.includes(gap.standardCode))
+            .forEach((gap) => ids.add(gap.id));
+        }
       }
     });
     setSelectedGapIds(ids);
   };
 
-  // Calculate per-standard projected scores
-  const gapImpactMap: Record<string, number> = {};
-  gaps.forEach((g) => {
-    const impactPoints = g.impact === 'critical' ? 8 : g.impact === 'high' ? 5 : g.impact === 'medium' ? 3 : 1;
-    const key = g.standardCode;
-    if (!gapImpactMap[key]) gapImpactMap[key] = 0;
-    if (selectedGapIds.has(g.id)) gapImpactMap[key] += impactPoints;
-  });
+  const improvementByStandard = assessment.gaps.reduce<Record<string, number>>((accumulator, gap) => {
+    if (!selectedGapIds.has(gap.id)) {
+      return accumulator;
+    }
 
-  const simData = standards.map((s) => ({
-    standard: s.standardCode.replace('ISO', 'ISO '),
-    code: s.standardCode,
-    current: s.overallScore,
-    projected: Math.min(100, s.overallScore + (gapImpactMap[s.standardCode] || 0)),
+    const uplift = gap.impact === 'critical' ? 8 : gap.impact === 'high' ? 5 : gap.impact === 'medium' ? 3 : 1;
+    accumulator[gap.standardCode] = (accumulator[gap.standardCode] || 0) + uplift;
+    return accumulator;
+  }, {});
+
+  const simulatorData = assessment.standards.map((standard) => ({
+    standard: standard.standardCode.replace('ISO', 'ISO '),
+    current: standard.overallScore,
+    projected: Math.min(100, standard.overallScore + (improvementByStandard[standard.standardCode] || 0)),
   }));
 
-  const overallCurrent = Math.round(standards.reduce((sum, s) => sum + s.overallScore, 0) / standards.length);
-  const overallProjected = Math.round(simData.reduce((sum, d) => sum + d.projected, 0) / simData.length);
+  const overallCurrent = Math.round(assessment.standards.reduce((sum, standard) => sum + standard.overallScore, 0) / assessment.standards.length);
+  const overallProjected = Math.round(simulatorData.reduce((sum, standard) => sum + standard.projected, 0) / simulatorData.length);
   const improvement = overallProjected - overallCurrent;
 
   return (
     <div>
-      {/* Quick phase selectors */}
       <div className="flex gap-2 mb-4 flex-wrap">
-        <button onClick={() => setSelectedGapIds(new Set())} className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-          style={{ background: selectedGapIds.size === 0 ? 'rgba(134, 188, 37, 0.15)' : 'var(--color-primary-700)', border: `1px solid ${selectedGapIds.size === 0 ? 'var(--color-accent-500)' : 'var(--glass-border)'}`, color: selectedGapIds.size === 0 ? 'var(--color-accent-400)' : 'var(--color-text-secondary)' }}>
+        <button
+          onClick={() => setSelectedGapIds(new Set())}
+          className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+          style={{ background: selectedGapIds.size === 0 ? 'rgba(134, 188, 37, 0.15)' : 'var(--color-primary-700)', border: `1px solid ${selectedGapIds.size === 0 ? 'var(--color-accent-500)' : 'var(--glass-border)'}`, color: selectedGapIds.size === 0 ? 'var(--color-accent-400)' : 'var(--color-text-secondary)' }}
+        >
           Current State
         </button>
-        {(['immediate', 'short-term', 'medium-term'] as const).map((p) => (
-          <button key={p} onClick={() => selectPhase(p)} className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all capitalize"
-            style={{ background: 'var(--color-primary-700)', border: '1px solid var(--glass-border)', color: 'var(--color-text-secondary)' }}>
-            All {p.replace('-', ' ')} fixes
+        {[1, 2, 3].map((phase) => (
+          <button
+            key={phase}
+            onClick={() => selectPhase(phase as 1 | 2 | 3)}
+            className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+            style={{ background: 'var(--color-primary-700)', border: '1px solid var(--glass-border)', color: 'var(--color-text-secondary)' }}
+          >
+            Phase {phase}
           </button>
         ))}
-        <button onClick={() => setSelectedGapIds(new Set(gaps.map((g) => g.id)))} className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-          style={{ background: 'var(--color-primary-700)', border: '1px solid var(--glass-border)', color: 'var(--color-text-secondary)' }}>
+        <button
+          onClick={() => setSelectedGapIds(new Set(assessment.gaps.map((gap) => gap.id)))}
+          className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+          style={{ background: 'var(--color-primary-700)', border: '1px solid var(--glass-border)', color: 'var(--color-text-secondary)' }}
+        >
           Fix All Gaps
         </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Gap checklist */}
         <div className="lg:col-span-1 max-h-[320px] overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-          {gaps.map((gap) => {
+          {assessment.gaps.map((gap) => {
             const checked = selectedGapIds.has(gap.id);
             const impactColor = gap.impact === 'critical' ? 'var(--color-risk-critical)' : gap.impact === 'high' ? '#DD6B20' : gap.impact === 'medium' ? '#FFD32A' : 'var(--color-accent-400)';
             return (
               <label
                 key={gap.id}
                 className="flex items-start gap-3 p-3 rounded-xl cursor-pointer transition-all"
-                style={{
-                  background: checked ? 'rgba(134, 188, 37, 0.08)' : 'var(--color-primary-700)',
-                  border: `1px solid ${checked ? 'rgba(134, 188, 37, 0.3)' : 'var(--glass-border)'}`,
-                }}
+                style={{ background: checked ? 'rgba(134, 188, 37, 0.08)' : 'var(--color-primary-700)', border: `1px solid ${checked ? 'rgba(134, 188, 37, 0.3)' : 'var(--glass-border)'}` }}
               >
                 <input
                   type="checkbox"
@@ -274,43 +557,38 @@ function MaturitySimulator({ standards }: { standards: { standardCode: string; o
               </label>
             );
           })}
-          {gaps.length === 0 && (
-            <p className="text-sm p-4 text-center" style={{ color: 'var(--color-text-muted)' }}>No gaps to simulate</p>
-          )}
         </div>
 
-        {/* Projected scores */}
         <div className="lg:col-span-2">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
             <div className="p-4 rounded-xl text-center col-span-1" style={{ background: 'rgba(134, 188, 37, 0.1)', border: '1px solid var(--color-accent-500)' }}>
               <div className="text-3xl font-bold score-display" style={{ color: 'var(--color-accent-500)' }}>{overallProjected}%</div>
               <div className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>Projected Overall</div>
             </div>
-            {simData.map((d) => (
-              <div key={d.standard} className="p-4 rounded-xl text-center" style={{ background: 'var(--color-primary-700)', border: '1px solid var(--glass-border)' }}>
-                <div className="text-2xl font-bold score-display" style={{ color: d.projected >= 75 ? 'var(--color-accent-400)' : d.projected >= 60 ? '#FFD32A' : '#DD6B20' }}>
-                  {d.projected}%
+            {simulatorData.map((item) => (
+              <div key={item.standard} className="p-4 rounded-xl text-center" style={{ background: 'var(--color-primary-700)', border: '1px solid var(--glass-border)' }}>
+                <div className="text-2xl font-bold score-display" style={{ color: item.projected >= 75 ? 'var(--color-accent-400)' : item.projected >= 60 ? '#FFD32A' : '#DD6B20' }}>
+                  {item.projected}%
                 </div>
-                <div className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>{d.standard}</div>
-                {d.projected > d.current && (
-                  <div className="text-[10px] mt-0.5" style={{ color: 'var(--color-accent-400)' }}>+{d.projected - d.current}%</div>
+                <div className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>{item.standard}</div>
+                {item.projected > item.current && (
+                  <div className="text-[10px] mt-0.5" style={{ color: 'var(--color-accent-400)' }}>+{item.projected - item.current}%</div>
                 )}
               </div>
             ))}
           </div>
 
-          {/* Progress bars */}
           <div className="space-y-3">
-            {simData.map((d) => (
-              <div key={d.standard}>
+            {simulatorData.map((item) => (
+              <div key={item.standard}>
                 <div className="flex items-center justify-between text-xs mb-1">
-                  <span style={{ color: 'var(--color-text-secondary)' }}>{d.standard}</span>
-                  <span style={{ color: 'var(--color-text-muted)' }}>{d.current}% → {d.projected}%</span>
+                  <span style={{ color: 'var(--color-text-secondary)' }}>{item.standard}</span>
+                  <span style={{ color: 'var(--color-text-muted)' }}>{item.current}% → {item.projected}%</span>
                 </div>
                 <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--color-primary-600)' }}>
                   <div className="relative h-full rounded-full">
-                    <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${d.projected}%`, background: 'linear-gradient(90deg, var(--color-accent-500), var(--color-accent-400))', transition: 'width 0.5s ease' }} />
-                    <div className="absolute inset-y-0 left-0 rounded-full opacity-40" style={{ width: `${d.current}%`, background: 'var(--color-text-muted)' }} />
+                    <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${item.projected}%`, background: 'linear-gradient(90deg, var(--color-accent-500), var(--color-accent-400))', transition: 'width 0.5s ease' }} />
+                    <div className="absolute inset-y-0 left-0 rounded-full opacity-40" style={{ width: `${item.current}%`, background: 'var(--color-text-muted)' }} />
                   </div>
                 </div>
               </div>
@@ -321,7 +599,7 @@ function MaturitySimulator({ standards }: { standards: { standardCode: string; o
 
       {improvement > 0 && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-4 p-3 rounded-xl text-sm" style={{ background: 'rgba(134, 188, 37, 0.05)', border: '1px solid rgba(134, 188, 37, 0.1)', color: 'var(--color-accent-400)' }}>
-          ↑ Fixing <strong>{selectedGapIds.size}</strong> gap{selectedGapIds.size !== 1 ? 's' : ''} would improve your overall score by <strong>+{improvement}%</strong> (from {overallCurrent}% to {overallProjected}%)
+          Closing <strong>{selectedGapIds.size}</strong> gap{selectedGapIds.size !== 1 ? 's' : ''} would improve the overall score by <strong>+{improvement}%</strong>.
         </motion.div>
       )}
     </div>

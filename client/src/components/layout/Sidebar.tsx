@@ -1,18 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import {
-  LayoutDashboard, ClipboardCheck, BookOpen, Workflow,
-  BarChart3, FileText, Settings, ChevronLeft, ChevronRight, Shield,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
-
-const navItems = [
-  { path: '/dashboard',  label: 'Dashboard',       icon: LayoutDashboard },
-  { path: '/assessment', label: 'Assessment',       icon: ClipboardCheck },
-  { path: '/standards',  label: 'Standards',        icon: BookOpen },
-  { path: '/agents',     label: 'Agent Workflow',   icon: Workflow },
-  { path: '/analytics',  label: 'Analytics',        icon: BarChart3 },
-  { path: '/reports',    label: 'Reports',          icon: FileText },
-];
+import { navigationSections } from '../../config/navigation';
 
 export default function Sidebar() {
   const { sidebarCollapsed, toggleSidebar } = useAppStore();
@@ -59,45 +48,55 @@ export default function Sidebar() {
 
       {/* Nav section label */}
       {!sidebarCollapsed && (
-        <div style={{ padding: '16px 14px 6px', fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-          Navigation
+        <div className="sidebar-briefing">
+          <div className="sidebar-briefing-label">Enterprise workspace</div>
+          <div className="sidebar-briefing-title">Compliance command center</div>
+          <div className="sidebar-briefing-copy">Assess posture, trace standards, and operationalize remediation from one governed workspace.</div>
         </div>
       )}
 
       {/* Nav items */}
-      <nav style={{ flex: 1, padding: '6px 8px', display: 'flex', flexDirection: 'column', gap: 1, overflowY: 'auto' }}>
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
-          return (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={`nav-item ${isActive ? 'active' : ''}`}
-              title={sidebarCollapsed ? item.label : undefined}
-              style={sidebarCollapsed ? { justifyContent: 'center', padding: '8px' } : undefined}
-            >
-              <item.icon
-                size={16}
-                style={{ flexShrink: 0, color: isActive ? '#0076A8' : 'rgba(255,255,255,0.5)' }}
-              />
-              {!sidebarCollapsed && <span>{item.label}</span>}
-            </NavLink>
-          );
-        })}
+      <nav style={{ flex: 1, padding: '8px', display: 'flex', flexDirection: 'column', gap: 10, overflowY: 'auto' }}>
+        {navigationSections.map((section) => (
+          <div key={section.label}>
+            {!sidebarCollapsed && <div className="sidebar-section-label">{section.label}</div>}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {section.items.map((item) => {
+                const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
+                return (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    className={`nav-item ${isActive ? 'active' : ''}`}
+                    title={sidebarCollapsed ? item.label : undefined}
+                    style={sidebarCollapsed ? { justifyContent: 'center', padding: '10px 8px' } : undefined}
+                  >
+                    <item.icon
+                      size={16}
+                      style={{ flexShrink: 0, color: isActive ? '#86BC25' : 'rgba(255,255,255,0.6)' }}
+                    />
+                    {!sidebarCollapsed && (
+                      <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                        <span>{item.label}</span>
+                        <span className="nav-item-meta">{item.description}</span>
+                      </span>
+                    )}
+                  </NavLink>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* Bottom — Settings + Collapse */}
-      <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', padding: '8px', display: 'flex', flexDirection: 'column', gap: 1 }}>
-        <NavLink
-          to="/settings"
-          className={`nav-item ${location.pathname === '/settings' ? 'active' : ''}`}
-          title={sidebarCollapsed ? 'Settings' : undefined}
-          style={sidebarCollapsed ? { justifyContent: 'center', padding: '8px' } : undefined}
-        >
-          <Settings size={16} style={{ flexShrink: 0, color: location.pathname === '/settings' ? '#0076A8' : 'rgba(255,255,255,0.5)' }} />
-          {!sidebarCollapsed && <span>Settings</span>}
-        </NavLink>
-
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', padding: '8px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {!sidebarCollapsed && (
+          <div className="sidebar-footer-card">
+            <div className="sidebar-footer-label">Governance note</div>
+            <div className="sidebar-footer-copy">Use Risk Intelligence for benchmark context before finalizing remediation priorities.</div>
+          </div>
+        )}
         <button
           onClick={toggleSidebar}
           className="nav-item"

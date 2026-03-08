@@ -9,6 +9,7 @@ import {
 } from './agentRunner';
 import { isoStandards } from '../data/standards';
 import { scoreAllStandards } from '../services/HybridScoringService';
+import { industryBenchmarks } from '../data/complianceKnowledgeBase';
 
 export interface OrchestratorCallbacks {
   onAgentStart: (agentName: string) => void;
@@ -89,6 +90,8 @@ interface StandardAssessment {
   overallScore: number;
   maturityLevel: number;
   clauseScores: { clauseId: string; score: number; finding: string }[];
+  scoringMethod?: string;
+  confidence?: number;
 }
 
 interface Gap {
@@ -175,32 +178,43 @@ export async function runOrchestrator(
 
   for (const result of hybridResults) {
     const agentName = standardAgentNames[result.standard] || `${result.standard} Agent`;
-    const std = isoStandards[result.standard];
 
     standardAssessments.push({
       standard: result.standard,
       name: result.name,
       overallScore: result.overallScore,
       maturityLevel: result.maturityLevel,
-      clauseScores: result.clauseScores.map(cs => ({
+      scoringMethod: result.scoringMethod,
+      confidence: result.averageConfidence,
+      clauseScores: result.clauseScores.map((cs: { clauseId: string; score: number; finding: string }) => ({
         clauseId: cs.clauseId,
         score: cs.score,
         finding: cs.finding,
       })),
     });
 
-    callbacks.onAgentComplete(agentName, `Scored ${result.clauseScores.length} clauses: ${result.overallScore}% (${result.scoringMethod})`);
-    callbacks.onLog(`⚖️ ${agentName} — ${result.overallScore}% overall (Level ${result.maturityLevel}, method: ${result.scoringMethod})`);
+    callbacks.onAgentComplete(agentName, `Scored ${result.clauseScores.length} clauses: ${result.overallScore}% (${result.scoringMethod}, confidence: ${result.averageConfidence}%)`);
+    callbacks.onLog(`⚖️ ${agentName} — ${result.overallScore}% overall (Level ${result.maturityLevel}, method: ${result.scoringMethod}, confidence: ${result.averageConfidence}%)`);
   }
 
   // Step 3: Gap Analysis Agent
   callbacks.onAgentStart('Gap Analysis Agent');
   callbacks.onLog('📊 Gap Analysis Agent — Analyzing cross-standard gaps...');
+
+  // Get industry benchmark context for richer analysis
+  const benchmark = industryBenchmarks[orgProfile.industry] || industryBenchmarks['Other'];
+  const benchmarkContext = benchmark
+    ? `\nIndustry Benchmarks (${benchmark.industry}): ${Object.entries(benchmark.averageScores).map(([k, v]) => `${k}: ${v}%`).join(', ')}\nCommon industry gaps: ${benchmark.commonGaps.join('; ')}\nRegulatory pressure: ${benchmark.regulatoryPressure}`
+    : '';
+
   const gapPrompt = `Analyze the following assessment results and identify compliance gaps:
 
-${standardAssessments.map((sa) => `${sa.standard}: Overall ${sa.overallScore}%, Clauses: ${JSON.stringify(sa.clauseScores)}`).join('\n\n')}
+${standardAssessments.map((sa) => `${sa.standard} (${sa.name}): Overall ${sa.overallScore}% (Maturity Level ${sa.maturityLevel}, Method: ${sa.scoringMethod || 'hybrid'}, Confidence: ${sa.confidence || 'N/A'}%)
+Clauses: ${JSON.stringify(sa.clauseScores)}`).join('\n\n')}
+${benchmarkContext}
 
-Organization: ${orgProfile.company}, ${orgProfile.industry}, ${orgProfile.employees} employees`;
+Organization: ${orgProfile.company}, ${orgProfile.industry}, ${orgProfile.employees} employees
+Scope: ${orgProfile.scope}`;
 
   const gapResult = await runAgent('Gap Analysis Agent', buildGapAnalysisPrompt(), gapPrompt, callbacks.onLog);
   callbacks.onAgentComplete('Gap Analysis Agent', gapResult);
@@ -215,9 +229,12 @@ Organization: ${orgProfile.company}, ${orgProfile.industry}, ${orgProfile.employ
   callbacks.onLog('🔐 Evidence Validation Agent — Validating evidence sufficiency and quality...');
   const evidencePrompt = `Validate the evidence cited for each clause in these assessment results:
 
-${standardAssessments.map((sa) => `${sa.standard}: ${JSON.stringify(sa.clauseScores)}`).join('\n\n')}
+${standardAssessments.map((sa) => `${sa.standard} (${sa.name}): Overall ${sa.overallScore}%, Method: ${sa.scoringMethod || 'hybrid'}
+Clause Scores: ${JSON.stringify(sa.clauseScores)}`).join('\n\n')}
 
-Gaps identified: ${JSON.stringify(allGaps)}
+Gaps identified (${allGaps.length} total, ${allGaps.filter(g => g.severity === 'critical').length} critical):
+${JSON.stringify(allGaps.slice(0, 20))}
+
 Organization: ${orgProfile.company}, ${orgProfile.industry}, ${orgProfile.employees} employees`;
 
   const evidenceResult = await runAgent('Evidence Validation Agent', buildEvidenceValidationPrompt(), evidencePrompt, callbacks.onLog);
@@ -243,7 +260,10 @@ Organization: ${orgProfile.company}, ${orgProfile.industry}, ${orgProfile.employ
 
 ${JSON.stringify(allGaps, null, 2)}
 
-Organization context: ${orgProfile.company}, ${orgProfile.industry}`;
+Evidence Validation Summary: ${evidenceValidation.summary}
+Evidence Quality: ${evidenceValidation.overallEvidenceScore}% overall (${evidenceValidation.sufficientCount} sufficient, ${evidenceValidation.insufficientCount} insufficient, ${evidenceValidation.missingCount} missing)
+
+Organization context: ${orgProfile.company}, ${orgProfile.industry}, ${orgProfile.employees} employees`;
 
   const remResult = await runAgent('Remediation Agent', buildRemediationPrompt(), remPrompt, callbacks.onLog);
   callbacks.onAgentComplete('Remediation Agent', remResult);
