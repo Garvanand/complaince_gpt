@@ -1,0 +1,166 @@
+@import "tailwindcss";
+
+@theme {
+  /* Primary Brand */
+  --color-primary-900: #0A0E1A;
+  --color-primary-800: #0F1629;
+  --color-primary-700: #162040;
+  --color-primary-600: #1E2D5A;
+
+  /* Deloitte Green Accent */
+  --color-accent-500: #00C389;
+  --color-accent-400: #00E5A0;
+  --color-accent-300: #66F0C3;
+
+  /* Risk Colors */
+  --color-risk-critical: #FF4757;
+  --color-risk-high: #FF6B35;
+  --color-risk-medium: #FFD32A;
+  --color-risk-low: #00C389;
+
+  /* Neutrals */
+  --color-text-primary: #F0F4FF;
+  --color-text-secondary: #8B9CC8;
+  --color-text-muted: #4A5680;
+
+  /* Font families */
+  --font-display: 'Playfair Display', serif;
+  --font-sans: 'DM Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+:root {
+  --glass-bg: rgba(15, 22, 41, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 8px 32px rgba(0, 195, 137, 0.08);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-primary-900);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Glassmorphism utilities */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: 1rem;
+  padding: 1.5rem;
+}
+
+/* Glow button */
+.btn-glow {
+  background: linear-gradient(135deg, var(--color-accent-500), var(--color-accent-400));
+  color: var(--color-primary-900);
+  font-weight: 600;
+  border: none;
+  border-radius: 0.75rem;
+  padding: 0.75rem 2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 20px rgba(0, 195, 137, 0.15);
+}
+.btn-glow:hover {
+  box-shadow: 0 0 40px rgba(0, 195, 137, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--color-text-primary);
+  font-weight: 600;
+  border: 1px solid var(--glass-border);
+  border-radius: 0.75rem;
+  padding: 0.75rem 2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.btn-ghost:hover {
+  border-color: var(--color-accent-500);
+  box-shadow: 0 0 20px rgba(0, 195, 137, 0.1);
+}
+
+/* Pulse animation */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(0, 195, 137, 0.3); }
+  50% { box-shadow: 0 0 20px rgba(0, 195, 137, 0.6); }
+}
+.pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Floating animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Mesh gradient background */
+@keyframes mesh-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.mesh-gradient {
+  background: linear-gradient(-45deg, #0A0E1A, #162040, #0A2A20, #0F1629, #1a3040);
+  background-size: 400% 400%;
+  animation: mesh-shift 15s ease infinite;
+}
+
+/* Count-up mono font */
+.score-display {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-primary-900);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary-600);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* Section label */
+.section-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-accent-500);
+  margin-bottom: 0.5rem;
+}
