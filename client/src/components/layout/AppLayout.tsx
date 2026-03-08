@@ -9,7 +9,6 @@ import { useAppStore } from '../../store/useAppStore';
 export default function AppLayout() {
   const { sidebarCollapsed, toggleSidebar } = useAppStore();
 
-  // Auto-collapse sidebar on small screens
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 768px)');
     if (mq.matches && !sidebarCollapsed) toggleSidebar();
@@ -24,7 +23,7 @@ export default function AppLayout() {
   return (
     <div className="app-shell">
       <Sidebar />
-      <div className={`app-content ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+      <div className="app-content">
         <Navbar />
         <main className="app-main">
           <Outlet />

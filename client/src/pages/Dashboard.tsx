@@ -1,149 +1,139 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Shield, AlertTriangle, CalendarDays, FileCheck, ArrowRight, Upload, PlayCircle, Bot, Search, BarChart3, FileText, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import {
+  Shield, AlertTriangle, CalendarDays, FileCheck,
+  ArrowRight, Upload, BarChart3, TrendingUp, ChevronRight,
+} from 'lucide-react';
 import {
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
   Legend, ResponsiveContainer, Tooltip,
 } from 'recharts';
-import ComplianceScoreRing from '../components/dashboard/ComplianceScoreRing';
 import KPICard from '../components/dashboard/KPICard';
 import ClauseHeatmap from '../components/analytics/ClauseHeatmap';
-import AgentActivityFeed from '../components/agents/AgentActivityFeed';
 import RemediationTimeline from '../components/reports/RemediationTimeline';
 import GapPriorityMatrix from '../components/analytics/GapPriorityMatrix';
-import { KPISkeleton, ChartSkeleton, CardSkeleton } from '../components/Skeleton';
+import { StatusBadge, ScoreBadge, SectionHeader, EmptyState } from '../components/ui/EnterpriseComponents';
 import { useAppStore } from '../store/useAppStore';
 import { formatDate } from '../utils/helpers';
 
-const standardsPreview = [
-  { code: 'ISO 37001', name: 'Anti-Bribery', color: '#DD6B20', clauses: 33 },
-  { code: 'ISO 37301', name: 'Compliance', color: '#86BC25', clauses: 28 },
-  { code: 'ISO 27001', name: 'InfoSec', color: '#00ABBD', clauses: 24 },
-  { code: 'ISO 9001', name: 'Quality', color: '#FFD32A', clauses: 28 },
-];
+const tooltipStyle = {
+  contentStyle: {
+    background: 'var(--white)',
+    border: '1px solid var(--border)',
+    borderRadius: 'var(--radius-lg)',
+    fontSize: 12,
+    color: 'var(--slate-700)',
+    boxShadow: 'var(--shadow-lg)',
+  },
+};
 
-const agents = [
-  { name: 'Gap Analyzer', icon: Search, status: 'idle' },
-  { name: 'Risk Scorer', icon: BarChart3, status: 'idle' },
-  { name: 'Clause Mapper', icon: FileText, status: 'idle' },
-  { name: 'Remediation Planner', icon: CheckCircle2, status: 'idle' },
-  { name: 'Maturity Assessor', icon: Shield, status: 'idle' },
-  { name: 'Evidence Linker', icon: Bot, status: 'idle' },
-];
+const standardsMeta: Record<string, { short: string; color: string }> = {
+  ISO37001: { short: 'ISO 37001', color: 'var(--chart-5)' },
+  ISO37301: { short: 'ISO 37301', color: 'var(--chart-1)' },
+  ISO27001: { short: 'ISO 27001', color: 'var(--chart-2)' },
+  ISO9001:  { short: 'ISO 9001',  color: 'var(--chart-3)' },
+};
 
 function EmptyDashboard() {
   const navigate = useNavigate();
   const { loadDemoData } = useAppStore();
 
   return (
-    <div className="p-6 md:p-8 space-y-6">
-      {/* KPI row — placeholder */}
-      <div className="kpi-grid">
-        {['Overall Score', 'Standards', 'Critical Gaps', 'Last Assessment'].map((label) => (
+    <div style={{ maxWidth: 700, margin: '40px auto', padding: '0 16px' }}>
+      {/* KPI placeholders */}
+      <div className="kpi-grid" style={{ marginBottom: 24 }}>
+        {['Overall Score', 'Standards Assessed', 'Critical Gaps', 'Last Assessment'].map((label) => (
           <div key={label} className="kpi-card">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-[#4A5568] mb-2">{label}</p>
-            <p className="text-3xl font-bold font-mono text-[#1E2D5A]">—</p>
+            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--slate-500)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>{label}</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--slate-300)', marginBottom: 4 }}>—</div>
+            <div className="skeleton" style={{ height: 10, width: '60%', marginTop: 4 }} />
           </div>
         ))}
       </div>
 
-      {/* Main CTA cards */}
-      <div className="grid md:grid-cols-2 gap-6">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-gradient-to-br from-[#86BC25]/[0.08] to-transparent border border-[#86BC25]/20 rounded-2xl p-8 flex flex-col"
-        >
-          <div className="w-12 h-12 rounded-2xl bg-[#86BC25] flex items-center justify-center mb-5 shadow-[0_0_30px_rgba(134,188,37,0.3)]">
-            <Upload className="w-5 h-5 text-white" />
+      {/* CTAs */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+        <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: 'var(--radius-md)',
+            background: 'var(--blue-800)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <Upload size={16} color="white" />
           </div>
-          <h3 className="text-lg font-bold text-white mb-2">Start New Assessment</h3>
-          <p className="text-sm text-[#8C9BAE] mb-6 flex-1">
-            Upload your governance documents and let our AI agents analyze compliance across all four ISO standards simultaneously.
-          </p>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--slate-900)', marginBottom: 4 }}>Start New Assessment</div>
+            <div style={{ fontSize: 12, color: 'var(--slate-500)', lineHeight: 1.5 }}>
+              Upload governance documents and run multi-standard ISO compliance analysis.
+            </div>
+          </div>
           <button
             onClick={() => navigate('/assessment')}
-            className="flex items-center gap-2 bg-[#86BC25] hover:bg-[#A8D048] text-white font-bold text-sm px-5 py-3 rounded-xl transition-all w-fit shadow-[0_0_20px_rgba(134,188,37,0.25)]"
+            className="btn btn-primary"
+            style={{ alignSelf: 'flex-start', marginTop: 4 }}
           >
-            Start Assessment <ArrowRight className="w-4 h-4" />
+            Start Assessment <ArrowRight size={13} />
           </button>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-8 flex flex-col"
-        >
-          <div className="w-12 h-12 rounded-2xl bg-white/[0.06] flex items-center justify-center mb-5">
-            <PlayCircle className="w-5 h-5 text-[#8C9BAE]" />
+        <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: 'var(--radius-md)',
+            background: 'var(--slate-200)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <BarChart3 size={16} color="var(--slate-600)" />
           </div>
-          <h3 className="text-lg font-bold text-white mb-2">Explore Demo Data</h3>
-          <p className="text-sm text-[#8C9BAE] mb-6 flex-1">
-            Load sample assessment results for Acme Corp to explore the full dashboard, analytics, and reporting experience.
-          </p>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--slate-900)', marginBottom: 4 }}>Load Demo Data</div>
+            <div style={{ fontSize: 12, color: 'var(--slate-500)', lineHeight: 1.5 }}>
+              Explore a sample assessment for Acme Corp across all four ISO standards.
+            </div>
+          </div>
           <button
             onClick={loadDemoData}
-            className="flex items-center gap-2 bg-white/[0.06] hover:bg-white/[0.10] border border-white/[0.08] text-white font-bold text-sm px-5 py-3 rounded-xl transition-all w-fit"
+            className="btn btn-secondary"
+            style={{ alignSelf: 'flex-start', marginTop: 4 }}
           >
-            Load Demo <PlayCircle className="w-4 h-4" />
+            Load Demo
           </button>
-        </motion.div>
+        </div>
       </div>
 
-      {/* Standards overview — always visible */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6"
-      >
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <p className="text-white font-bold text-sm">Supported Standards</p>
-            <p className="text-[#4A5568] text-xs">Multi-standard assessment coverage</p>
-          </div>
-          <button
-            onClick={() => navigate('/standards')}
-            className="text-xs text-[#86BC25] hover:text-[#A8D048] font-medium flex items-center gap-1 transition-colors"
-          >
-            View Library <ArrowRight className="w-3 h-3" />
+      {/* Standards reference table */}
+      <div className="card">
+        <div className="card-header">
+          <SectionHeader label="Reference" title="Supported ISO Standards" />
+          <button onClick={() => navigate('/standards')} className="btn btn-ghost" style={{ fontSize: 12 }}>
+            View Library <ChevronRight size={13} />
           </button>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {standardsPreview.map((s) => (
-            <div key={s.code} className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 text-center">
-              <p className="text-lg font-bold font-mono" style={{ color: s.color }}>{s.code.replace('ISO ', '')}</p>
-              <p className="text-xs text-[#8C9BAE] mt-1">{s.name}</p>
-              <p className="text-[10px] text-[#4A5568] mt-2">{s.clauses} clauses</p>
-            </div>
-          ))}
+        <div style={{ overflowX: 'auto' }}>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Standard</th>
+                <th>Title</th>
+                <th>Clauses</th>
+                <th>Domain</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                { code: 'ISO 37001', name: 'Anti-Bribery Management Systems', clauses: 33, domain: 'Anti-Bribery' },
+                { code: 'ISO 37301', name: 'Compliance Management Systems', clauses: 28, domain: 'Governance' },
+                { code: 'ISO 27001', name: 'Information Security Management', clauses: 24, domain: 'InfoSec' },
+                { code: 'ISO 9001',  name: 'Quality Management Systems', clauses: 28, domain: 'Quality' },
+              ].map((s) => (
+                <tr key={s.code}>
+                  <td><span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 12, color: 'var(--blue-700)' }}>{s.code}</span></td>
+                  <td style={{ color: 'var(--slate-700)' }}>{s.name}</td>
+                  <td style={{ color: 'var(--slate-600)' }}>{s.clauses}</td>
+                  <td><span className="badge badge-pending">{s.domain}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </motion.div>
-
-      {/* Agent status */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6"
-      >
-        <div className="mb-5">
-          <p className="text-white font-bold text-sm">AI Agent Pipeline</p>
-          <p className="text-[#4A5568] text-xs">Agents activate when assessment begins</p>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          {agents.map((agent) => (
-            <div key={agent.name} className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-3 text-center">
-              <agent.icon className="w-5 h-5 text-[#4A5568] mx-auto mb-2" />
-              <p className="text-xs text-[#8C9BAE] font-medium">{agent.name}</p>
-              <p className="text-[10px] text-[#1E2D5A] mt-1 uppercase tracking-wider font-bold">Idle</p>
-            </div>
-          ))}
-        </div>
-      </motion.div>
+      </div>
     </div>
   );
 }
@@ -154,7 +144,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 600);
+    const t = setTimeout(() => setLoading(false), 400);
     return () => clearTimeout(t);
   }, []);
 
@@ -162,142 +152,245 @@ export default function Dashboard() {
 
   const a = currentAssessment;
   const criticalGaps = a.gaps.filter((g) => g.impact === 'critical').length;
+  const highGaps = a.gaps.filter((g) => g.impact === 'high').length;
 
   if (loading) {
     return (
-      <div className="p-6 md:p-8 space-y-8">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div className="kpi-grid">
-          {[...Array(4)].map((_, i) => <KPISkeleton key={i} />)}
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="kpi-card">
+              <div className="skeleton" style={{ height: 12, width: '55%', marginBottom: 16 }} />
+              <div className="skeleton" style={{ height: 28, width: '40%', marginBottom: 8 }} />
+              <div className="skeleton" style={{ height: 10, width: '70%' }} />
+            </div>
+          ))}
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ChartSkeleton height={340} />
-          <ChartSkeleton height={340} />
-        </div>
-        <ChartSkeleton height={250} />
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <CardSkeleton />
-          <CardSkeleton />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div className="card" style={{ height: 320 }}><div style={{ padding: 20 }}><div className="skeleton" style={{ height: 280 }} /></div></div>
+          <div className="card" style={{ height: 320 }}><div style={{ padding: 20 }}><div className="skeleton" style={{ height: 280 }} /></div></div>
         </div>
       </div>
     );
   }
 
   const radarData = a.standards.map((s) => ({
-    standard: s.standardCode.replace('ISO', ''),
-    current: s.overallScore,
-    target: 85,
+    standard: standardsMeta[s.standardCode]?.short || s.standardCode,
+    Current: s.overallScore,
+    Target: 85,
   }));
 
   return (
-    <div className="p-6 md:p-8 space-y-8">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+      {/* Demo banner */}
       {isDemoMode && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-3 py-3 px-5 bg-[#86BC25]/[0.06] border border-[#86BC25]/20 rounded-2xl"
-        >
-          <div className="w-1.5 h-1.5 rounded-full bg-[#86BC25] animate-pulse" />
-          <span className="text-sm text-[#86BC25]">
-            Demo Mode — showing sample data for {a.orgProfile.companyName}
-          </span>
-        </motion.div>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          padding: '8px 16px',
+          background: '#FFFBEB',
+          border: '1px solid #FDE68A',
+          borderRadius: 'var(--radius-lg)',
+          fontSize: 12,
+          color: '#92400E',
+        }}>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--risk-medium)', flexShrink: 0 }} />
+          <span><strong>Demo Mode</strong> — Displaying sample assessment data for {a.orgProfile.companyName}.</span>
+          <button onClick={() => navigate('/assessment')} className="btn btn-ghost" style={{ marginLeft: 'auto', fontSize: 11, padding: '3px 8px' }}>
+            Run Real Assessment <ArrowRight size={11} />
+          </button>
+        </div>
       )}
 
       {/* KPI Row */}
       <div className="kpi-grid">
-        <div className="kpi-card flex-row items-center gap-5">
-          <ComplianceScoreRing score={a.overallScore} maturityLevel={a.overallMaturity} size={100} showMaturity={false} />
-          <div>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[#4A5568]">
-              Overall Score
-            </span>
-            <div className="text-sm mt-1 text-[#8C9BAE]">
-              Level {a.overallMaturity} — {a.overallMaturityLabel}
-            </div>
+        <KPICard
+          title="Overall Compliance Score"
+          value={a.overallScore}
+          suffix="%"
+          icon={<Shield size={15} />}
+          color="var(--blue-700)"
+          subtitle={`Maturity Level ${a.overallMaturity} — ${a.overallMaturityLabel}`}
+          trend={{ value: 4, label: 'vs. last assessment' }}
+        />
+        <KPICard
+          title="Standards Assessed"
+          value={a.standards.length}
+          icon={<FileCheck size={15} />}
+          color="var(--chart-3)"
+          subtitle={a.standards.map(s => standardsMeta[s.standardCode]?.short || s.standardCode).join(', ')}
+        />
+        <KPICard
+          title="Critical Gaps"
+          value={criticalGaps}
+          icon={<AlertTriangle size={15} />}
+          color="var(--risk-critical)"
+          subtitle={`${highGaps} high severity, ${a.gaps.length - criticalGaps - highGaps} others`}
+        />
+        <KPICard
+          title="Last Assessment"
+          value={0}
+          hideValue
+          icon={<CalendarDays size={15} />}
+          color="var(--slate-500)"
+          subtitle={formatDate(a.timestamp)}
+        />
+      </div>
+
+      {/* Standards Compliance Table + Radar */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: 16 }}>
+
+        {/* Standards table */}
+        <div className="card">
+          <div className="card-header">
+            <SectionHeader label="Assessment Results" title="Standards Compliance Summary" />
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Standard</th>
+                  <th>Score</th>
+                  <th>Status</th>
+                  <th>Critical Gaps</th>
+                  <th>Clauses</th>
+                </tr>
+              </thead>
+              <tbody>
+                {a.standards.map((s) => {
+                  const statusStr = s.overallScore >= 75 ? 'compliant' : s.overallScore >= 50 ? 'partial' : 'non-compliant';
+                  const critCount = a.gaps.filter(g => g.standardCode === s.standardCode && g.impact === 'critical').length;
+                  return (
+                    <tr key={s.standardCode}>
+                      <td>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 12, color: 'var(--blue-700)' }}>
+                          {standardsMeta[s.standardCode]?.short || s.standardCode}
+                        </span>
+                      </td>
+                      <td><ScoreBadge score={s.overallScore} /></td>
+                      <td><StatusBadge status={statusStr} /></td>
+                      <td>
+                        {critCount > 0
+                          ? <span style={{ color: 'var(--risk-critical)', fontWeight: 700 }}>{critCount}</span>
+                          : <span style={{ color: 'var(--status-compliant)' }}>0</span>}
+                      </td>
+                      <td style={{ color: 'var(--slate-500)' }}>{s.clauseScores.length}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
-        <div className="kpi-card">
-          <KPICard title="Standards Assessed" value={a.standards.length} icon={<FileCheck size={20} />} subtitle="Active ISO standards" delay={200} />
-        </div>
-        <div className="kpi-card">
-          <KPICard title="Critical Gaps" value={criticalGaps} icon={<AlertTriangle size={20} />} color="var(--color-risk-critical)" subtitle="Requires immediate action" delay={400} />
-        </div>
-        <div className="kpi-card">
-          <KPICard title="Last Assessment" value={0} icon={<CalendarDays size={20} />} subtitle={formatDate(a.timestamp)} delay={600} />
+
+        {/* Compliance Radar */}
+        <div className="card">
+          <div className="card-header">
+            <SectionHeader label="Compliance Maturity" title="Current vs. Target" />
+          </div>
+          <div style={{ padding: '12px 16px' }}>
+            <ResponsiveContainer width="100%" height={260}>
+              <RadarChart data={radarData} margin={{ top: 8, right: 20, bottom: 8, left: 20 }}>
+                <PolarGrid stroke="var(--slate-200)" />
+                <PolarAngleAxis dataKey="standard" tick={{ fill: 'var(--slate-600)', fontSize: 11 }} />
+                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: 'var(--slate-400)', fontSize: 10 }} />
+                <Radar
+                  name="Current"
+                  dataKey="Current"
+                  stroke="var(--blue-700)"
+                  fill="var(--blue-700)"
+                  fillOpacity={0.15}
+                  strokeWidth={2}
+                />
+                <Radar
+                  name="Target (85%)"
+                  dataKey="Target"
+                  stroke="var(--slate-400)"
+                  fill="none"
+                  strokeDasharray="4 3"
+                  strokeWidth={1.5}
+                />
+                <Tooltip {...tooltipStyle} />
+                <Legend wrapperStyle={{ fontSize: 11, color: 'var(--slate-500)', paddingTop: 4 }} />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6"
-        >
-          <p className="text-[10px] font-bold uppercase tracking-widest text-[#86BC25] mb-1">Compliance Maturity</p>
-          <h3 className="text-base font-bold text-white mb-4">Current vs Target</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <RadarChart data={radarData}>
-              <PolarGrid stroke="rgba(255,255,255,0.06)" />
-              <PolarAngleAxis dataKey="standard" tick={{ fill: '#8C9BAE', fontSize: 12 }} />
-              <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: '#4A5568', fontSize: 10 }} />
-              <Radar name="Current" dataKey="current" stroke="#86BC25" fill="#86BC25" fillOpacity={0.2} strokeWidth={2} />
-              <Radar name="Target" dataKey="target" stroke="#4A5568" fill="none" strokeDasharray="5 5" strokeWidth={1.5} />
-              <Tooltip contentStyle={{ background: '#0C1220', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', color: '#fff' }} />
-              <Legend wrapperStyle={{ color: '#8C9BAE', fontSize: 12 }} />
-            </RadarChart>
-          </ResponsiveContainer>
-        </motion.div>
+      {/* Gap Priority Matrix + Remediation Timeline */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div className="card">
+          <div className="card-header">
+            <SectionHeader label="Risk Analysis" title="Gap Priority Matrix" description="Impact vs. implementation effort" />
+          </div>
+          <div className="card-body" style={{ paddingTop: 8 }}>
+            <GapPriorityMatrix gaps={a.gaps} />
+          </div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6"
-        >
-          <p className="text-[10px] font-bold uppercase tracking-widest text-[#86BC25] mb-1">Gap Priority Matrix</p>
-          <h3 className="text-base font-bold text-white mb-4">Impact vs Effort</h3>
-          <GapPriorityMatrix gaps={a.gaps} />
-        </motion.div>
+        <div className="card">
+          <div className="card-header">
+            <SectionHeader label="Remediation Roadmap" title="Priority Actions" />
+            <button onClick={() => navigate('/reports')} className="btn btn-ghost" style={{ fontSize: 12, flexShrink: 0 }}>
+              View All <ChevronRight size={12} />
+            </button>
+          </div>
+          <div className="card-body" style={{ paddingTop: 8 }}>
+            <RemediationTimeline actions={a.remediation.slice(0, 5)} />
+          </div>
+        </div>
       </div>
 
-      {/* Heatmap */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6"
-      >
-        <p className="text-[10px] font-bold uppercase tracking-widest text-[#86BC25] mb-1">Clause Compliance</p>
-        <h3 className="text-base font-bold text-white mb-4">Heatmap</h3>
-        <ClauseHeatmap standards={a.standards} />
-      </motion.div>
-
-      {/* Agent Feed + Remediation */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6"
-        >
-          <p className="text-[10px] font-bold uppercase tracking-widest text-[#86BC25] mb-1">Agent Activity</p>
-          <h3 className="text-base font-bold text-white mb-4">Recent Agent Actions</h3>
-          <AgentActivityFeed />
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
-          className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6"
-        >
-          <p className="text-[10px] font-bold uppercase tracking-widest text-[#86BC25] mb-1">Remediation Roadmap</p>
-          <h3 className="text-base font-bold text-white mb-4">Priority Actions</h3>
-          <RemediationTimeline actions={a.remediation.slice(0, 5)} />
-        </motion.div>
+      {/* Clause Heatmap */}
+      <div className="card">
+        <div className="card-header">
+          <SectionHeader label="Clause Analysis" title="Compliance Heatmap" description="Clause-level compliance across all assessed standards" />
+          <button onClick={() => navigate('/analytics')} className="btn btn-ghost" style={{ fontSize: 12, flexShrink: 0 }}>
+            Full Analytics <ChevronRight size={12} />
+          </button>
+        </div>
+        <div className="card-body" style={{ paddingTop: 8 }}>
+          <ClauseHeatmap standards={a.standards} />
+        </div>
       </div>
+
+      {/* Critical Gaps Summary */}
+      {criticalGaps > 0 && (
+        <div className="card">
+          <div className="card-header">
+            <SectionHeader
+              label="Immediate Attention Required"
+              title={`Critical Gaps (${criticalGaps})`}
+              description="These findings require immediate remediation action"
+            />
+            <button onClick={() => navigate('/reports')} className="btn btn-ghost" style={{ fontSize: 12, flexShrink: 0 }}>
+              View Report <ChevronRight size={12} />
+            </button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12, padding: 16 }}>
+            {a.gaps.filter(g => g.impact === 'critical').map((gap) => (
+              <div key={gap.id} style={{
+                padding: 14,
+                borderRadius: 'var(--radius-md)',
+                background: 'var(--risk-critical-bg)',
+                border: '1px solid var(--risk-critical-border)',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                  <span className="badge badge-critical">Critical</span>
+                  <span style={{ fontSize: 11, color: 'var(--slate-500)', fontFamily: 'var(--font-mono)' }}>
+                    {gap.standardCode.replace('ISO', 'ISO ')}
+                  </span>
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--slate-800)', marginBottom: 4 }}>{gap.title}</div>
+                <div style={{ fontSize: 12, color: 'var(--slate-600)', lineHeight: 1.4 }}>{gap.description}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

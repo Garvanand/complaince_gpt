@@ -1,7 +1,5 @@
-import { motion } from 'framer-motion';
-import { useCountUp } from '../../hooks/useCountUp';
-import { useInView } from '../../hooks/useCountUp';
 import type { ReactNode } from 'react';
+import { useInView, useCountUp } from '../../hooks/useCountUp';
 
 interface KPICardProps {
   title: string;
@@ -12,6 +10,8 @@ interface KPICardProps {
   icon: ReactNode;
   color?: string;
   delay?: number;
+  trend?: { value: number; label: string };
+  hideValue?: boolean;
 }
 
 export default function KPICard({
@@ -21,41 +21,63 @@ export default function KPICard({
   prefix = '',
   subtitle,
   icon,
-  color = 'var(--color-accent-500)',
+  color = 'var(--blue-700)',
   delay = 0,
+  trend,
+  hideValue = false,
 }: KPICardProps) {
   const { ref, inView } = useInView();
-  const displayValue = useCountUp(inView ? value : 0, 2000);
+  const displayValue = useCountUp(inView ? value : 0, 1200);
 
   return (
-    <motion.div
+    <div
       ref={ref}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: delay / 1000 }}
-      className="glass-card flex flex-col gap-3 hover:scale-[1.02] transition-transform duration-300"
+      className="kpi-card"
+      style={{ animationDelay: `${delay}ms` }}
     >
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
+        <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--slate-500)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
           {title}
         </span>
-        <div
-          className="w-10 h-10 rounded-xl flex items-center justify-center"
-          style={{ background: `${color}15`, color }}
-        >
+        <div style={{
+          width: 32,
+          height: 32,
+          borderRadius: 'var(--radius-md)',
+          background: 'var(--slate-100)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color,
+          flexShrink: 0,
+        }}>
           {icon}
         </div>
       </div>
-      <div className="flex items-baseline gap-1">
-        <span className="score-display text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
+
+      {!hideValue && (
+        <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--slate-900)', lineHeight: 1, marginBottom: 6 }} className="score-display">
           {prefix}{displayValue}{suffix}
-        </span>
-      </div>
-      {subtitle && (
-        <span className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-          {subtitle}
-        </span>
+        </div>
       )}
-    </motion.div>
+
+      {subtitle && (
+        <div style={{ fontSize: 12, color: 'var(--slate-500)' }}>{subtitle}</div>
+      )}
+
+      {trend && (
+        <div style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 3,
+          marginTop: 6,
+          fontSize: 11,
+          fontWeight: 600,
+          color: trend.value >= 0 ? 'var(--status-compliant)' : 'var(--risk-critical)',
+        }}>
+          <span>{trend.value >= 0 ? '↑' : '↓'} {Math.abs(trend.value)}%</span>
+          <span style={{ color: 'var(--slate-400)', fontWeight: 400 }}>{trend.label}</span>
+        </div>
+      )}
+    </div>
   );
 }

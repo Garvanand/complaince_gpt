@@ -1,22 +1,22 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Search, PlayCircle, Plus } from 'lucide-react';
+import { Search, Plus, Bell } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import NotificationsDropdown from '../NotificationsDropdown';
 
 const pageTitles: Record<string, { title: string; subtitle: string }> = {
-  '/dashboard':  { title: 'Dashboard',      subtitle: 'Overview of your compliance posture' },
-  '/assessment': { title: 'Assessment',     subtitle: 'Upload documents and run AI analysis' },
-  '/standards':  { title: 'Standards',      subtitle: 'ISO standards library and clause explorer' },
-  '/agents':     { title: 'Agent Workflow', subtitle: 'Multi-agent orchestration visualization' },
-  '/analytics':  { title: 'Analytics',      subtitle: 'Deep compliance analytics and trends' },
-  '/reports':    { title: 'Reports',        subtitle: 'Assessment history and generated reports' },
-  '/settings':   { title: 'Settings',       subtitle: 'Configuration and preferences' },
+  '/dashboard':  { title: 'Dashboard',       subtitle: 'Compliance posture overview' },
+  '/assessment': { title: 'New Assessment',  subtitle: 'Upload documents and run AI analysis' },
+  '/standards':  { title: 'Standards',       subtitle: 'ISO standards library and clause explorer' },
+  '/agents':     { title: 'Agent Workflow',  subtitle: 'Multi-agent orchestration pipeline' },
+  '/analytics':  { title: 'Analytics',       subtitle: 'Compliance analytics and trend analysis' },
+  '/reports':    { title: 'Reports',         subtitle: 'Assessment reports and findings' },
+  '/settings':   { title: 'Settings',        subtitle: 'Configuration and preferences' },
 };
 
 export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isDemoMode, loadDemoData } = useAppStore();
+  const { isDemoMode, orgProfile, unreadCount } = useAppStore();
   const page = pageTitles[location.pathname] || { title: 'ComplianceGPT', subtitle: '' };
 
   const openSearch = () => {
@@ -26,56 +26,98 @@ export default function Navbar() {
   return (
     <header className="app-topbar">
       {/* Page title */}
-      <div className="flex-1 min-w-0">
-        <h1 className="text-white font-bold text-lg leading-tight truncate">
-          {page.title}
-        </h1>
-        <p className="text-[#4A5568] text-xs truncate">{page.subtitle}</p>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="page-title">{page.title}</div>
+        <div className="page-subtitle">{page.subtitle}</div>
       </div>
 
       {/* Search */}
       <button
         onClick={openSearch}
-        className="hidden md:flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-[#8C9BAE] hover:border-white/[0.15] transition-colors text-sm min-w-[200px]"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '6px 12px',
+          background: 'var(--slate-50)',
+          border: '1px solid var(--border-strong)',
+          borderRadius: 'var(--radius-md)',
+          color: 'var(--slate-500)',
+          fontSize: 13,
+          cursor: 'pointer',
+          minWidth: 200,
+          transition: 'border-color 120ms ease',
+        }}
+        onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--slate-400)')}
+        onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border-strong)')}
       >
-        <Search className="w-4 h-4" />
+        <Search size={14} />
         <span>Search...</span>
-        <kbd className="ml-auto bg-white/[0.08] text-[#4A5568] text-xs px-2 py-0.5 rounded font-mono">
-          Ctrl K
-        </kbd>
+        <kbd style={{
+          marginLeft: 'auto',
+          background: 'var(--slate-200)',
+          color: 'var(--slate-500)',
+          fontSize: 10,
+          padding: '2px 6px',
+          borderRadius: 3,
+          fontFamily: 'var(--font-mono)',
+          fontWeight: 500,
+        }}>⌃K</kbd>
       </button>
 
-      {/* Demo mode pill */}
+      {/* Demo pill */}
       {isDemoMode && (
-        <div className="flex items-center gap-2 bg-[#86BC25]/10 border border-[#86BC25]/25 rounded-full px-3 py-1.5">
-          <div className="w-1.5 h-1.5 rounded-full bg-[#86BC25] animate-pulse" />
-          <span className="text-[#86BC25] text-xs font-bold uppercase tracking-widest">
-            Demo
-          </span>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          padding: '4px 10px',
+          background: '#FFFBEB',
+          border: '1px solid #FDE68A',
+          borderRadius: 'var(--radius-md)',
+          fontSize: 11,
+          fontWeight: 600,
+          color: '#92400E',
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+        }}>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--risk-medium)', flexShrink: 0 }} />
+          Demo Mode
         </div>
       )}
 
-      {/* Load Demo button */}
-      {!isDemoMode && (
-        <button
-          onClick={loadDemoData}
-          className="flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] hover:border-white/[0.18] text-[#8C9BAE] hover:text-white rounded-xl px-4 py-2.5 text-sm transition-all duration-150"
-        >
-          <PlayCircle className="w-4 h-4" />
-          <span className="hidden sm:inline">Load Demo</span>
-        </button>
+      {/* Org chip */}
+      {orgProfile.companyName && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          padding: '4px 10px',
+          background: 'var(--blue-50)',
+          border: '1px solid var(--blue-100)',
+          borderRadius: 'var(--radius-md)',
+          fontSize: 12,
+          color: 'var(--blue-800)',
+          fontWeight: 500,
+          maxWidth: 160,
+        }}>
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {orgProfile.companyName}
+          </span>
+        </div>
       )}
 
       {/* Notifications */}
       <NotificationsDropdown />
 
-      {/* Start Assessment CTA */}
+      {/* New Assessment */}
       <button
         onClick={() => navigate('/assessment')}
-        className="flex items-center gap-2 bg-[#86BC25] hover:bg-[#A8D048] text-white font-bold text-sm px-5 py-2.5 rounded-xl transition-all duration-150 shadow-[0_0_20px_rgba(134,188,37,0.25)] hover:shadow-[0_0_30px_rgba(134,188,37,0.4)]"
+        className="btn btn-primary"
+        style={{ gap: 6 }}
       >
-        <Plus className="w-4 h-4" />
-        <span className="hidden sm:inline">New Assessment</span>
+        <Plus size={14} />
+        <span>New Assessment</span>
       </button>
     </header>
   );

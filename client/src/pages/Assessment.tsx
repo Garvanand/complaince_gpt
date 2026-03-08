@@ -1,18 +1,18 @@
 import { useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
   Building2, Upload, FileText, X, CheckCircle,
-  Loader2, ArrowRight, ArrowLeft, Play,
+  Loader2, ArrowRight, ArrowLeft, Play, AlertCircle,
+  ChevronDown,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAppStore } from '../store/useAppStore';
 import { demoAssessmentResult } from '../data/demo-data';
 import { useAssessmentStream } from '../hooks/useAssessmentStream';
 import apiClient from '../utils/apiClient';
-import ComplianceScoreRing from '../components/dashboard/ComplianceScoreRing';
 import type { StandardCode } from '../types';
 
+/* ── Static data ─────────────────────────────────────── */
 const industries = [
   'Financial Services', 'Healthcare', 'Technology', 'Manufacturing',
   'Energy & Utilities', 'Retail & Consumer', 'Government', 'Professional Services',
@@ -20,32 +20,118 @@ const industries = [
 
 const employeeRanges = ['1-50', '51-200', '201-500', '501-1000', '1000-5000', '5000+'];
 
-const standardOptions: { code: StandardCode; name: string; desc: string; color: string }[] = [
-  { code: 'ISO37001', name: 'ISO 37001', desc: 'Anti-Bribery Management Systems', color: '#DD6B20' },
-  { code: 'ISO37301', name: 'ISO 37301', desc: 'Compliance Management Systems', color: '#86BC25' },
-  { code: 'ISO27001', name: 'ISO 27001', desc: 'Information Security Management', color: '#00ABBD' },
-  { code: 'ISO9001', name: 'ISO 9001', desc: 'Quality Management Systems', color: '#FFD32A' },
+const jurisdictions = [
+  'Australia', 'Canada', 'European Union', 'Germany', 'Singapore',
+  'United Kingdom', 'United States', 'Other',
 ];
 
-const agentNodes: { name: string; status: 'idle' | 'processing' | 'complete' }[] = [
-  { name: 'Document Agent', status: 'idle' },
-  { name: 'Bribery Risk Agent', status: 'idle' },
-  { name: 'Governance Agent', status: 'idle' },
-  { name: 'Security Agent', status: 'idle' },
-  { name: 'Quality Agent', status: 'idle' },
-  { name: 'Gap Analysis Agent', status: 'idle' },
-  { name: 'Remediation Agent', status: 'idle' },
+const maturityOptions = [
+  { value: 'initial',     label: 'Initial (Level 1)',     desc: 'Ad-hoc processes, no formal program' },
+  { value: 'developing',  label: 'Developing (Level 2)',  desc: 'Some documented policies, inconsistent' },
+  { value: 'defined',     label: 'Defined (Level 3)',     desc: 'Formal program established and maintained' },
+  { value: 'managed',     label: 'Managed (Level 4)',     desc: 'Monitored, measured and controlled' },
+  { value: 'optimizing',  label: 'Optimizing (Level 5)', desc: 'Continuous improvement culture' },
 ];
 
+const standardOptions: { code: StandardCode; name: string; desc: string; clauses: number; scope: string }[] = [
+  { code: 'ISO37001', name: 'ISO 37001:2025', desc: 'Anti-Bribery Management Systems', clauses: 33, scope: 'Anti-bribery, gifts & hospitality, third-party risk' },
+  { code: 'ISO37301', name: 'ISO 37301:2021', desc: 'Compliance Management Systems', clauses: 28, scope: 'Governance framework, obligations register, culture' },
+  { code: 'ISO27001', name: 'ISO 27001:2022', desc: 'Information Security Management', clauses: 24, scope: 'ISMS, controls, risk treatment, incident response' },
+  { code: 'ISO9001',  name: 'ISO 9001:2015',  desc: 'Quality Management Systems',    clauses: 28, scope: 'Process control, customer focus, continual improvement' },
+];
+
+const steps = [
+  { id: 0, label: 'Organization' },
+  { id: 1, label: 'Documents' },
+  { id: 2, label: 'Standards' },
+  { id: 3, label: 'Analysis' },
+  { id: 4, label: 'Results' },
+];
+
+const agentNodes = [
+  { name: 'Document Parser',      task: 'Parsing and extracting policy content' },
+  { name: 'Clause Mapper',        task: 'Mapping content to ISO clause structure' },
+  { name: 'Gap Analyzer',         task: 'Identifying compliance gaps and findings' },
+  { name: 'Risk Scorer',          task: 'Calculating risk impact and severity' },
+  { name: 'Remediation Planner',  task: 'Generating phased remediation roadmap' },
+];
+
+/* ── Step Progress Header ─────────────────────────────── */
+function StepProgress({ step }: { step: number }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 0, marginBottom: 24 }}>
+      {steps.map((s, i) => (
+        <div key={s.id} style={{ display: 'flex', alignItems: 'center', flex: i < steps.length - 1 ? 1 : undefined }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+            <div style={{
+              width: 28,
+              height: 28,
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 12,
+              fontWeight: 700,
+              background: i < step ? 'var(--blue-800)' : i === step ? 'var(--blue-800)' : 'var(--white)',
+              color: i <= step ? 'var(--white)' : 'var(--slate-400)',
+              border: `2px solid ${i <= step ? 'var(--blue-800)' : 'var(--border-strong)'}`,
+              transition: 'all 200ms ease',
+              flexShrink: 0,
+            }}>
+              {i < step ? <CheckCircle size={14} /> : i + 1}
+            </div>
+            <span style={{
+              fontSize: 10,
+              fontWeight: i === step ? 700 : 500,
+              color: i === step ? 'var(--blue-800)' : i < step ? 'var(--slate-600)' : 'var(--slate-400)',
+              whiteSpace: 'nowrap',
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+            }}>
+              {s.label}
+            </span>
+          </div>
+          {i < steps.length - 1 && (
+            <div style={{
+              flex: 1,
+              height: 1,
+              background: i < step ? 'var(--blue-800)' : 'var(--border)',
+              margin: '0 8px',
+              marginBottom: 18,
+              transition: 'background 200ms ease',
+            }} />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ── Form Field ───────────────────────────────────────── */
+function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="form-label">
+        {label}
+        {required && <span style={{ color: 'var(--risk-critical)', marginLeft: 2 }}>*</span>}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+/* ── Main Component ───────────────────────────────────── */
 export default function Assessment() {
   const navigate = useNavigate();
   const { orgProfile, setOrgProfile, selectedStandards, setSelectedStandards, setAssessment, isDemoMode, addNotification } = useAppStore();
-  const { startStream, stopStream } = useAssessmentStream();
+  const { startStream } = useAssessmentStream();
   const [step, setStep] = useState(0);
   const [files, setFiles] = useState<File[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const [processing, setProcessing] = useState(false);
-  const [agentStates, setAgentStates] = useState(agentNodes);
+  const [agentStates, setAgentStates] = useState(
+    agentNodes.map(a => ({ ...a, status: 'idle' as 'idle' | 'processing' | 'complete', progress: 0 }))
+  );
   const [logs, setLogs] = useState<string[]>([]);
   const [done, setDone] = useState(false);
   const [finalScore, setFinalScore] = useState(62);
@@ -53,7 +139,7 @@ export default function Assessment() {
   const toggleStandard = (code: StandardCode) => {
     setSelectedStandards(
       selectedStandards.includes(code)
-        ? selectedStandards.filter((s) => s !== code)
+        ? selectedStandards.filter(s => s !== code)
         : [...selectedStandards, code]
     );
   };
@@ -62,445 +148,593 @@ export default function Assessment() {
     e.preventDefault();
     setDragOver(false);
     const newFiles = Array.from(e.dataTransfer.files).filter(
-      (f) => f.type === 'application/pdf' || f.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || f.type === 'text/plain'
+      f => ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'].includes(f.type)
     );
-    setFiles((prev) => [...prev, ...newFiles]);
+    setFiles(prev => [...prev, ...newFiles]);
   }, []);
 
-  const removeFile = (index: number) => setFiles((prev) => prev.filter((_, i) => i !== index));
-
-  const simulateProcessing = async () => {
-    setProcessing(true);
-
-    if (!isDemoMode) {
-      // Real API mode: upload files, start assessment, stream SSE
-      try {
-        // Upload files first
-        let filePaths: string[] = [];
-        if (files.length > 0) {
-          const formData = new FormData();
-          files.forEach((f) => formData.append('files', f));
-          const uploadRes = await apiClient.post('/upload', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-          });
-          filePaths = uploadRes.data.files.map((f: any) => f.savedPath);
-        }
-
-        // Start assessment
-        const res = await apiClient.post('/assessment/start', {
-          filePaths,
-          standards: selectedStandards,
-          orgProfile: {
-            company: orgProfile.companyName,
-            industry: orgProfile.industrySector,
-            employees: orgProfile.employeeCount,
-            scope: orgProfile.assessmentScope,
-          },
-        });
-
-        const assessmentId = res.data.assessmentId;
-
-        // Stream SSE events
-        startStream(
-          assessmentId,
-          (event) => {
-            if (event.type === 'agent-start' && event.agent) {
-              setAgentStates((prev) =>
-                prev.map((a) =>
-                  a.name === event.agent ? { ...a, status: 'processing' as const } : a
-                )
-              );
-            }
-            if (event.type === 'agent-complete' && event.agent) {
-              setAgentStates((prev) =>
-                prev.map((a) =>
-                  a.name === event.agent ? { ...a, status: 'complete' as const } : a
-                )
-              );
-            }
-            if (event.type === 'log' && event.message) {
-              setLogs((prev) => [...prev, `[${new Date().toLocaleTimeString()}] ${event.message}`]);
-            }
-          },
-          (result) => {
-            setAgentStates((prev) => prev.map((a) => ({ ...a, status: 'complete' as const })));
-            setFinalScore(result.overallScore || 62);
-            setProcessing(false);
-            setDone(true);
-            toast.success('Assessment complete!');
-            addNotification({ type: 'success', title: 'Assessment Complete', message: `Overall score: ${result.overallScore}%` });
-          },
-          (error) => {
-            setProcessing(false);
-            toast.error(`Assessment failed: ${error}`);
-            addNotification({ type: 'error', title: 'Assessment Failed', message: error });
-          }
-        );
-      } catch {
-        setProcessing(false);
-        toast.error('Failed to start assessment. Falling back to demo mode.');
-        runDemoSimulation();
-      }
-      return;
-    }
-
-    // Demo mode simulation
-    runDemoSimulation();
-  };
+  const removeFile = (i: number) => setFiles(prev => prev.filter((_, idx) => idx !== i));
 
   const runDemoSimulation = async () => {
     setProcessing(true);
-    const agentSequence = [
-      { idx: 0, msg: '🔍 Document Agent — Parsing uploaded policy documents...' },
-      { idx: 0, msg: '🔍 Document Agent — Extracted 42 policy sections, 18 controls identified' },
-      { idx: 1, msg: '⚖️ Bribery Risk Agent — Assessing ISO 37001 clauses...' },
-      { idx: 2, msg: '📋 Governance Agent — Evaluating ISO 37301 compliance...' },
-      { idx: 3, msg: '🔒 Security Agent — Analyzing ISO 27001 controls...' },
-      { idx: 4, msg: '✅ Quality Agent — Reviewing ISO 9001 processes...' },
-      { idx: 1, msg: '⚖️ Bribery Risk Agent — Scored 16 clauses: 54% overall (Level 2)' },
-      { idx: 2, msg: '📋 Governance Agent — Scored 12 clauses: 61% overall (Level 3)' },
-      { idx: 3, msg: '🔒 Security Agent — Scored 11 clauses: 58% overall (Level 2)' },
-      { idx: 4, msg: '✅ Quality Agent — Scored 12 clauses: 74% overall (Level 3)' },
-      { idx: 5, msg: '📊 Gap Analysis Agent — Analyzing cross-standard gaps...' },
-      { idx: 5, msg: '📊 Gap Analysis Agent — Identified 12 gaps, 5 critical across 4 standards' },
-      { idx: 6, msg: '🛠️ Remediation Agent — Building phased roadmap...' },
-      { idx: 6, msg: '🛠️ Remediation Agent — Generated 9-action roadmap across 3 phases' },
+    const sequence = [
+      { idx: 0, msg: 'Document Parser — Extracting content from uploaded policy documents...' },
+      { idx: 0, msg: 'Document Parser — Identified 42 policy sections, 18 control categories' },
+      { idx: 1, msg: 'Clause Mapper — Aligning content against ISO clause structure...' },
+      { idx: 1, msg: 'Clause Mapper — Mapped 113 clauses across 4 standards' },
+      { idx: 2, msg: 'Gap Analyzer — Running cross-standard gap identification...' },
+      { idx: 2, msg: 'Gap Analyzer — Identified 12 compliance gaps, 5 critical severity' },
+      { idx: 3, msg: 'Risk Scorer — Calculating impact and effort scoring...' },
+      { idx: 3, msg: 'Risk Scorer — Risk matrix complete: 5 critical, 4 high, 3 medium' },
+      { idx: 4, msg: 'Remediation Planner — Generating phased remediation roadmap...' },
+      { idx: 4, msg: 'Remediation Planner — 9-action roadmap generated across 3 phases' },
     ];
 
-    for (let i = 0; i < agentSequence.length; i++) {
-      await new Promise((r) => setTimeout(r, 800));
-      const { idx, msg } = agentSequence[i];
-
-      setAgentStates((prev) =>
-        prev.map((a, j) => {
-          if (j === idx) return { ...a, status: 'processing' as const };
-          if (j < idx && prev[j].status === 'processing') return { ...a, status: 'complete' as const };
-          return a;
-        })
-      );
-      setLogs((prev) => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
+    for (let i = 0; i < sequence.length; i++) {
+      await new Promise(r => setTimeout(r, 750));
+      const { idx, msg } = sequence[i];
+      setAgentStates(prev => prev.map((a, j) => {
+        if (j === idx) return { ...a, status: 'processing' as const };
+        if (j < idx && prev[j].status !== 'complete') return { ...a, status: 'complete' as const };
+        return a;
+      }));
+      setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
     }
 
-    // Mark all done
-    setAgentStates((prev) => prev.map((a) => ({ ...a, status: 'complete' as const })));
-    setLogs((prev) => [...prev, `[${new Date().toLocaleTimeString()}] ✓ Assessment Complete — Overall Score: 62%`]);
+    setAgentStates(prev => prev.map(a => ({ ...a, status: 'complete' as const })));
+    setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Assessment complete — Overall Score: 62%`]);
     setProcessing(false);
     setDone(true);
   };
 
+  const startAnalysis = async () => {
+    setProcessing(true);
+    if (!isDemoMode) {
+      try {
+        let filePaths: string[] = [];
+        if (files.length > 0) {
+          const formData = new FormData();
+          files.forEach(f => formData.append('files', f));
+          const uploadRes = await apiClient.post('/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+          filePaths = uploadRes.data.files.map((f: { savedPath: string }) => f.savedPath);
+        }
+        const res = await apiClient.post('/assessment/start', {
+          filePaths,
+          standards: selectedStandards,
+          orgProfile: { company: orgProfile.companyName, industry: orgProfile.industrySector, employees: orgProfile.employeeCount, scope: orgProfile.assessmentScope },
+        });
+        startStream(
+          res.data.assessmentId,
+          (event) => {
+            if (event.type === 'agent-start' && event.agent) {
+              setAgentStates(prev => prev.map(a => a.name === event.agent ? { ...a, status: 'processing' as const } : a));
+            }
+            if (event.type === 'agent-complete' && event.agent) {
+              setAgentStates(prev => prev.map(a => a.name === event.agent ? { ...a, status: 'complete' as const } : a));
+            }
+            if (event.type === 'log' && event.message) {
+              setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${event.message}`]);
+            }
+          },
+          (result) => {
+            setAgentStates(prev => prev.map(a => ({ ...a, status: 'complete' as const })));
+            setFinalScore(result.overallScore || 62);
+            setProcessing(false);
+            setDone(true);
+            toast.success('Assessment complete');
+            addNotification({ type: 'success', title: 'Assessment Complete', message: `Overall score: ${result.overallScore}%` });
+          },
+          (error) => {
+            setProcessing(false);
+            toast.error(`Assessment failed: ${error}. Running demo simulation.`);
+            runDemoSimulation();
+          }
+        );
+      } catch {
+        setProcessing(false);
+        runDemoSimulation();
+      }
+      return;
+    }
+    runDemoSimulation();
+  };
+
   const finishAssessment = () => {
-    setAssessment({
-      ...demoAssessmentResult,
-      orgProfile: { ...orgProfile },
-      timestamp: new Date().toISOString(),
-      overallScore: finalScore,
-    });
-    addNotification({ type: 'success', title: 'Assessment Saved', message: `Score: ${finalScore}% — View your dashboard for full results.` });
+    setAssessment({ ...demoAssessmentResult, orgProfile: { ...orgProfile }, timestamp: new Date().toISOString(), overallScore: finalScore });
+    addNotification({ type: 'success', title: 'Assessment Saved', message: `Score: ${finalScore}%` });
     navigate('/dashboard');
   };
 
   const canProceed = () => {
-    if (step === 0) return orgProfile.companyName && orgProfile.industrySector && selectedStandards.length > 0;
+    if (step === 0) return !!(orgProfile.companyName && orgProfile.industrySector);
     if (step === 1) return files.length > 0;
+    if (step === 2) return selectedStandards.length > 0;
+    if (step === 3) return done;
     return true;
   };
 
+  const scoreColor = finalScore >= 75 ? 'var(--status-compliant)' : finalScore >= 50 ? 'var(--risk-medium)' : 'var(--risk-critical)';
+  const scoreLabel = finalScore >= 75 ? 'Compliant' : finalScore >= 50 ? 'Partially Compliant' : 'Non-Compliant';
+
   return (
-    <div className="max-w-4xl mx-auto">
-      {/* Progress steps */}
-      <div className="flex items-center justify-center gap-2 mb-10">
-        {['Organization', 'Documents', 'AI Analysis', 'Results'].map((label, i) => (
-          <div key={label} className="flex items-center gap-2">
-            <div
-              className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all"
-              style={{
-                background: i <= step ? 'linear-gradient(135deg, var(--color-accent-500), var(--color-accent-400))' : 'var(--color-primary-700)',
-                color: i <= step ? 'var(--color-primary-900)' : 'var(--color-text-muted)',
-              }}
-            >
-              {i < step ? <CheckCircle size={16} /> : i + 1}
-            </div>
-            <span className="text-xs font-medium hidden sm:inline" style={{ color: i <= step ? 'var(--color-text-primary)' : 'var(--color-text-muted)' }}>
-              {label}
-            </span>
-            {i < 3 && <div className="w-8 h-px" style={{ background: i < step ? 'var(--color-accent-500)' : 'var(--color-primary-600)' }} />}
-          </div>
-        ))}
-      </div>
+    <div style={{ maxWidth: 800, margin: '0 auto' }}>
+      <StepProgress step={step} />
 
-      <AnimatePresence mode="wait">
-        {/* Step 0: Org Profile */}
-        {step === 0 && (
-          <motion.div key="step0" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-8">
-            <div className="glass-card space-y-6">
+      {/* Step 0 — Organization Setup */}
+      {step === 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div className="card">
+            <div className="card-header">
               <div>
-                <span className="section-label">Step 1</span>
-                <h2 className="font-display text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Organization Profile</h2>
+                <span className="section-label">Step 1 of 5</span>
+                <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--slate-900)' }}>Organization Profile</h2>
               </div>
-
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <label className="text-sm font-medium mb-2 block" style={{ color: 'var(--color-text-secondary)' }}>Company Name</label>
-                  <div className="flex items-center gap-2 px-4 py-3 rounded-xl" style={{ background: 'var(--color-primary-700)', border: '1px solid var(--glass-border)' }}>
-                    <Building2 size={16} style={{ color: 'var(--color-text-muted)' }} />
+            </div>
+            <div className="card-body">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <Field label="Legal Entity Name" required>
+                  <div style={{ position: 'relative' }}>
+                    <Building2 size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--slate-400)' }} />
                     <input
                       value={orgProfile.companyName}
-                      onChange={(e) => setOrgProfile({ companyName: e.target.value })}
-                      placeholder="Acme Corp"
-                      className="bg-transparent border-none outline-none text-sm flex-1"
-                      style={{ color: 'var(--color-text-primary)' }}
+                      onChange={e => setOrgProfile({ companyName: e.target.value })}
+                      placeholder="Acme Corporation"
+                      className="form-input"
+                      style={{ paddingLeft: 30 }}
                     />
                   </div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium mb-2 block" style={{ color: 'var(--color-text-secondary)' }}>Industry Sector</label>
-                  <select
-                    value={orgProfile.industrySector}
-                    onChange={(e) => setOrgProfile({ industrySector: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-                    style={{ background: 'var(--color-primary-700)', border: '1px solid var(--glass-border)', color: 'var(--color-text-primary)' }}
-                  >
-                    <option value="">Select industry</option>
-                    {industries.map((i) => <option key={i} value={i}>{i}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-medium mb-2 block" style={{ color: 'var(--color-text-secondary)' }}>Employee Count</label>
-                  <select
-                    value={orgProfile.employeeCount}
-                    onChange={(e) => setOrgProfile({ employeeCount: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-                    style={{ background: 'var(--color-primary-700)', border: '1px solid var(--glass-border)', color: 'var(--color-text-primary)' }}
-                  >
-                    <option value="">Select range</option>
-                    {employeeRanges.map((r) => <option key={r} value={r}>{r}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-medium mb-2 block" style={{ color: 'var(--color-text-secondary)' }}>Assessment Scope</label>
-                  <div className="flex gap-3">
-                    {(['full', 'quick', 'targeted'] as const).map((scope) => (
-                      <button
-                        key={scope}
-                        onClick={() => setOrgProfile({ assessmentScope: scope })}
-                        className="flex-1 py-3 rounded-xl text-sm font-medium transition-all capitalize"
-                        style={{
-                          background: orgProfile.assessmentScope === scope ? 'rgba(134, 188, 37, 0.15)' : 'var(--color-primary-700)',
-                          border: `1px solid ${orgProfile.assessmentScope === scope ? 'var(--color-accent-500)' : 'var(--glass-border)'}`,
-                          color: orgProfile.assessmentScope === scope ? 'var(--color-accent-400)' : 'var(--color-text-secondary)',
-                        }}
-                      >
-                        {scope}
-                      </button>
-                    ))}
+                </Field>
+
+                <Field label="Industry Sector" required>
+                  <div style={{ position: 'relative' }}>
+                    <select
+                      value={orgProfile.industrySector}
+                      onChange={e => setOrgProfile({ industrySector: e.target.value })}
+                      className="form-select"
+                    >
+                      <option value="">Select sector...</option>
+                      {industries.map(i => <option key={i} value={i}>{i}</option>)}
+                    </select>
+                    <ChevronDown size={13} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--slate-400)', pointerEvents: 'none' }} />
                   </div>
+                </Field>
+
+                <Field label="Employee Count">
+                  <div style={{ position: 'relative' }}>
+                    <select
+                      value={orgProfile.employeeCount}
+                      onChange={e => setOrgProfile({ employeeCount: e.target.value })}
+                      className="form-select"
+                    >
+                      <option value="">Select range...</option>
+                      {employeeRanges.map(r => <option key={r} value={r}>{r}</option>)}
+                    </select>
+                    <ChevronDown size={13} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--slate-400)', pointerEvents: 'none' }} />
+                  </div>
+                </Field>
+
+                <Field label="Jurisdiction">
+                  <div style={{ position: 'relative' }}>
+                    <select
+                      className="form-select"
+                    >
+                      <option value="">Select jurisdiction...</option>
+                      {jurisdictions.map(j => <option key={j} value={j}>{j}</option>)}
+                    </select>
+                    <ChevronDown size={13} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--slate-400)', pointerEvents: 'none' }} />
+                  </div>
+                </Field>
+
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <Field label="Current Compliance Maturity">
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8, marginTop: 4 }}>
+                      {maturityOptions.map(m => (
+                        <button
+                          key={m.value}
+                          type="button"
+                          onClick={() => setOrgProfile({ assessmentScope: m.value })}
+                          style={{
+                            padding: '10px 8px',
+                            borderRadius: 'var(--radius-md)',
+                            border: `2px solid ${orgProfile.assessmentScope === m.value ? 'var(--blue-700)' : 'var(--border)'}`,
+                            background: orgProfile.assessmentScope === m.value ? 'var(--blue-50)' : 'var(--white)',
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                            transition: 'all 120ms ease',
+                          }}
+                        >
+                          <div style={{ fontSize: 12, fontWeight: 700, color: orgProfile.assessmentScope === m.value ? 'var(--blue-800)' : 'var(--slate-700)', marginBottom: 2 }}>
+                            {m.label}
+                          </div>
+                          <div style={{ fontSize: 10, color: 'var(--slate-500)', lineHeight: 1.3 }}>{m.desc}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </Field>
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
 
-            <div className="glass-card space-y-4">
-              <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text-primary)' }}>Select Standards</h3>
-              <div className="grid md:grid-cols-2 gap-4">
-                {standardOptions.map((s) => (
-                  <button
-                    key={s.code}
-                    onClick={() => toggleStandard(s.code)}
-                    className="p-4 rounded-xl text-left transition-all"
-                    style={{
-                      background: selectedStandards.includes(s.code) ? `${s.color}10` : 'var(--color-primary-700)',
-                      border: `2px solid ${selectedStandards.includes(s.code) ? s.color : 'var(--glass-border)'}`,
-                    }}
-                  >
-                    <div className="text-lg font-bold" style={{ color: s.color }}>{s.name}</div>
-                    <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{s.desc}</div>
-                  </button>
+      {/* Step 1 — Document Upload */}
+      {step === 1 && (
+        <div className="card">
+          <div className="card-header">
+            <div>
+              <span className="section-label">Step 2 of 5</span>
+              <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--slate-900)' }}>Document Ingestion</h2>
+            </div>
+          </div>
+          <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <p style={{ fontSize: 13, color: 'var(--slate-600)' }}>
+              Upload policy documents, procedures, and governance frameworks for analysis. Supported formats: PDF, DOCX, TXT.
+            </p>
+
+            {/* Drop zone */}
+            <div
+              onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={handleDrop}
+              onClick={() => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.multiple = true;
+                input.accept = '.pdf,.docx,.txt';
+                input.onchange = e => {
+                  const t = e.target as HTMLInputElement;
+                  if (t.files) setFiles(prev => [...prev, ...Array.from(t.files!)]);
+                };
+                input.click();
+              }}
+              style={{
+                border: `2px dashed ${dragOver ? 'var(--blue-500)' : 'var(--border-strong)'}`,
+                borderRadius: 'var(--radius-lg)',
+                padding: '32px 24px',
+                textAlign: 'center',
+                cursor: 'pointer',
+                background: dragOver ? 'var(--blue-50)' : 'var(--slate-50)',
+                transition: 'all 150ms ease',
+              }}
+            >
+              <Upload size={28} style={{ color: dragOver ? 'var(--blue-700)' : 'var(--slate-400)', marginBottom: 12 }} />
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--slate-700)', marginBottom: 4 }}>
+                Drag files here or click to browse
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--slate-500)' }}>
+                PDF, DOCX, TXT — Documents are processed securely and not stored
+              </div>
+            </div>
+
+            {/* File list */}
+            {files.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--slate-500)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  {files.length} Document{files.length !== 1 ? 's' : ''} Queued
+                </div>
+                {files.map((f, i) => (
+                  <div key={i} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '10px 14px',
+                    background: 'var(--white)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius-md)',
+                  }}>
+                    <FileText size={16} style={{ color: 'var(--blue-600)', flexShrink: 0 }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--slate-800)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</div>
+                      <div style={{ fontSize: 11, color: 'var(--slate-500)' }}>{(f.size / 1024).toFixed(1)} KB • {f.name.split('.').pop()?.toUpperCase()}</div>
+                    </div>
+                    <span className="badge badge-compliant" style={{ flexShrink: 0 }}>Ready</span>
+                    <button
+                      onClick={e => { e.stopPropagation(); removeFile(i); }}
+                      style={{ padding: 4, borderRadius: 'var(--radius-sm)', background: 'transparent', border: 'none', color: 'var(--slate-400)', cursor: 'pointer', flexShrink: 0 }}
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
                 ))}
               </div>
+            )}
+
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '10px 14px',
+              background: 'var(--blue-50)',
+              border: '1px solid var(--blue-100)',
+              borderRadius: 'var(--radius-md)',
+              fontSize: 12,
+              color: 'var(--blue-800)',
+            }}>
+              <AlertCircle size={14} style={{ flexShrink: 0 }} />
+              If no documents are uploaded, the assessment will run in demo simulation mode using sample data.
             </div>
-          </motion.div>
-        )}
+          </div>
+        </div>
+      )}
 
-        {/* Step 1: Upload */}
-        {step === 1 && (
-          <motion.div key="step1" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }}>
-            <div className="glass-card space-y-6">
-              <div>
-                <span className="section-label">Step 2</span>
-                <h2 className="font-display text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Upload Policy Documents</h2>
-              </div>
-
-              <div
-                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-                onDragLeave={() => setDragOver(false)}
-                onDrop={handleDrop}
-                className="border-2 border-dashed rounded-2xl p-12 text-center transition-all cursor-pointer"
-                style={{
-                  borderColor: dragOver ? 'var(--color-accent-500)' : 'var(--color-primary-600)',
-                  background: dragOver ? 'rgba(134, 188, 37, 0.05)' : 'transparent',
-                }}
-                onClick={() => {
-                  const input = document.createElement('input');
-                  input.type = 'file';
-                  input.multiple = true;
-                  input.accept = '.pdf,.docx,.txt';
-                  input.onchange = (e) => {
-                    const target = e.target as HTMLInputElement;
-                    if (target.files) setFiles((prev) => [...prev, ...Array.from(target.files!)]);
-                  };
-                  input.click();
-                }}
-              >
-                <Upload size={40} className="mx-auto mb-4" style={{ color: dragOver ? 'var(--color-accent-500)' : 'var(--color-text-muted)' }} />
-                <p className="text-base font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>
-                  Drag & drop or click to upload
-                </p>
-                <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
-                  PDF, DOCX, TXT • Your documents are analyzed securely and never stored
-                </p>
-              </div>
-
-              {files.length > 0 && (
-                <div className="space-y-2">
-                  {files.map((f, i) => (
-                    <div key={i} className="flex items-center justify-between p-3 rounded-xl" style={{ background: 'var(--color-primary-700)' }}>
-                      <div className="flex items-center gap-3">
-                        <FileText size={18} style={{ color: 'var(--color-accent-500)' }} />
-                        <div>
-                          <div className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>{f.name}</div>
-                          <div className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{(f.size / 1024).toFixed(1)} KB</div>
-                        </div>
-                      </div>
-                      <button onClick={() => removeFile(i)} className="p-1 rounded hover:bg-[var(--color-primary-600)]">
-                        <X size={16} style={{ color: 'var(--color-text-muted)' }} />
-                      </button>
+      {/* Step 2 — Standards Selection */}
+      {step === 2 && (
+        <div className="card">
+          <div className="card-header">
+            <div>
+              <span className="section-label">Step 3 of 5</span>
+              <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--slate-900)' }}>Standards Selection</h2>
+            </div>
+          </div>
+          <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <p style={{ fontSize: 13, color: 'var(--slate-600)', marginBottom: 4 }}>
+              Select the ISO standards to assess. Each standard is evaluated independently with cross-standard gap analysis.
+            </p>
+            {standardOptions.map(s => {
+              const selected = selectedStandards.includes(s.code);
+              return (
+                <button
+                  key={s.code}
+                  onClick={() => toggleStandard(s.code)}
+                  type="button"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: 16,
+                    padding: '16px',
+                    borderRadius: 'var(--radius-lg)',
+                    border: `2px solid ${selected ? 'var(--blue-700)' : 'var(--border)'}`,
+                    background: selected ? 'var(--blue-50)' : 'var(--white)',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 120ms ease',
+                    width: '100%',
+                  }}
+                >
+                  <div style={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: 4,
+                    border: `2px solid ${selected ? 'var(--blue-700)' : 'var(--slate-400)'}`,
+                    background: selected ? 'var(--blue-800)' : 'transparent',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    marginTop: 1,
+                  }}>
+                    {selected && <CheckCircle size={12} color="white" />}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 3 }}>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: selected ? 'var(--blue-900)' : 'var(--slate-800)', fontFamily: 'var(--font-mono)' }}>
+                        {s.name}
+                      </span>
+                      <span style={{ fontSize: 12, color: 'var(--slate-600)', fontFamily: 'var(--font-sans)' }}>{s.desc}</span>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
+                    <div style={{ fontSize: 11, color: 'var(--slate-500)' }}>
+                      {s.clauses} clauses · {s.scope}
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <span className="badge badge-pending">{s.clauses} clauses</span>
+                  </div>
+                </button>
+              );
+            })}
 
-        {/* Step 2: Processing */}
-        {step === 2 && (
-          <motion.div key="step2" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }}>
-            <div className="glass-card space-y-6">
-              <div className="text-center">
-                <span className="section-label">Step 3</span>
-                <h2 className="font-display text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>AI Agent Orchestration</h2>
+            {selectedStandards.length === 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: '#FEF2F2', border: '1px solid var(--risk-critical-border)', borderRadius: 'var(--radius-md)', fontSize: 12, color: 'var(--risk-critical)' }}>
+                <AlertCircle size={14} />
+                Select at least one ISO standard to proceed.
               </div>
+            )}
+          </div>
+        </div>
+      )}
 
-              {/* Agent nodes */}
-              <div className="flex flex-wrap justify-center gap-4">
+      {/* Step 3 — AI Analysis */}
+      {step === 3 && (
+        <div className="card">
+          <div className="card-header">
+            <div>
+              <span className="section-label">Step 4 of 5</span>
+              <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--slate-900)' }}>AI Agent Analysis</h2>
+            </div>
+          </div>
+          <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+            {/* Agent Status Table */}
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--slate-500)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>
+                Agent Pipeline Status
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {agentStates.map((agent, i) => (
-                  <div key={agent.name} className="flex flex-col items-center gap-2">
-                    <div
-                      className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all"
-                      style={{
-                        background: agent.status === 'complete' ? 'rgba(134, 188, 37, 0.2)' : agent.status === 'processing' ? 'rgba(134, 188, 37, 0.1)' : 'var(--color-primary-700)',
-                        border: `2px solid ${agent.status === 'complete' ? 'var(--color-accent-500)' : agent.status === 'processing' ? 'var(--color-accent-500)' : 'var(--color-primary-600)'}`,
-                        animation: agent.status === 'processing' ? 'pulse-glow 2s ease-in-out infinite' : 'none',
-                      }}
-                    >
+                  <div key={agent.name} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '12px 14px',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--border)',
+                    background: agent.status === 'complete' ? 'var(--status-compliant-bg)' : agent.status === 'processing' ? 'var(--blue-50)' : 'var(--white)',
+                    transition: 'all 200ms ease',
+                  }}>
+                    <div style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: '50%',
+                      background: agent.status === 'complete' ? 'var(--status-compliant-bg)' : agent.status === 'processing' ? 'var(--blue-100)' : 'var(--slate-100)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}>
                       {agent.status === 'complete' ? (
-                        <CheckCircle size={22} style={{ color: 'var(--color-accent-500)' }} />
+                        <CheckCircle size={14} color="var(--status-compliant)" />
                       ) : agent.status === 'processing' ? (
-                        <Loader2 size={22} className="animate-spin" style={{ color: 'var(--color-accent-400)' }} />
+                        <Loader2 size={14} color="var(--blue-700)" className="animate-spin" />
                       ) : (
-                        <span className="text-xs font-bold" style={{ color: 'var(--color-text-muted)' }}>{i + 1}</span>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--slate-400)' }}>{i + 1}</span>
                       )}
                     </div>
-                    <span className="text-[10px] font-medium text-center max-w-[80px]" style={{ color: agent.status === 'idle' ? 'var(--color-text-muted)' : 'var(--color-text-secondary)' }}>
-                      {agent.name}
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--slate-800)' }}>{agent.name}</div>
+                      <div style={{ fontSize: 11, color: 'var(--slate-500)' }}>
+                        {agent.status === 'processing' ? agent.task : agent.status === 'complete' ? 'Completed' : 'Waiting'}
+                      </div>
+                    </div>
+                    <span style={{
+                      fontSize: 10,
+                      fontWeight: 600,
+                      padding: '2px 8px',
+                      borderRadius: 3,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
+                      background: agent.status === 'complete' ? 'var(--status-compliant-bg)' : agent.status === 'processing' ? 'var(--blue-100)' : 'var(--slate-100)',
+                      color: agent.status === 'complete' ? 'var(--status-compliant)' : agent.status === 'processing' ? 'var(--blue-800)' : 'var(--slate-500)',
+                    }}>
+                      {agent.status === 'processing' ? 'Active' : agent.status === 'complete' ? 'Done' : 'Idle'}
                     </span>
                   </div>
                 ))}
               </div>
+            </div>
 
-              {!processing && !done && (
-                <div className="text-center">
-                  <button onClick={simulateProcessing} className="btn-glow flex items-center gap-2 mx-auto text-lg px-8 py-4">
-                    <Play size={20} /> Start Analysis
-                  </button>
+            {/* Start button */}
+            {!processing && !done && (
+              <div style={{ textAlign: 'center' }}>
+                <button onClick={startAnalysis} className="btn btn-primary" style={{ padding: '10px 28px', fontSize: 14 }}>
+                  <Play size={15} /> Start Analysis
+                </button>
+              </div>
+            )}
+
+            {/* Log console */}
+            {logs.length > 0 && (
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--slate-500)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
+                  Analysis Log
                 </div>
-              )}
-
-              {/* Log panel */}
-              {logs.length > 0 && (
                 <div
-                  className="rounded-xl p-4 max-h-[280px] overflow-y-auto font-mono text-xs space-y-1"
-                  style={{ background: 'var(--color-primary-900)', border: '1px solid var(--glass-border)' }}
+                  className="custom-scrollbar"
+                  style={{
+                    background: 'var(--slate-900)',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '12px 16px',
+                    maxHeight: 220,
+                    overflowY: 'auto',
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: 11,
+                    lineHeight: 1.6,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 3,
+                  }}
                 >
                   {logs.map((log, i) => (
-                    <div key={i} style={{ color: log.includes('✓') ? 'var(--color-accent-500)' : log.includes('critical') || log.includes('Critical') ? 'var(--color-risk-critical)' : 'var(--color-text-secondary)' }}>
+                    <div key={i} style={{
+                      color: log.includes('complete') || log.includes('Complete') ? '#86EFAC'
+                        : log.includes('critical') || log.includes('Critical') || log.includes('Error') ? '#FCA5A5'
+                        : '#94A3B8',
+                    }}>
                       {log}
                     </div>
                   ))}
                   {processing && (
-                    <div className="flex items-center gap-2" style={{ color: 'var(--color-accent-400)' }}>
-                      <Loader2 size={12} className="animate-spin" /> Processing...
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#93C5FD' }}>
+                      <Loader2 size={10} className="animate-spin" /> Processing...
                     </div>
                   )}
                 </div>
-              )}
-            </div>
-          </motion.div>
-        )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
-        {/* Step 3: Results */}
-        {step === 3 && (
-          <motion.div key="step3" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }}>
-            <div className="glass-card text-center space-y-6">
+      {/* Step 4 — Results */}
+      {step === 4 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div className="card">
+            <div className="card-header">
               <div>
-                <span className="section-label">Step 4</span>
-                <h2 className="font-display text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Assessment Complete</h2>
+                <span className="section-label">Step 5 of 5</span>
+                <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--slate-900)' }}>Assessment Results</h2>
               </div>
+              <span className="badge badge-compliant">Complete</span>
+            </div>
+            <div className="card-body">
+              {/* Score summary */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 24, alignItems: 'center' }}>
+                <div style={{ textAlign: 'center', padding: 24, background: 'var(--slate-50)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
+                  <div style={{ fontSize: 48, fontWeight: 800, color: scoreColor, lineHeight: 1 }} className="score-display">{finalScore}%</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: scoreColor, marginTop: 6 }}>{scoreLabel}</div>
+                  <div style={{ fontSize: 11, color: 'var(--slate-500)', marginTop: 2 }}>Overall Compliance Score</div>
+                </div>
 
-              <ComplianceScoreRing score={finalScore} maturityLevel={finalScore >= 75 ? 4 : finalScore >= 60 ? 3 : 2} size={180} delay={300} />
-
-              <div className="grid md:grid-cols-3 gap-4 max-w-xl mx-auto">
-                {[
-                  { label: 'Critical Gaps', value: '5', color: 'var(--color-risk-critical)' },
-                  { label: 'Standards Assessed', value: '4', color: 'var(--color-accent-500)' },
-                  { label: 'Remediation Actions', value: '9', color: 'var(--color-risk-medium)' },
-                ].map((stat) => (
-                  <div key={stat.label} className="p-4 rounded-xl" style={{ background: 'var(--color-primary-700)' }}>
-                    <div className="score-display text-2xl font-bold" style={{ color: stat.color }}>{stat.value}</div>
-                    <div className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>{stat.label}</div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex items-center gap-4 justify-center">
-                <button onClick={finishAssessment} className="btn-glow flex items-center gap-2">
-                  View Dashboard <ArrowRight size={18} />
-                </button>
-                <button onClick={() => navigate('/reports')} className="btn-ghost flex items-center gap-2">
-                  Generate Report
-                </button>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  {[
+                    { label: 'Critical Gaps', value: '5', color: 'var(--risk-critical)' },
+                    { label: 'High Gaps', value: '4', color: 'var(--risk-high)' },
+                    { label: 'Standards Assessed', value: String(selectedStandards.length || 4), color: 'var(--blue-700)' },
+                    { label: 'Remediation Actions', value: '9', color: 'var(--status-partial)' },
+                  ].map(stat => (
+                    <div key={stat.label} style={{
+                      padding: '14px',
+                      borderRadius: 'var(--radius-md)',
+                      border: '1px solid var(--border)',
+                      background: 'var(--white)',
+                    }}>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: stat.color }} className="score-display">{stat.value}</div>
+                      <div style={{ fontSize: 11, color: 'var(--slate-500)', marginTop: 2 }}>{stat.label}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <div className="card-footer" style={{ display: 'flex', gap: 10 }}>
+              <button onClick={finishAssessment} className="btn btn-primary">
+                Open Dashboard <ArrowRight size={13} />
+              </button>
+              <button onClick={() => navigate('/reports')} className="btn btn-secondary">
+                View Full Report
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Navigation */}
-      <div className="flex items-center justify-between mt-8">
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginTop: 20,
+        padding: '14px 0',
+        borderTop: '1px solid var(--border)',
+      }}>
         <button
           onClick={() => setStep(Math.max(0, step - 1))}
           disabled={step === 0}
-          className="btn-ghost flex items-center gap-2 disabled:opacity-30"
+          className="btn btn-ghost"
         >
-          <ArrowLeft size={18} /> Back
+          <ArrowLeft size={14} /> Back
         </button>
-        {step < 3 && (
-          <button
-            onClick={() => setStep(Math.min(3, step + 1))}
-            disabled={!canProceed() || (step === 2 && !done)}
-            className="btn-glow flex items-center gap-2 disabled:opacity-30"
-          >
-            {step === 2 ? 'View Results' : 'Continue'} <ArrowRight size={18} />
-          </button>
+
+        {step < 4 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 12, color: 'var(--slate-500)' }}>Step {step + 1} of {steps.length}</span>
+            <button
+              onClick={() => setStep(s => Math.min(4, s + 1))}
+              disabled={!canProceed() || (step === 3 && !done)}
+              className="btn btn-primary"
+            >
+              {step === 3 ? 'View Results' : 'Continue'} <ArrowRight size={14} />
+            </button>
+          </div>
         )}
       </div>
     </div>
