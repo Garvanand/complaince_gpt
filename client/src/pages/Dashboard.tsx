@@ -12,6 +12,7 @@ import KPICard from '../components/dashboard/KPICard';
 import ClauseHeatmap from '../components/analytics/ClauseHeatmap';
 import RemediationTimeline from '../components/reports/RemediationTimeline';
 import GapPriorityMatrix from '../components/analytics/GapPriorityMatrix';
+import EvidenceValidationPanel from '../components/reports/EvidenceValidationPanel';
 import { StatusBadge, ScoreBadge, SectionHeader, EmptyState } from '../components/ui/EnterpriseComponents';
 import { useAppStore } from '../store/useAppStore';
 import { formatDate } from '../utils/helpers';
@@ -356,6 +357,21 @@ export default function Dashboard() {
           <ClauseHeatmap standards={a.standards} />
         </div>
       </div>
+
+      {/* Evidence Validation */}
+      {a.evidenceValidation && a.evidenceValidation.evidenceItems.length > 0 && (
+        <div className="card">
+          <div className="card-header">
+            <SectionHeader label="Evidence Intelligence" title="Evidence Validation" description="AI-powered validation of evidence sufficiency, quality, and cross-standard reuse" />
+            <button onClick={() => navigate('/reports')} className="btn btn-ghost" style={{ fontSize: 12, flexShrink: 0 }}>
+              Full Report <ChevronRight size={12} />
+            </button>
+          </div>
+          <div className="card-body" style={{ paddingTop: 8 }}>
+            <EvidenceValidationPanel data={a.evidenceValidation} />
+          </div>
+        </div>
+      )}
 
       {/* Critical Gaps Summary */}
       {criticalGaps > 0 && (

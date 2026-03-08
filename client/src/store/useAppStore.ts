@@ -66,6 +66,7 @@ const defaultAgentStatuses: AgentStatus[] = [
   { name: 'Security Agent', status: 'idle', progress: 0, currentAction: '' },
   { name: 'Quality Agent', status: 'idle', progress: 0, currentAction: '' },
   { name: 'Gap Analysis Agent', status: 'idle', progress: 0, currentAction: '' },
+  { name: 'Evidence Validation Agent', status: 'idle', progress: 0, currentAction: '' },
   { name: 'Remediation Agent', status: 'idle', progress: 0, currentAction: '' },
 ];
 

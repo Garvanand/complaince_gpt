@@ -3,6 +3,7 @@ import {
   runAgent,
   buildDocumentAgentPrompt,
   buildGapAnalysisPrompt,
+  buildEvidenceValidationPrompt,
   buildRemediationPrompt,
 } from './agentRunner';
 import { isoStandards } from '../data/standards';
@@ -16,6 +17,30 @@ export interface OrchestratorCallbacks {
   onComplete: (result: AssessmentResult) => void;
 }
 
+export interface EvidenceValidationItem {
+  id: string;
+  clauseId: string;
+  standardCode: string;
+  evidenceText: string;
+  validationResult: 'sufficient' | 'partial' | 'insufficient' | 'missing';
+  qualityScore: number;
+  qualityLevel: 'direct' | 'indirect' | 'anecdotal' | 'none';
+  issues: string[];
+  recommendation: string;
+  crossStandardReuse: string[];
+}
+
+export interface EvidenceValidationResult {
+  evidenceItems: EvidenceValidationItem[];
+  overallEvidenceScore: number;
+  sufficientCount: number;
+  partialCount: number;
+  insufficientCount: number;
+  missingCount: number;
+  crossStandardOpportunities: number;
+  summary: string;
+}
+
 export interface AssessmentResult {
   id: string;
   orgProfile: { company: string; industry: string; employees: string; scope: string };
@@ -23,6 +48,7 @@ export interface AssessmentResult {
   maturityLevel: number;
   standardAssessments: StandardAssessment[];
   gaps: Gap[];
+  evidenceValidation: EvidenceValidationResult;
   remediationActions: RemediationAction[];
   timestamp: string;
 }
@@ -154,7 +180,33 @@ Organization: ${orgProfile.company}, ${orgProfile.industry}, ${orgProfile.employ
   const criticalCount = allGaps.filter((g) => g.severity === 'critical').length;
   callbacks.onLog(`📊 Gap Analysis Agent — Identified ${allGaps.length} gaps, ${criticalCount} critical across ${standards.length} standards`);
 
-  // Step 4: Remediation Agent
+  // Step 4: Evidence Validation Agent
+  callbacks.onAgentStart('Evidence Validation Agent');
+  callbacks.onLog('🔐 Evidence Validation Agent — Validating evidence sufficiency and quality...');
+  const evidencePrompt = `Validate the evidence cited for each clause in these assessment results:
+
+${standardAssessments.map((sa) => `${sa.standard}: ${JSON.stringify(sa.clauseScores)}`).join('\n\n')}
+
+Gaps identified: ${JSON.stringify(allGaps)}
+Organization: ${orgProfile.company}, ${orgProfile.industry}, ${orgProfile.employees} employees`;
+
+  const evidenceResult = await runAgent('Evidence Validation Agent', buildEvidenceValidationPrompt(), evidencePrompt, callbacks.onLog);
+  callbacks.onAgentComplete('Evidence Validation Agent', evidenceResult);
+
+  const evidenceParsed = safeParseJSON(evidenceResult);
+  const evidenceValidation: EvidenceValidationResult = {
+    evidenceItems: (evidenceParsed?.evidenceItems as EvidenceValidationItem[]) || [],
+    overallEvidenceScore: (evidenceParsed?.overallEvidenceScore as number) || 0,
+    sufficientCount: (evidenceParsed?.sufficientCount as number) || 0,
+    partialCount: (evidenceParsed?.partialCount as number) || 0,
+    insufficientCount: (evidenceParsed?.insufficientCount as number) || 0,
+    missingCount: (evidenceParsed?.missingCount as number) || 0,
+    crossStandardOpportunities: (evidenceParsed?.crossStandardOpportunities as number) || 0,
+    summary: (evidenceParsed?.summary as string) || 'Evidence validation complete.',
+  };
+  callbacks.onLog(`🔐 Evidence Validation Agent — Score: ${evidenceValidation.overallEvidenceScore}%, ${evidenceValidation.sufficientCount} sufficient, ${evidenceValidation.insufficientCount} insufficient, ${evidenceValidation.missingCount} missing`);
+
+  // Step 5: Remediation Agent
   callbacks.onAgentStart('Remediation Agent');
   callbacks.onLog('🛠️ Remediation Agent — Building phased roadmap...');
   const remPrompt = `Create a phased remediation roadmap for these gaps:
@@ -182,6 +234,7 @@ Organization context: ${orgProfile.company}, ${orgProfile.industry}`;
     maturityLevel: getMaturityLevel(overallScore),
     standardAssessments,
     gaps: allGaps,
+    evidenceValidation,
     remediationActions: allActions,
     timestamp: new Date().toISOString(),
   };

@@ -41,6 +41,12 @@ export const genWAIModules: Record<string, GenWAIModule> = {
     capability: 'Immutable audit logging and evidence management',
     endpoint: '/api/genw/audit-trail',
   },
+  evidenceValidator: {
+    id: 'genw-evidence',
+    name: 'Evidence Validation Engine',
+    capability: 'AI-powered evidence sufficiency analysis and chain-of-custody verification',
+    endpoint: '/api/genw/evidence-validation',
+  },
 };
 
 export interface GenWAIAgentMapping {
@@ -57,6 +63,7 @@ export const agentModuleMappings: GenWAIAgentMapping[] = [
   { agentName: 'Quality Agent', genWAIModule: 'complianceKnowledge', description: 'Uses GenW.AI Knowledge Graph for quality management cross-referencing' },
   { agentName: 'Gap Analysis Agent', genWAIModule: 'complianceKnowledge', description: 'Cross-references all standards via GenW.AI Knowledge Graph' },
   { agentName: 'Remediation Agent', genWAIModule: 'remediationEngine', description: 'Generates phased roadmaps via GenW.AI Remediation Planning Engine' },
+  { agentName: 'Evidence Validation Agent', genWAIModule: 'evidenceValidator', description: 'Validates evidence sufficiency and quality via GenW.AI Evidence Validation Engine' },
 ];
 
 /**

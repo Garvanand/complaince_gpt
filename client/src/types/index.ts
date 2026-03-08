@@ -75,6 +75,30 @@ export interface RemediationAction {
   description: string;
 }
 
+export interface EvidenceValidationItem {
+  id: string;
+  clauseId: string;
+  standardCode: string;
+  evidenceText: string;
+  validationResult: 'sufficient' | 'partial' | 'insufficient' | 'missing';
+  qualityScore: number;
+  qualityLevel: 'direct' | 'indirect' | 'anecdotal' | 'none';
+  issues: string[];
+  recommendation: string;
+  crossStandardReuse: string[];
+}
+
+export interface EvidenceValidation {
+  evidenceItems: EvidenceValidationItem[];
+  overallEvidenceScore: number;
+  sufficientCount: number;
+  partialCount: number;
+  insufficientCount: number;
+  missingCount: number;
+  crossStandardOpportunities: number;
+  summary: string;
+}
+
 export interface AssessmentResult {
   id: string;
   orgProfile: OrgProfile;
@@ -84,6 +108,7 @@ export interface AssessmentResult {
   overallMaturityLabel: string;
   standards: StandardAssessment[];
   gaps: Gap[];
+  evidenceValidation: EvidenceValidation;
   remediation: RemediationAction[];
   executiveSummary: string;
 }

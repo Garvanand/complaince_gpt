@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { FileText, Bot, Search, Scale, Shield, Award, GitBranch, Wrench, ArrowRight } from 'lucide-react';
+import { FileText, Bot, Search, Scale, Shield, Award, GitBranch, Wrench, ArrowRight, ShieldCheck } from 'lucide-react';
 
 const agents = [
   { name: 'Document Agent', icon: Search, module: 'GenW RealmAI', input: 'Raw policy documents (PDF, DOCX)', output: 'Structured policy sections, controls, evidence artifacts', color: '#00ABBD', desc: 'Parses and structures compliance-relevant content from uploaded policy documents using NLP.' },
@@ -8,6 +8,7 @@ const agents = [
   { name: 'Security Agent', icon: Shield, module: 'GenW Agent Builder', input: 'Parsed document content, Org profile', output: 'ISO 27001 clause scores, evidence, gaps', color: '#00ABBD', desc: 'Assesses information security management against ISO 27001:2022 controls.' },
   { name: 'Quality Agent', icon: Award, module: 'GenW Agent Builder', input: 'Parsed document content, Org profile', output: 'ISO 9001 clause scores, evidence, gaps', color: '#FFD32A', desc: 'Reviews quality management systems against ISO 9001:2015 requirements.' },
   { name: 'Gap Analysis Agent', icon: GitBranch, module: 'GenW Agent Builder', input: 'All standard assessment results', output: 'Prioritized gaps, cross-standard overlaps, effort estimates', color: '#E53E3E', desc: 'Cross-standard gap analyser that identifies prioritized gaps and overlap opportunities.' },
+  { name: 'Evidence Validation Agent', icon: ShieldCheck, module: 'GenW Evidence Engine', input: 'Clause scores, evidence citations, gap analysis', output: 'Evidence sufficiency ratings, quality scores, cross-standard reuse map', color: '#0076A8', desc: 'Validates whether cited evidence actually supports compliance claims. Checks sufficiency, quality (direct/indirect/anecdotal), chain of custody, and identifies cross-standard evidence reuse opportunities.' },
   { name: 'Remediation Agent', icon: Wrench, module: 'GenW Agent Builder', input: 'Gap analysis results, Org profile', output: 'Phased remediation roadmap with actions', color: '#A8D048', desc: 'Generates a consultant-quality phased remediation roadmap with specific actions.' },
 ];
 
@@ -42,8 +43,12 @@ export default function AgentWorkflow() {
           <AgentNode agent={agents[5]} />
           <FlowArrow />
 
-          {/* Remediation */}
+          {/* Evidence Validation */}
           <AgentNode agent={agents[6]} />
+          <FlowArrow />
+
+          {/* Remediation */}
+          <AgentNode agent={agents[7]} />
         </div>
       </motion.div>
 

@@ -93,7 +93,7 @@ async function scoreWithML(
 
     if (!response.ok) return null;
 
-    const data: MLScoreResponse = await response.json();
+    const data = await response.json() as MLScoreResponse;
     return data.results.map(r => ({
       clauseId: r.clauseId,
       clauseTitle: r.clauseTitle,
@@ -148,7 +148,7 @@ Return ONLY valid JSON:
     });
 
     const text = response.content
-      .filter((b): b is { type: 'text'; text: string } => b.type === 'text')
+      .filter((b): b is Extract<typeof b, { type: 'text' }> => b.type === 'text')
       .map(b => b.text)
       .join('');
 

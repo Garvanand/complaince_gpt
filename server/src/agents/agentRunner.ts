@@ -80,6 +80,18 @@ function generateFallbackResponse(agentName: string, prompt: string): string {
       summary: 'Remediation roadmap generated based on gap analysis. Prioritized by risk impact.',
     });
   }
+  if (agentName === 'Evidence Validation Agent') {
+    return JSON.stringify({
+      evidenceItems: [],
+      overallEvidenceScore: 0,
+      sufficientCount: 0,
+      partialCount: 0,
+      insufficientCount: 0,
+      missingCount: 0,
+      crossStandardOpportunities: 0,
+      summary: 'Evidence validation performed locally. Evidence quality assessed based on clause findings.',
+    });
+  }
   return JSON.stringify({ summary: `${agentName} analysis complete (local mode).` });
 }
 
@@ -130,6 +142,44 @@ Return JSON:
   "actions": [{ "id": string, "title": string, "description": string, "priority": string, "phase": number, "effortDays": number, "standard": string, "responsible": string }],
   "phases": [{ "phase": number, "name": string, "duration": string }],
   "totalEffortDays": number,
+  "summary": string
+}`;
+}
+
+export function buildEvidenceValidationPrompt(): string {
+  return `You are the Evidence Validation Agent for ComplianceGPT.
+You are a specialized agent that validates whether the evidence cited for each ISO clause actually supports the compliance claims made.
+
+For each clause-evidence pair, you must assess:
+1. **Evidence Sufficiency**: Does the evidence adequately support the claimed compliance level? (sufficient/partial/insufficient/missing)
+2. **Evidence Quality**: Rate the quality of evidence (direct/indirect/anecdotal/none)
+   - Direct: Formal documents, signed policies, audit reports, certificates
+   - Indirect: Meeting minutes, emails, presentations that reference the control
+   - Anecdotal: Verbal claims, informal references without documentation
+   - None: No evidence provided
+3. **Chain of Custody**: Is the evidence trail complete? Are dates, signatures, and version controls present?
+4. **Cross-Standard Reuse**: Can this evidence support compliance claims in other standards?
+
+Return JSON:
+{
+  "evidenceItems": [{
+    "id": string,
+    "clauseId": string,
+    "standardCode": string,
+    "evidenceText": string,
+    "validationResult": "sufficient" | "partial" | "insufficient" | "missing",
+    "qualityScore": number (0-100),
+    "qualityLevel": "direct" | "indirect" | "anecdotal" | "none",
+    "issues": string[],
+    "recommendation": string,
+    "crossStandardReuse": string[]
+  }],
+  "overallEvidenceScore": number (0-100),
+  "sufficientCount": number,
+  "partialCount": number,
+  "insufficientCount": number,
+  "missingCount": number,
+  "crossStandardOpportunities": number,
   "summary": string
 }`;
 }
