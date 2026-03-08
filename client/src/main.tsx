@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import './styles/globals.css'
+import './index.css'
 import App from './App'
 import ErrorBoundary from './components/ErrorBoundary'
 
@@ -15,14 +16,15 @@ createRoot(document.getElementById('root')!).render(
           position="top-right"
           toastOptions={{
             style: {
-              background: 'var(--color-primary-700)',
-              color: 'var(--color-text-primary)',
-              border: '1px solid var(--glass-border)',
-              borderRadius: '12px',
+              background: 'var(--white)',
+              color: 'var(--slate-800)',
+              border: '1px solid var(--border)',
+              borderRadius: '8px',
               fontSize: '14px',
+              boxShadow: 'var(--shadow-lg)',
             },
-            success: { iconTheme: { primary: '#86BC25', secondary: '#0A0E1A' } },
-            error: { iconTheme: { primary: '#E53E3E', secondary: '#0A0E1A' } },
+            success: { iconTheme: { primary: '#16A34A', secondary: '#FFFFFF' } },
+            error: { iconTheme: { primary: '#DC2626', secondary: '#FFFFFF' } },
           }}
         />
       </BrowserRouter>

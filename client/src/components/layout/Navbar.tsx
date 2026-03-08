@@ -38,25 +38,25 @@ export default function Navbar() {
           display: 'flex',
           alignItems: 'center',
           gap: 8,
-          padding: '6px 12px',
-          background: 'var(--slate-50)',
-          border: '1px solid var(--border-strong)',
-          borderRadius: 'var(--radius-md)',
-          color: 'var(--slate-500)',
+          padding: '6px 14px',
+          background: '#F2F2F2',
+          border: '1px solid #E5E5E5',
+          borderRadius: 999,
+          color: '#767676',
           fontSize: 13,
           cursor: 'pointer',
           minWidth: 200,
           transition: 'border-color 120ms ease',
         }}
-        onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--slate-400)')}
-        onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border-strong)')}
+        onMouseEnter={e => (e.currentTarget.style.borderColor = '#C4C4C4')}
+        onMouseLeave={e => (e.currentTarget.style.borderColor = '#E5E5E5')}
       >
         <Search size={14} />
         <span>Search...</span>
         <kbd style={{
           marginLeft: 'auto',
-          background: 'var(--slate-200)',
-          color: 'var(--slate-500)',
+          background: '#E0E0E0',
+          color: '#767676',
           fontSize: 10,
           padding: '2px 6px',
           borderRadius: 3,
@@ -93,11 +93,11 @@ export default function Navbar() {
           alignItems: 'center',
           gap: 6,
           padding: '4px 10px',
-          background: 'var(--blue-50)',
-          border: '1px solid var(--blue-100)',
-          borderRadius: 'var(--radius-md)',
+          background: '#E6F4FA',
+          border: '1px solid #B3DFF0',
+          borderRadius: 999,
           fontSize: 12,
-          color: 'var(--blue-800)',
+          color: '#005A80',
           fontWeight: 500,
           maxWidth: 160,
         }}>

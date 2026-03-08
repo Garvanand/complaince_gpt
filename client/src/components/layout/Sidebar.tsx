@@ -27,7 +27,7 @@ export default function Sidebar() {
           display: 'flex',
           alignItems: 'center',
           padding: '0 14px',
-          borderBottom: '1px solid var(--border)',
+          borderBottom: '1px solid rgba(255,255,255,0.1)',
           flexShrink: 0,
           gap: 10,
           overflow: 'hidden',
@@ -35,24 +35,22 @@ export default function Sidebar() {
       >
         <div
           style={{
-            width: 28,
-            height: 28,
-            borderRadius: 6,
-            background: 'var(--blue-800)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            width: 7,
+            height: 7,
+            borderRadius: '50%',
+            background: '#86BC25',
             flexShrink: 0,
           }}
-        >
-          <Shield size={15} color="white" />
-        </div>
+        />
         {!sidebarCollapsed && (
           <div style={{ overflow: 'hidden' }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--slate-900)', whiteSpace: 'nowrap' }}>
+            <div style={{
+              fontFamily: "'Libre Baskerville', Georgia, serif",
+              fontSize: 14, fontWeight: 700, color: '#FFFFFF', whiteSpace: 'nowrap',
+            }}>
               ComplianceGPT
             </div>
-            <div style={{ fontSize: 10, color: 'var(--slate-500)', whiteSpace: 'nowrap', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
               Risk Intelligence
             </div>
           </div>
@@ -61,7 +59,7 @@ export default function Sidebar() {
 
       {/* Nav section label */}
       {!sidebarCollapsed && (
-        <div style={{ padding: '16px 14px 6px', fontSize: 10, fontWeight: 600, color: 'var(--slate-400)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+        <div style={{ padding: '16px 14px 6px', fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
           Navigation
         </div>
       )}
@@ -80,7 +78,7 @@ export default function Sidebar() {
             >
               <item.icon
                 size={16}
-                style={{ flexShrink: 0, color: isActive ? 'var(--blue-700)' : 'var(--slate-500)' }}
+                style={{ flexShrink: 0, color: isActive ? '#0076A8' : 'rgba(255,255,255,0.5)' }}
               />
               {!sidebarCollapsed && <span>{item.label}</span>}
             </NavLink>
@@ -89,14 +87,14 @@ export default function Sidebar() {
       </nav>
 
       {/* Bottom — Settings + Collapse */}
-      <div style={{ borderTop: '1px solid var(--border)', padding: '8px', display: 'flex', flexDirection: 'column', gap: 1 }}>
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', padding: '8px', display: 'flex', flexDirection: 'column', gap: 1 }}>
         <NavLink
           to="/settings"
           className={`nav-item ${location.pathname === '/settings' ? 'active' : ''}`}
           title={sidebarCollapsed ? 'Settings' : undefined}
           style={sidebarCollapsed ? { justifyContent: 'center', padding: '8px' } : undefined}
         >
-          <Settings size={16} style={{ flexShrink: 0, color: location.pathname === '/settings' ? 'var(--blue-700)' : 'var(--slate-500)' }} />
+          <Settings size={16} style={{ flexShrink: 0, color: location.pathname === '/settings' ? '#0076A8' : 'rgba(255,255,255,0.5)' }} />
           {!sidebarCollapsed && <span>Settings</span>}
         </NavLink>
 
@@ -107,10 +105,10 @@ export default function Sidebar() {
           title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {sidebarCollapsed
-            ? <ChevronRight size={15} style={{ color: 'var(--slate-400)' }} />
+            ? <ChevronRight size={15} style={{ color: 'rgba(255,255,255,0.4)' }} />
             : <>
-                <ChevronLeft size={15} style={{ color: 'var(--slate-400)', flexShrink: 0 }} />
-                <span style={{ color: 'var(--slate-500)', fontSize: 12 }}>Collapse</span>
+                <ChevronLeft size={15} style={{ color: 'rgba(255,255,255,0.4)', flexShrink: 0 }} />
+                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>Collapse</span>
               </>
           }
         </button>

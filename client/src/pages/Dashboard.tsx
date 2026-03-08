@@ -55,14 +55,14 @@ function EmptyDashboard() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
         <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{
-            width: 36, height: 36, borderRadius: 'var(--radius-md)',
-            background: 'var(--blue-800)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: 36, height: 36, borderRadius: 4,
+            background: '#0076A8', display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
             <Upload size={16} color="white" />
           </div>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--slate-900)', marginBottom: 4 }}>Start New Assessment</div>
-            <div style={{ fontSize: 12, color: 'var(--slate-500)', lineHeight: 1.5 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#1A1A1A', marginBottom: 4 }}>Start New Assessment</div>
+            <div style={{ fontSize: 12, color: '#767676', lineHeight: 1.5 }}>
               Upload governance documents and run multi-standard ISO compliance analysis.
             </div>
           </div>
@@ -77,14 +77,14 @@ function EmptyDashboard() {
 
         <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{
-            width: 36, height: 36, borderRadius: 'var(--radius-md)',
-            background: 'var(--slate-200)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: 36, height: 36, borderRadius: 4,
+            background: '#F2F2F2', display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <BarChart3 size={16} color="var(--slate-600)" />
+            <BarChart3 size={16} color="#5C5C5C" />
           </div>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--slate-900)', marginBottom: 4 }}>Load Demo Data</div>
-            <div style={{ fontSize: 12, color: 'var(--slate-500)', lineHeight: 1.5 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#1A1A1A', marginBottom: 4 }}>Load Demo Data</div>
+            <div style={{ fontSize: 12, color: '#767676', lineHeight: 1.5 }}>
               Explore a sample assessment for Acme Corp across all four ISO standards.
             </div>
           </div>

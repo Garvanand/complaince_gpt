@@ -1,18 +1,18 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Upload, Bot, FileText, Shield, BarChart3, Cog, ChevronDown, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, Upload, Bot, FileText, Shield, BarChart3, Cog, ChevronDown, CheckCircle2, ChevronRight } from 'lucide-react';
 
 const standards = [
-  { code: 'ISO 37001', name: 'Anti-Bribery Management', focus: 'Bribery Prevention & Detection', clauses: 33, color: '#DD6B20' },
+  { code: 'ISO 37001', name: 'Anti-Bribery Management', focus: 'Bribery Prevention & Detection', clauses: 33, color: '#0076A8' },
   { code: 'ISO 37301', name: 'Compliance Management', focus: 'Regulatory Compliance', clauses: 28, color: '#86BC25' },
-  { code: 'ISO 27001', name: 'Information Security', focus: 'Data Protection & Cybersecurity', clauses: 24, color: '#00ABBD' },
-  { code: 'ISO 9001', name: 'Quality Management', focus: 'Process Excellence & QA', clauses: 28, color: '#FFD32A' },
+  { code: 'ISO 27001', name: 'Information Security', focus: 'Data Protection & Cybersecurity', clauses: 24, color: '#009CDE' },
+  { code: 'ISO 9001', name: 'Quality Management', focus: 'Process Excellence & QA', clauses: 28, color: '#5C5C5C' },
 ];
 
 const steps = [
-  { icon: Upload, title: 'Upload Policy Documents', desc: 'Drag & drop your governance policies, procedures, and manuals in PDF or DOCX format.' },
-  { icon: Bot, title: 'AI Agents Analyze', desc: 'Seven specialized agents powered by Claude simultaneously assess your documents against ISO clauses.' },
-  { icon: FileText, title: 'Receive Intelligence Report', desc: 'Get detailed scores, gap analysis, maturity levels, and a phased remediation roadmap.' },
+  { icon: Upload, title: 'Upload Documents', desc: 'Drag & drop your governance policies, procedures, and manuals in PDF or DOCX format.' },
+  { icon: Bot, title: 'AI Agents Analyze', desc: 'Seven specialized agents simultaneously assess your documents against ISO clause requirements.' },
+  { icon: FileText, title: 'Receive Intelligence', desc: 'Get detailed compliance scores, gap analysis, maturity levels, and remediation roadmaps.' },
 ];
 
 const genwMapping = [
@@ -23,10 +23,10 @@ const genwMapping = [
 ];
 
 const previewScores = [
-  { code: 'ISO 37001', score: 87, color: '#DD6B20' },
+  { code: 'ISO 37001', score: 87, color: '#0076A8' },
   { code: 'ISO 37301', score: 92, color: '#86BC25' },
-  { code: 'ISO 27001', score: 78, color: '#00ABBD' },
-  { code: 'ISO 9001', score: 84, color: '#FFD32A' },
+  { code: 'ISO 27001', score: 78, color: '#009CDE' },
+  { code: 'ISO 9001', score: 84, color: '#5C5C5C' },
 ];
 
 const stats = [
@@ -40,242 +40,349 @@ export default function Landing() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-[#05080F] text-white">
-      {/* ── Fixed Navbar ── */}
-      <nav className="fixed top-0 inset-x-0 z-50 h-16 bg-[#05080F]/80 backdrop-blur-xl border-b border-white/[0.06] flex items-center px-8">
-        <div className="flex items-center gap-2.5">
-          <Shield className="w-5 h-5 text-[#86BC25]" />
-          <span className="font-display text-base font-bold tracking-tight">ComplianceGPT</span>
-          <span className="text-[#86BC25] text-base font-bold">™</span>
+    <div className="min-h-screen overflow-y-auto" style={{ background: '#FFFFFF' }}>
+
+      {/* ── Black Top Nav ── */}
+      <nav style={{
+        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
+        height: 56, background: '#000000',
+        display: 'flex', alignItems: 'center', padding: '0 40px',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{
+            width: 6, height: 6, borderRadius: '50%', background: '#86BC25',
+          }} />
+          <span style={{
+            fontFamily: "'Libre Baskerville', Georgia, serif",
+            fontSize: 17, fontWeight: 700, color: '#FFFFFF', letterSpacing: '-0.02em',
+          }}>
+            ComplianceGPT
+          </span>
         </div>
-        <span className="ml-3 text-[10px] text-[#4A5568] font-medium tracking-widest uppercase border border-white/[0.08] rounded px-2 py-0.5">
-          GenW.AI Platform
-        </span>
-        <div className="flex-1" />
-        <div className="hidden md:flex items-center gap-8 text-sm text-[#8C9BAE]">
-          <a href="#how-it-works" className="hover:text-white transition-colors">How It Works</a>
-          <a href="#standards" className="hover:text-white transition-colors">Standards</a>
-          <a href="#platform" className="hover:text-white transition-colors">Platform</a>
+        <div style={{ flex: 1 }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 32, fontSize: 14, fontWeight: 500 }}>
+          <a href="#how-it-works" style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'none', transition: 'color 0.2s' }}
+            onMouseEnter={e => e.currentTarget.style.color = '#FFFFFF'}
+            onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.7)'}>
+            How It Works
+          </a>
+          <a href="#standards" style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'none', transition: 'color 0.2s' }}
+            onMouseEnter={e => e.currentTarget.style.color = '#FFFFFF'}
+            onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.7)'}>
+            Standards
+          </a>
+          <a href="#platform" style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'none', transition: 'color 0.2s' }}
+            onMouseEnter={e => e.currentTarget.style.color = '#FFFFFF'}
+            onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.7)'}>
+            Platform
+          </a>
+          <button
+            onClick={() => navigate('/dashboard')}
+            style={{
+              background: '#0076A8', color: '#FFFFFF',
+              fontWeight: 600, fontSize: 14, padding: '8px 24px',
+              borderRadius: 999, border: 'none', cursor: 'pointer',
+              transition: 'background 0.2s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = '#005A80'}
+            onMouseLeave={e => e.currentTarget.style.background = '#0076A8'}
+          >
+            Launch App
+          </button>
         </div>
-        <button
-          onClick={() => navigate('/dashboard')}
-          className="ml-8 bg-[#86BC25] hover:bg-[#A8D048] text-white font-bold text-sm px-5 py-2 rounded-xl transition-all shadow-[0_0_20px_rgba(134,188,37,0.25)]"
-        >
-          Launch App
-        </button>
       </nav>
 
       {/* ── Hero ── */}
-      <section className="relative min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center overflow-hidden">
-        {/* Grid overlay */}
-        <div className="absolute inset-0 opacity-[0.04]" style={{
-          backgroundImage: 'linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)',
-          backgroundSize: '80px 80px',
+      <section style={{
+        minHeight: '100vh', display: 'flex', alignItems: 'center',
+        paddingTop: 56, position: 'relative', overflow: 'hidden',
+      }}>
+        <div style={{
+          position: 'absolute', top: 56, left: 0, right: 0, height: 3,
+          background: 'linear-gradient(90deg, #86BC25, #0076A8)',
         }} />
-        {/* Green glow */}
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full bg-[#86BC25]/[0.06] blur-[120px]" />
 
-        <div className="relative z-10 flex flex-col items-center text-center px-6 max-w-4xl">
-          {/* Badge row */}
+        <div style={{
+          maxWidth: 1200, margin: '0 auto', padding: '80px 48px',
+          display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'center',
+          width: '100%',
+        }}>
           <motion.div
-            initial={{ opacity: 0, y: -12 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-3 mb-8"
+            initial={{ opacity: 0, x: -32 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.7, ease: 'easeOut' }}
           >
-            <span className="bg-white/[0.04] border border-white/[0.08] text-[#86BC25] text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full">
-              Built on GenW.AI™
-            </span>
-            <span className="bg-white/[0.04] border border-white/[0.08] text-[#8C9BAE] text-xs font-medium px-3 py-1.5 rounded-full">
-              Hacksplosion 2026
-            </span>
-          </motion.div>
-
-          {/* Headline */}
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="font-display text-5xl sm:text-6xl md:text-7xl font-bold leading-[1.05] mb-5"
-          >
-            AI-Powered<br />
-            <span className="text-[#86BC25]">Multi-Standard</span> Governance<br />
-            Intelligence
-          </motion.h1>
-
-          {/* Standards pills */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.25 }}
-            className="flex flex-wrap justify-center gap-2 mb-8"
-          >
-            {standards.map(s => (
-              <span key={s.code} className="flex items-center gap-1.5 bg-white/[0.04] border border-white/[0.08] rounded-full px-3 py-1 text-xs font-medium" style={{ color: s.color }}>
-                <CheckCircle2 className="w-3 h-3" />
-                {s.code}
-              </span>
-            ))}
-          </motion.div>
-
-          {/* Subtitle */}
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="text-[#8C9BAE] text-lg md:text-xl max-w-2xl mb-10"
-          >
-            Upload your governance documents. Seven AI agents simultaneously assess compliance 
-            across ISO 37001, 37301, 27001 & 9001 — delivering instant readiness intelligence.
-          </motion.p>
-
-          {/* CTAs */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="flex items-center gap-4 mb-16"
-          >
-            <button
-              onClick={() => navigate('/assessment')}
-              className="flex items-center gap-2 bg-[#86BC25] hover:bg-[#A8D048] text-white font-bold text-base px-8 py-4 rounded-2xl transition-all shadow-[0_0_30px_rgba(134,188,37,0.3)] hover:shadow-[0_0_40px_rgba(134,188,37,0.5)]"
-            >
-              Start Assessment <ArrowRight className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] hover:border-white/[0.18] text-white font-medium text-base px-8 py-4 rounded-2xl transition-all"
-            >
-              View Demo
-            </button>
-          </motion.div>
-
-          {/* Preview Card */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="w-full max-w-2xl bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6"
-          >
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <p className="text-white font-bold text-sm">Compliance Overview</p>
-                <p className="text-[#4A5568] text-xs">Sample multi-standard assessment</p>
-              </div>
-              <span className="text-[#86BC25] bg-[#86BC25]/10 text-xs font-bold px-3 py-1 rounded-full">LIVE PREVIEW</span>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+              <span style={{
+                fontSize: 11, fontWeight: 700, letterSpacing: '0.12em',
+                textTransform: 'uppercase', color: '#0076A8',
+                background: '#E6F4FA', padding: '4px 12px', borderRadius: 2,
+              }}>Built on GenW.AI™</span>
+              <span style={{
+                fontSize: 11, fontWeight: 700, letterSpacing: '0.12em',
+                textTransform: 'uppercase', color: '#5C5C5C',
+                background: '#F2F2F2', padding: '4px 12px', borderRadius: 2,
+              }}>Hacksplosion 2026</span>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              {previewScores.map(s => (
-                <div key={s.code} className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 text-center">
-                  <p className="text-[#4A5568] text-[10px] font-bold uppercase tracking-wider mb-2">{s.code}</p>
-                  <p className="text-3xl font-bold font-mono" style={{ color: s.color }}>{s.score}%</p>
-                  <div className="mt-2 h-1 rounded-full bg-white/[0.06] overflow-hidden">
-                    <motion.div
-                      className="h-full rounded-full"
-                      style={{ background: s.color }}
-                      initial={{ width: 0 }}
-                      animate={{ width: `${s.score}%` }}
-                      transition={{ delay: 0.8, duration: 1.2, ease: 'easeOut' }}
-                    />
-                  </div>
-                </div>
+
+            <h1 style={{
+              fontFamily: "'Libre Baskerville', Georgia, serif",
+              fontSize: 52, lineHeight: 1.12, fontWeight: 400,
+              color: '#1A1A1A', marginBottom: 24, letterSpacing: '-0.02em',
+            }}>
+              AI-Powered<br />
+              Multi-Standard<br />
+              <span style={{ color: '#0076A8' }}>Governance Intelligence</span>
+            </h1>
+
+            <p style={{
+              fontSize: 18, lineHeight: 1.7, color: '#5C5C5C',
+              maxWidth: 480, marginBottom: 36,
+            }}>
+              Upload your governance documents. Seven AI agents simultaneously assess compliance
+              across ISO 37001, 37301, 27001 & 9001 — delivering instant readiness intelligence.
+            </p>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 40 }}>
+              <button
+                onClick={() => navigate('/assessment')}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  background: '#0076A8', color: '#FFFFFF',
+                  fontWeight: 600, fontSize: 16, padding: '14px 32px',
+                  borderRadius: 999, border: 'none', cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = '#005A80'}
+                onMouseLeave={e => e.currentTarget.style.background = '#0076A8'}
+              >
+                Start Assessment <ArrowRight size={18} />
+              </button>
+              <button
+                onClick={() => navigate('/dashboard')}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  background: 'transparent', color: '#2D2D2D',
+                  fontWeight: 600, fontSize: 16, padding: '14px 32px',
+                  borderRadius: 999, border: '1px solid #C4C4C4', cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = '#F2F2F2'; e.currentTarget.style.borderColor = '#9E9E9E'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = '#C4C4C4'; }}
+              >
+                View Demo
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              {standards.map(s => (
+                <span key={s.code} style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  fontSize: 13, fontWeight: 600, color: s.color,
+                  padding: '4px 12px', border: `1px solid ${s.color}30`,
+                  borderRadius: 2, background: `${s.color}08`,
+                }}>
+                  <CheckCircle2 size={13} /> {s.code}
+                </span>
               ))}
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 32 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.2, ease: 'easeOut' }}
+          >
+            <div style={{
+              background: '#FAFAFA', border: '1px solid #E5E5E5',
+              borderRadius: 8, padding: 32, position: 'relative',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#0076A8', marginBottom: 4 }}>
+                    Live Preview
+                  </div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: '#1A1A1A' }}>Compliance Overview</div>
+                  <div style={{ fontSize: 13, color: '#767676' }}>Sample multi-standard assessment</div>
+                </div>
+                <Shield size={32} style={{ color: '#0076A8', opacity: 0.3 }} />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+                {previewScores.map((s, i) => (
+                  <motion.div
+                    key={s.code}
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 + i * 0.1 }}
+                    style={{
+                      background: '#FFFFFF', border: '1px solid #E5E5E5',
+                      borderRadius: 6, padding: 20, textAlign: 'center',
+                    }}
+                  >
+                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#767676', marginBottom: 8 }}>
+                      {s.code}
+                    </div>
+                    <div style={{
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontSize: 36, fontWeight: 700, color: s.color,
+                      lineHeight: 1, marginBottom: 12,
+                    }}>
+                      {s.score}%
+                    </div>
+                    <div style={{ height: 3, borderRadius: 2, background: '#E5E5E5', overflow: 'hidden' }}>
+                      <motion.div
+                        style={{ height: '100%', borderRadius: 2, background: s.color }}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${s.score}%` }}
+                        transition={{ delay: 0.8, duration: 1.2, ease: 'easeOut' }}
+                      />
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
             </div>
           </motion.div>
         </div>
 
-        {/* Scroll indicator */}
         <motion.div
-          className="mt-12"
+          style={{ position: 'absolute', bottom: 32, left: '50%', transform: 'translateX(-50%)' }}
           animate={{ y: [0, 8, 0] }}
           transition={{ duration: 2, repeat: Infinity }}
         >
-          <ChevronDown className="w-5 h-5 text-[#4A5568]" />
+          <ChevronDown size={20} color="#9E9E9E" />
         </motion.div>
       </section>
 
-      {/* ── Stats Bar ── */}
-      <section className="py-12 px-6 bg-white/[0.02] border-y border-white/[0.06]">
-        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
+      {/* ── Stats ── */}
+      <section style={{ padding: '48px 40px', background: '#F2F2F2', borderTop: '1px solid #E5E5E5', borderBottom: '1px solid #E5E5E5' }}>
+        <div style={{ maxWidth: 1000, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 32 }}>
           {stats.map((s, i) => (
             <motion.div
               key={s.label}
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
+              transition={{ delay: i * 0.08 }}
               viewport={{ once: true }}
-              className="text-center"
+              style={{ textAlign: 'center' }}
             >
-              <div className="text-3xl font-bold font-mono text-[#86BC25]">{s.value}</div>
-              <div className="text-xs text-[#4A5568] mt-1">{s.label}</div>
+              <div style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: 36, fontWeight: 700, color: '#1A1A1A', lineHeight: 1, marginBottom: 4,
+              }}>{s.value}</div>
+              <div style={{ fontSize: 13, color: '#767676', fontWeight: 500 }}>{s.label}</div>
             </motion.div>
           ))}
         </div>
       </section>
 
       {/* ── How It Works ── */}
-      <section id="how-it-works" className="py-24 px-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <p className="text-[#86BC25] text-xs font-bold uppercase tracking-widest mb-3">How It Works</p>
-            <h2 className="font-display text-3xl md:text-4xl font-bold">
-              Three Steps to Compliance Intelligence
+      <section id="how-it-works" style={{ padding: '96px 40px', background: '#FFFFFF' }}>
+        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 64 }}>
+            <div style={{
+              fontSize: 11, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase',
+              color: '#0076A8', marginBottom: 12,
+            }}>How It Works</div>
+            <h2 style={{
+              fontFamily: "'Libre Baskerville', Georgia, serif",
+              fontSize: 36, fontWeight: 400, color: '#1A1A1A', lineHeight: 1.2,
+            }}>
+              Three steps to compliance intelligence
             </h2>
           </div>
-          <div className="grid md:grid-cols-3 gap-8 relative">
-            {/* Connecting line */}
-            <div className="hidden md:block absolute top-16 left-[20%] right-[20%] h-px bg-gradient-to-r from-transparent via-[#86BC25]/30 to-transparent" />
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 32 }}>
             {steps.map((step, i) => (
               <motion.div
                 key={step.title}
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.15 }}
+                transition={{ delay: i * 0.12 }}
                 viewport={{ once: true }}
-                className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-8 text-center relative"
+                style={{
+                  padding: 36, borderTop: '3px solid #0076A8',
+                  background: '#FAFAFA', position: 'relative',
+                }}
               >
-                <div className="w-14 h-14 rounded-2xl mx-auto mb-5 flex items-center justify-center bg-[#86BC25] shadow-[0_0_30px_rgba(134,188,37,0.3)]">
-                  <step.icon className="w-6 h-6 text-white" />
+                <div style={{
+                  fontSize: 48, fontWeight: 700, color: '#E5E5E5',
+                  fontFamily: "'Libre Baskerville', serif",
+                  position: 'absolute', top: 16, right: 20, lineHeight: 1,
+                }}>
+                  {String(i + 1).padStart(2, '0')}
                 </div>
-                <p className="text-[#86BC25] text-[10px] font-bold uppercase tracking-widest mb-2">Step {i + 1}</p>
-                <h3 className="text-base font-bold mb-2">{step.title}</h3>
-                <p className="text-sm text-[#8C9BAE]">{step.desc}</p>
+                <div style={{
+                  width: 44, height: 44, borderRadius: 4,
+                  background: '#0076A8', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  marginBottom: 20,
+                }}>
+                  <step.icon size={20} color="white" />
+                </div>
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: '#1A1A1A', marginBottom: 8 }}>
+                  {step.title}
+                </h3>
+                <p style={{ fontSize: 15, lineHeight: 1.6, color: '#5C5C5C' }}>
+                  {step.desc}
+                </p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── Standards Showcase ── */}
-      <section id="standards" className="py-24 px-6 bg-white/[0.02]">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <p className="text-[#86BC25] text-xs font-bold uppercase tracking-widest mb-3">Standards Coverage</p>
-            <h2 className="font-display text-3xl md:text-4xl font-bold">
-              Multi-Standard Intelligence
+      {/* ── Standards ── */}
+      <section id="standards" style={{ padding: '96px 40px', background: '#F2F2F2' }}>
+        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 64 }}>
+            <div style={{
+              fontSize: 11, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase',
+              color: '#0076A8', marginBottom: 12,
+            }}>Standards Coverage</div>
+            <h2 style={{
+              fontFamily: "'Libre Baskerville', Georgia, serif",
+              fontSize: 36, fontWeight: 400, color: '#1A1A1A', lineHeight: 1.2,
+            }}>
+              Multi-standard intelligence
             </h2>
           </div>
-          <div className="grid sm:grid-cols-2 gap-6">
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 20 }}>
             {standards.map((s, i) => (
               <motion.div
                 key={s.code}
-                initial={{ opacity: 0, y: 24 }}
+                initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
+                transition={{ delay: i * 0.08 }}
                 viewport={{ once: true }}
-                className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6 hover:border-white/[0.15] transition-all group cursor-pointer"
+                style={{
+                  background: '#FFFFFF', border: '1px solid #E5E5E5',
+                  borderRadius: 6, padding: 28, cursor: 'pointer',
+                  transition: 'box-shadow 0.2s, transform 0.2s',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none'; }}
               >
-                <div className="flex items-start justify-between mb-3">
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
                   <div>
-                    <p className="text-xl font-bold font-display" style={{ color: s.color }}>{s.code}</p>
-                    <p className="text-sm font-semibold text-white mt-0.5">{s.name}</p>
+                    <div style={{
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontSize: 20, fontWeight: 700, color: s.color, marginBottom: 2,
+                    }}>{s.code}</div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: '#1A1A1A' }}>{s.name}</div>
                   </div>
-                  <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-white/[0.04]" style={{ color: s.color }}>
-                    {s.clauses} clauses
-                  </span>
+                  <span style={{
+                    fontSize: 12, fontWeight: 700, color: '#767676',
+                    fontFamily: "'JetBrains Mono', monospace",
+                    background: '#F2F2F2', padding: '4px 10px', borderRadius: 2,
+                  }}>{s.clauses} clauses</span>
                 </div>
-                <p className="text-sm text-[#8C9BAE]">{s.focus}</p>
-                <div className="mt-4 flex items-center gap-1.5 text-xs font-medium text-[#4A5568] group-hover:text-white transition-colors">
-                  Explore clauses <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                <p style={{ fontSize: 14, color: '#767676', marginBottom: 12 }}>{s.focus}</p>
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 4,
+                  fontSize: 13, fontWeight: 600, color: '#0076A8',
+                }}>
+                  Explore clauses <ChevronRight size={14} />
                 </div>
               </motion.div>
             ))}
@@ -283,36 +390,52 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── GenW.AI Integration ── */}
-      <section id="platform" className="py-24 px-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <p className="text-[#86BC25] text-xs font-bold uppercase tracking-widest mb-3">Platform Integration</p>
-            <h2 className="font-display text-3xl md:text-4xl font-bold mb-3">
+      {/* ── Platform ── */}
+      <section id="platform" style={{ padding: '96px 40px', background: '#FFFFFF' }}>
+        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 64 }}>
+            <div style={{
+              fontSize: 11, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase',
+              color: '#0076A8', marginBottom: 12,
+            }}>Platform Integration</div>
+            <h2 style={{
+              fontFamily: "'Libre Baskerville', Georgia, serif",
+              fontSize: 36, fontWeight: 400, color: '#1A1A1A', lineHeight: 1.2, marginBottom: 8,
+            }}>
               Built for GenW.AI™
             </h2>
-            <p className="text-[#8C9BAE] text-lg">Native deployment on Deloitte's enterprise AI platform</p>
+            <p style={{ fontSize: 17, color: '#767676', maxWidth: 500, margin: '0 auto' }}>
+              Native deployment on Deloitte's enterprise AI platform
+            </p>
           </div>
-          <div className="grid md:grid-cols-2 gap-6">
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 20 }}>
             {genwMapping.map((item, i) => (
               <motion.div
                 key={item.from}
-                initial={{ opacity: 0, x: i % 2 === 0 ? -16 : 16 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.1 }}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.08 }}
                 viewport={{ once: true }}
-                className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6 flex items-start gap-4"
+                style={{
+                  background: '#FAFAFA', border: '1px solid #E5E5E5',
+                  borderRadius: 6, padding: 24, display: 'flex', gap: 16, alignItems: 'flex-start',
+                }}
               >
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 bg-[#86BC25]/10">
-                  <item.icon className="w-5 h-5 text-[#86BC25]" />
+                <div style={{
+                  width: 40, height: 40, borderRadius: 4,
+                  background: '#E6F4FA', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0,
+                }}>
+                  <item.icon size={18} color="#0076A8" />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-bold text-[#86BC25]">GenW {item.from}</span>
-                    <ArrowRight className="w-3 h-3 text-[#4A5568]" />
-                    <span className="text-sm font-semibold text-white">{item.to}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: '#0076A8' }}>GenW {item.from}</span>
+                    <ArrowRight size={12} color="#9E9E9E" />
+                    <span style={{ fontSize: 14, fontWeight: 700, color: '#1A1A1A' }}>{item.to}</span>
                   </div>
-                  <p className="text-sm text-[#8C9BAE]">{item.desc}</p>
+                  <p style={{ fontSize: 14, color: '#767676', lineHeight: 1.5 }}>{item.desc}</p>
                 </div>
               </motion.div>
             ))}
@@ -320,38 +443,54 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── CTA Section ── */}
-      <section className="py-24 px-6">
-        <div className="max-w-3xl mx-auto text-center">
+      {/* ── CTA ── */}
+      <section style={{ padding: '96px 40px', background: '#000000' }}>
+        <div style={{ maxWidth: 700, margin: '0 auto', textAlign: 'center' }}>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="bg-gradient-to-br from-[#86BC25]/[0.08] to-transparent border border-[#86BC25]/20 rounded-3xl p-12"
           >
-            <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
-              Ready to Transform Compliance?
+            <h2 style={{
+              fontFamily: "'Libre Baskerville', Georgia, serif",
+              fontSize: 36, fontWeight: 400, color: '#FFFFFF', lineHeight: 1.2, marginBottom: 16,
+            }}>
+              Ready to transform compliance?
             </h2>
-            <p className="text-[#8C9BAE] text-lg mb-8 max-w-xl mx-auto">
+            <p style={{ fontSize: 17, color: 'rgba(255,255,255,0.6)', marginBottom: 36, maxWidth: 500, margin: '0 auto 36px' }}>
               Join 500+ organizations using AI-powered governance intelligence to go from policy to proof.
             </p>
             <button
               onClick={() => navigate('/assessment')}
-              className="inline-flex items-center gap-2 bg-[#86BC25] hover:bg-[#A8D048] text-white font-bold text-base px-10 py-4 rounded-2xl transition-all shadow-[0_0_30px_rgba(134,188,37,0.3)] hover:shadow-[0_0_40px_rgba(134,188,37,0.5)]"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                background: '#0076A8', color: '#FFFFFF',
+                fontWeight: 600, fontSize: 16, padding: '16px 40px',
+                borderRadius: 999, border: 'none', cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = '#005A80'}
+              onMouseLeave={e => e.currentTarget.style.background = '#0076A8'}
             >
-              Start Your Assessment <ArrowRight className="w-5 h-5" />
+              Start Your Assessment <ArrowRight size={18} />
             </button>
           </motion.div>
         </div>
       </section>
 
       {/* ── Footer ── */}
-      <footer className="py-8 px-6 text-center border-t border-white/[0.06]">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <Shield className="w-4 h-4 text-[#86BC25]" />
-          <span className="font-display text-sm font-bold">ComplianceGPT™</span>
+      <footer style={{
+        padding: '24px 40px', background: '#000000',
+        borderTop: '1px solid rgba(255,255,255,0.1)', textAlign: 'center',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 4 }}>
+          <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#86BC25' }} />
+          <span style={{
+            fontFamily: "'Libre Baskerville', Georgia, serif",
+            fontSize: 14, fontWeight: 700, color: '#FFFFFF',
+          }}>ComplianceGPT™</span>
         </div>
-        <p className="text-[#4A5568] text-xs">
+        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>
           From Policy to Proof — Built on GenW.AI™ | Hacksplosion 2026
         </p>
       </footer>

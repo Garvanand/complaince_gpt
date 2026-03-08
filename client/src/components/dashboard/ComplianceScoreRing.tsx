@@ -44,7 +44,7 @@ export default function ComplianceScoreRing({
             cy={center}
             r={radius}
             fill="none"
-            stroke="var(--color-primary-700)"
+            stroke="var(--color-primary-600)"
             strokeWidth={strokeWidth}
           />
           {/* Progress */}
