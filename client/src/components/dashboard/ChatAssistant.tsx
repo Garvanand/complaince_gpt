@@ -15,15 +15,16 @@ export default function ChatAssistant() {
   const { isChatOpen, toggleChat, chatMessages, addChatMessage, currentAssessment } = useAppStore();
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [streamingContent, setStreamingContent] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
-  }, [chatMessages]);
+  }, [chatMessages, streamingContent]);
 
   const handleSend = async (message?: string) => {
     const text = message || input.trim();
-    if (!text) return;
+    if (!text || isTyping) return;
     setInput('');
 
     const userMsg: ChatMessage = {
@@ -34,31 +35,89 @@ export default function ChatAssistant() {
     };
     addChatMessage(userMsg);
     setIsTyping(true);
+    setStreamingContent('');
 
-    // Simulate AI response (in production, this calls /api/chat)
-    setTimeout(() => {
-      const responses: Record<string, string> = {
+    try {
+      const response = await fetch('/api/chat/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: text,
+          context: currentAssessment
+            ? { overallScore: currentAssessment.overallScore, standards: currentAssessment.standards.map((s) => ({ code: s.standardCode, score: s.overallScore })), gapCount: currentAssessment.gaps.length }
+            : null,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Stream failed');
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let fullText = '';
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                if (data.type === 'delta' && data.text) {
+                  fullText += data.text;
+                  setStreamingContent(fullText);
+                }
+                if (data.type === 'done') {
+                  break;
+                }
+                if (data.type === 'error') {
+                  fullText = `Error: ${data.message}`;
+                  break;
+                }
+              } catch {
+                // ignore parse errors
+              }
+            }
+          }
+        }
+      }
+
+      const reply: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: fullText || 'I can help you with compliance questions. Try asking about your score, gaps, or remediation plan.',
+        timestamp: new Date().toISOString(),
+      };
+      addChatMessage(reply);
+      setStreamingContent('');
+    } catch {
+      // Fallback to demo responses
+      const demoResponses: Record<string, string> = {
         "What's my biggest compliance risk?":
-          "Based on your assessment, your most critical risk is the **absence of a whistleblower mechanism** (ISO 37001 Clause 8.9) and **no due diligence framework** (Clause 8.2). Both carry significant legal liability exposure. I recommend establishing a whistleblower hotline within 30 days — this is a quick win with high impact.",
+          "Based on your assessment, your most critical risk is the **absence of a whistleblower mechanism** (ISO 37001 Clause 8.9) and **no due diligence framework** (Clause 8.2). Both carry significant legal liability exposure. I recommend establishing a whistleblower hotline within 30 days.",
         "How do I fix Clause 8.2?":
-          "Clause 8.2 (Due Diligence) currently scores 0%. To address this:\n\n1. **Develop a risk-based due diligence policy** for all business associates\n2. **Create DD questionnaires** tiered by risk level (basic, standard, enhanced)\n3. **Implement screening** for top 50 business associates within 60 days\n4. **Set up ongoing monitoring** with annual re-assessments\n\nEstimated effort: 15 person-days. Responsible: Legal & Procurement teams.",
+          "Clause 8.2 (Due Diligence) currently scores 0%. To address this:\n\n1. **Develop a risk-based due diligence policy** for all business associates\n2. **Create DD questionnaires** tiered by risk level\n3. **Implement screening** for top 50 business associates within 60 days\n4. **Set up ongoing monitoring** with annual re-assessments\n\nEstimated effort: 15 person-days.",
         "What's my ISO 37001 maturity?":
-          "Your ISO 37001 maturity is at **Level 2 — Defined**. This means you have basic policies in place but lack operational implementation. Key areas dragging you down:\n\n- Due diligence: 0%\n- Whistleblower mechanism: 0%\n- Training execution: 33%\n\nAddressing these three areas alone would elevate you to **Level 3 (Managed)** within 60-90 days.",
+          "Your ISO 37001 maturity is at **Level 2 — Defined**. Key areas dragging you down:\n\n- Due diligence: 0%\n- Whistleblower mechanism: 0%\n- Training execution: 33%\n\nAddressing these three areas alone would elevate you to **Level 3 (Managed)** within 60-90 days.",
         "Show me quick wins for this month":
-          "Here are your top 3 quick wins for the next 30 days:\n\n1. 🎓 **Deploy Anti-Bribery Training** (5 days, HR/Compliance) — closes gaps in ISO 37001 & 37301\n2. 📞 **Launch Whistleblower Hotline** (10 days, Legal) — critical legal requirement\n3. 🎁 **Implement Gift Register** (3 days, Compliance) — low effort, visible improvement\n\nTotal effort: ~18 person-days. Projected score improvement: +12% overall.",
+          "Top 3 quick wins for 30 days:\n\n1. 🎓 **Deploy Anti-Bribery Training** (5 days) — closes gaps in ISO 37001 & 37301\n2. 📞 **Launch Whistleblower Hotline** (10 days) — critical legal requirement\n3. 🎁 **Implement Gift Register** (3 days) — low effort, visible improvement\n\nProjected score improvement: +12% overall.",
       };
 
       const reply: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content:
-          responses[text] ||
-          `Based on your ${currentAssessment ? `assessment showing ${currentAssessment.overallScore}% overall compliance` : 'current data'}, I can help you understand specific clause requirements, identify priority gaps, and plan remediation actions. Try asking about specific clauses, standards, or your risk profile.`,
+        content: demoResponses[text] || `Based on your ${currentAssessment ? `assessment showing ${currentAssessment.overallScore}% overall compliance` : 'current data'}, I can help you understand specific clause requirements, identify priority gaps, and plan remediation actions.`,
         timestamp: new Date().toISOString(),
       };
       addChatMessage(reply);
-      setIsTyping(false);
-    }, 1500);
+      setStreamingContent('');
+    }
+
+    setIsTyping(false);
   };
 
   return (
@@ -169,7 +228,18 @@ export default function ChatAssistant() {
                   </div>
                 </div>
               ))}
-              {isTyping && (
+              {isTyping && streamingContent && (
+                <div className="flex justify-start">
+                  <div
+                    className="max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap"
+                    style={{ background: 'var(--color-primary-700)', color: 'var(--color-text-primary)' }}
+                  >
+                    {streamingContent}
+                    <span className="inline-block w-1.5 h-4 ml-0.5 animate-pulse" style={{ background: 'var(--color-accent-500)' }} />
+                  </div>
+                </div>
+              )}
+              {isTyping && !streamingContent && (
                 <div className="flex justify-start">
                   <div
                     className="px-4 py-3 rounded-2xl flex items-center gap-1"

@@ -2,11 +2,14 @@ import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
-  Building2, Users, Target, Upload, FileText, X, CheckCircle,
+  Building2, Upload, FileText, X, CheckCircle,
   Loader2, ArrowRight, ArrowLeft, Play,
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useAppStore } from '../store/useAppStore';
 import { demoAssessmentResult } from '../data/demo-data';
+import { useAssessmentStream } from '../hooks/useAssessmentStream';
+import apiClient from '../utils/apiClient';
 import ComplianceScoreRing from '../components/dashboard/ComplianceScoreRing';
 import type { StandardCode } from '../types';
 
@@ -36,7 +39,8 @@ const agentNodes: { name: string; status: 'idle' | 'processing' | 'complete' }[]
 
 export default function Assessment() {
   const navigate = useNavigate();
-  const { orgProfile, setOrgProfile, selectedStandards, setSelectedStandards, setAssessment } = useAppStore();
+  const { orgProfile, setOrgProfile, selectedStandards, setSelectedStandards, setAssessment, isDemoMode, addNotification } = useAppStore();
+  const { startStream, stopStream } = useAssessmentStream();
   const [step, setStep] = useState(0);
   const [files, setFiles] = useState<File[]>([]);
   const [dragOver, setDragOver] = useState(false);
@@ -44,6 +48,7 @@ export default function Assessment() {
   const [agentStates, setAgentStates] = useState(agentNodes);
   const [logs, setLogs] = useState<string[]>([]);
   const [done, setDone] = useState(false);
+  const [finalScore, setFinalScore] = useState(62);
 
   const toggleStandard = (code: StandardCode) => {
     setSelectedStandards(
@@ -65,6 +70,85 @@ export default function Assessment() {
   const removeFile = (index: number) => setFiles((prev) => prev.filter((_, i) => i !== index));
 
   const simulateProcessing = async () => {
+    setProcessing(true);
+
+    if (!isDemoMode) {
+      // Real API mode: upload files, start assessment, stream SSE
+      try {
+        // Upload files first
+        let filePaths: string[] = [];
+        if (files.length > 0) {
+          const formData = new FormData();
+          files.forEach((f) => formData.append('files', f));
+          const uploadRes = await apiClient.post('/upload', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          });
+          filePaths = uploadRes.data.files.map((f: any) => f.savedPath);
+        }
+
+        // Start assessment
+        const res = await apiClient.post('/assessment/start', {
+          filePaths,
+          standards: selectedStandards,
+          orgProfile: {
+            company: orgProfile.companyName,
+            industry: orgProfile.industrySector,
+            employees: orgProfile.employeeCount,
+            scope: orgProfile.assessmentScope,
+          },
+        });
+
+        const assessmentId = res.data.assessmentId;
+
+        // Stream SSE events
+        startStream(
+          assessmentId,
+          (event) => {
+            if (event.type === 'agent-start' && event.agent) {
+              setAgentStates((prev) =>
+                prev.map((a) =>
+                  a.name === event.agent ? { ...a, status: 'processing' as const } : a
+                )
+              );
+            }
+            if (event.type === 'agent-complete' && event.agent) {
+              setAgentStates((prev) =>
+                prev.map((a) =>
+                  a.name === event.agent ? { ...a, status: 'complete' as const } : a
+                )
+              );
+            }
+            if (event.type === 'log' && event.message) {
+              setLogs((prev) => [...prev, `[${new Date().toLocaleTimeString()}] ${event.message}`]);
+            }
+          },
+          (result) => {
+            setAgentStates((prev) => prev.map((a) => ({ ...a, status: 'complete' as const })));
+            setFinalScore(result.overallScore || 62);
+            setProcessing(false);
+            setDone(true);
+            toast.success('Assessment complete!');
+            addNotification({ type: 'success', title: 'Assessment Complete', message: `Overall score: ${result.overallScore}%` });
+          },
+          (error) => {
+            setProcessing(false);
+            toast.error(`Assessment failed: ${error}`);
+            addNotification({ type: 'error', title: 'Assessment Failed', message: error });
+          }
+        );
+      } catch {
+        setProcessing(false);
+        toast.error('Failed to start assessment. Falling back to demo mode.');
+        runDemoSimulation();
+      }
+      return;
+    }
+
+    // Demo mode simulation
+    runDemoSimulation();
+  };
+
+  const runDemoSimulation = async () => {
     setProcessing(true);
     const agentSequence = [
       { idx: 0, msg: '🔍 Document Agent — Parsing uploaded policy documents...' },
@@ -109,7 +193,9 @@ export default function Assessment() {
       ...demoAssessmentResult,
       orgProfile: { ...orgProfile },
       timestamp: new Date().toISOString(),
+      overallScore: finalScore,
     });
+    addNotification({ type: 'success', title: 'Assessment Saved', message: `Score: ${finalScore}% — View your dashboard for full results.` });
     navigate('/dashboard');
   };
 
@@ -370,7 +456,7 @@ export default function Assessment() {
                 <h2 className="font-display text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Assessment Complete</h2>
               </div>
 
-              <ComplianceScoreRing score={62} maturityLevel={3} size={180} delay={300} />
+              <ComplianceScoreRing score={finalScore} maturityLevel={finalScore >= 75 ? 4 : finalScore >= 60 ? 3 : 2} size={180} delay={300} />
 
               <div className="grid md:grid-cols-3 gap-4 max-w-xl mx-auto">
                 {[

@@ -1,9 +1,11 @@
 import { motion } from 'framer-motion';
-import { FileText, Download, Eye, ArrowRight } from 'lucide-react';
+import { FileText, Download, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../store/useAppStore';
 import { formatDate, getRiskColor } from '../utils/helpers';
+import { generateReport } from '../utils/generateReport';
 import RemediationTimeline from '../components/reports/RemediationTimeline';
+import EvidenceMapper from '../components/EvidenceMapper';
 
 export default function Reports() {
   const navigate = useNavigate();
@@ -48,7 +50,7 @@ export default function Reports() {
               </span>
             </div>
           </div>
-          <button className="btn-glow flex items-center gap-2">
+          <button onClick={() => generateReport(a)} className="btn-glow flex items-center gap-2">
             <Download size={16} /> Download PDF
           </button>
         </div>
@@ -131,6 +133,11 @@ export default function Reports() {
             </div>
           ))}
         </div>
+      </motion.div>
+
+      {/* Evidence Mapper */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
+        <EvidenceMapper />
       </motion.div>
 
       {/* Remediation roadmap */}

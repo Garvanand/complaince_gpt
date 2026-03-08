@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Shield, AlertTriangle, CalendarDays, FileCheck, Clock, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -11,12 +12,19 @@ import ClauseHeatmap from '../components/analytics/ClauseHeatmap';
 import AgentActivityFeed from '../components/agents/AgentActivityFeed';
 import RemediationTimeline from '../components/reports/RemediationTimeline';
 import GapPriorityMatrix from '../components/analytics/GapPriorityMatrix';
+import { KPISkeleton, ChartSkeleton, CardSkeleton } from '../components/Skeleton';
 import { useAppStore } from '../store/useAppStore';
 import { formatDate } from '../utils/helpers';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { currentAssessment, isDemoMode, loadDemoData } = useAppStore();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 600);
+    return () => clearTimeout(t);
+  }, []);
 
   if (!currentAssessment) {
     return (
@@ -47,6 +55,25 @@ export default function Dashboard() {
 
   const a = currentAssessment;
   const criticalGaps = a.gaps.filter((g) => g.impact === 'critical').length;
+
+  if (loading) {
+    return (
+      <div className="space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => <KPISkeleton key={i} />)}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <ChartSkeleton height={340} />
+          <ChartSkeleton height={340} />
+        </div>
+        <ChartSkeleton height={250} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
+      </div>
+    );
+  }
 
   const radarData = a.standards.map((s) => ({
     standard: s.standardCode.replace('ISO', ''),

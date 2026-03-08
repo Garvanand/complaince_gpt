@@ -164,3 +164,39 @@ body {
   color: var(--color-accent-500);
   margin-bottom: 0.5rem;
 }
+
+/* Custom thin scrollbar for nested scrolls */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-primary-600);
+  border-radius: 2px;
+}
+
+/* Responsive overrides */
+@media (max-width: 768px) {
+  .glass-card {
+    padding: 1rem;
+    border-radius: 0.75rem;
+  }
+  
+  .btn-glow, .btn-ghost {
+    padding: 0.5rem 1.25rem;
+    font-size: 0.875rem;
+  }
+
+  /* Ensure tables scroll horizontally */
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 640px) {
+  .glass-card {
+    padding: 0.75rem;
+  }
+}

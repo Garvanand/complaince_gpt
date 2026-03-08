@@ -1,6 +1,7 @@
 import { useLocation } from 'react-router-dom';
-import { Bell, Search, Sparkles } from 'lucide-react';
+import { Search, Sparkles, Command } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
+import NotificationsDropdown from '../NotificationsDropdown';
 
 const pageTitles: Record<string, string> = {
   '/dashboard': 'Dashboard',
@@ -12,10 +13,25 @@ const pageTitles: Record<string, string> = {
   '/settings': 'Settings',
 };
 
+const pageDescriptions: Record<string, string> = {
+  '/dashboard': 'Overview of your compliance posture',
+  '/assessment': 'Run a new compliance assessment',
+  '/standards': 'Browse ISO standards and clauses',
+  '/agents': 'View AI agent orchestration pipeline',
+  '/analytics': 'Trends, benchmarks, and simulation',
+  '/reports': 'Generate and download reports',
+  '/settings': 'Configure your workspace',
+};
+
 export default function Navbar() {
   const location = useLocation();
   const { isDemoMode, loadDemoData, toggleDemoMode } = useAppStore();
   const title = pageTitles[location.pathname] || 'ComplianceGPT';
+  const desc = pageDescriptions[location.pathname] || '';
+
+  const openSearch = () => {
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }));
+  };
 
   return (
     <header
@@ -30,22 +46,27 @@ export default function Navbar() {
         <h1 className="text-xl font-semibold" style={{ color: 'var(--color-text-primary)' }}>
           {title}
         </h1>
+        {desc && (
+          <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>{desc}</p>
+        )}
       </div>
 
-      <div className="flex items-center gap-4">
-        {/* Search bar */}
-        <div
-          className="flex items-center gap-2 px-4 py-2 rounded-xl"
+      <div className="flex items-center gap-3">
+        {/* Search trigger */}
+        <button
+          onClick={openSearch}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl transition-all hover:border-[var(--color-accent-500)]"
           style={{ background: 'var(--color-primary-700)', border: '1px solid var(--glass-border)' }}
         >
           <Search size={16} style={{ color: 'var(--color-text-muted)' }} />
-          <input
-            type="text"
-            placeholder="Search clauses, gaps..."
-            className="bg-transparent border-none outline-none text-sm w-48"
-            style={{ color: 'var(--color-text-primary)' }}
-          />
-        </div>
+          <span className="text-sm hidden md:inline" style={{ color: 'var(--color-text-muted)' }}>Search...</span>
+          <kbd
+            className="text-[10px] font-mono px-1.5 py-0.5 rounded hidden md:inline-flex items-center gap-0.5 ml-2"
+            style={{ background: 'var(--color-primary-600)', color: 'var(--color-text-muted)', border: '1px solid var(--glass-border)' }}
+          >
+            Ctrl K
+          </kbd>
+        </button>
 
         {/* Demo Mode Toggle */}
         <button
@@ -60,22 +81,11 @@ export default function Navbar() {
           }}
         >
           <Sparkles size={16} />
-          {isDemoMode ? 'Demo Active' : 'Load Demo'}
+          <span className="hidden sm:inline">{isDemoMode ? 'Demo Active' : 'Load Demo'}</span>
         </button>
 
         {/* Notifications */}
-        <button
-          className="relative p-2.5 rounded-xl transition-all"
-          style={{ background: 'var(--color-primary-700)', border: '1px solid var(--glass-border)' }}
-        >
-          <Bell size={18} style={{ color: 'var(--color-text-secondary)' }} />
-          <span
-            className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center"
-            style={{ background: 'var(--color-risk-critical)', color: 'white' }}
-          >
-            3
-          </span>
-        </button>
+        <NotificationsDropdown />
       </div>
     </header>
   );

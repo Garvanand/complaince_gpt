@@ -177,54 +177,151 @@ export default function Analytics() {
   );
 }
 
-/* Maturity Progression Simulator */
+/* Maturity Progression Simulator — Gap-based "What If" Analysis */
 function MaturitySimulator({ standards }: { standards: { standardCode: string; overallScore: number }[] }) {
-  const [phase, setPhase] = useState(0);
-  const phases = ['Current', 'Phase 1 (+30d)', 'Phase 2 (+90d)', 'Phase 3 (+180d)'];
-  const improvements = [0, 12, 22, 35];
+  const { currentAssessment } = useAppStore();
+  const gaps = currentAssessment?.gaps ?? [];
+  const remediations = currentAssessment?.remediation ?? [];
+  const [selectedGapIds, setSelectedGapIds] = useState<Set<string>>(new Set());
+
+  const toggleGap = (id: string) => {
+    setSelectedGapIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const selectPhase = (phase: 'immediate' | 'short-term' | 'medium-term') => {
+    const phaseOrder = { immediate: 1, 'short-term': 2, 'medium-term': 3 };
+    const ids = new Set<string>();
+    remediations.forEach((r) => {
+      if (phaseOrder[r.phase as keyof typeof phaseOrder] <= phaseOrder[phase]) {
+        ids.add(r.gapId);
+      }
+    });
+    setSelectedGapIds(ids);
+  };
+
+  // Calculate per-standard projected scores
+  const gapImpactMap: Record<string, number> = {};
+  gaps.forEach((g) => {
+    const impactPoints = g.impact === 'critical' ? 8 : g.impact === 'high' ? 5 : g.impact === 'medium' ? 3 : 1;
+    const key = g.standardCode;
+    if (!gapImpactMap[key]) gapImpactMap[key] = 0;
+    if (selectedGapIds.has(g.id)) gapImpactMap[key] += impactPoints;
+  });
 
   const simData = standards.map((s) => ({
     standard: s.standardCode.replace('ISO', 'ISO '),
-    score: Math.min(100, s.overallScore + improvements[phase]),
+    code: s.standardCode,
+    current: s.overallScore,
+    projected: Math.min(100, s.overallScore + (gapImpactMap[s.standardCode] || 0)),
   }));
 
-  const overallSim = Math.round(simData.reduce((sum, d) => sum + d.score, 0) / simData.length);
+  const overallCurrent = Math.round(standards.reduce((sum, s) => sum + s.overallScore, 0) / standards.length);
+  const overallProjected = Math.round(simData.reduce((sum, d) => sum + d.projected, 0) / simData.length);
+  const improvement = overallProjected - overallCurrent;
 
   return (
     <div>
-      <div className="flex gap-2 mb-6 flex-wrap">
-        {phases.map((p, i) => (
-          <button
-            key={p}
-            onClick={() => setPhase(i)}
-            className="px-4 py-2 rounded-xl text-sm font-medium transition-all"
-            style={{
-              background: phase === i ? 'rgba(0, 195, 137, 0.15)' : 'var(--color-primary-700)',
-              border: `1px solid ${phase === i ? 'var(--color-accent-500)' : 'var(--glass-border)'}`,
-              color: phase === i ? 'var(--color-accent-400)' : 'var(--color-text-secondary)',
-            }}
-          >
-            {p}
+      {/* Quick phase selectors */}
+      <div className="flex gap-2 mb-4 flex-wrap">
+        <button onClick={() => setSelectedGapIds(new Set())} className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+          style={{ background: selectedGapIds.size === 0 ? 'rgba(0, 195, 137, 0.15)' : 'var(--color-primary-700)', border: `1px solid ${selectedGapIds.size === 0 ? 'var(--color-accent-500)' : 'var(--glass-border)'}`, color: selectedGapIds.size === 0 ? 'var(--color-accent-400)' : 'var(--color-text-secondary)' }}>
+          Current State
+        </button>
+        {(['immediate', 'short-term', 'medium-term'] as const).map((p) => (
+          <button key={p} onClick={() => selectPhase(p)} className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all capitalize"
+            style={{ background: 'var(--color-primary-700)', border: '1px solid var(--glass-border)', color: 'var(--color-text-secondary)' }}>
+            All {p.replace('-', ' ')} fixes
           </button>
         ))}
+        <button onClick={() => setSelectedGapIds(new Set(gaps.map((g) => g.id)))} className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+          style={{ background: 'var(--color-primary-700)', border: '1px solid var(--glass-border)', color: 'var(--color-text-secondary)' }}>
+          Fix All Gaps
+        </button>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="p-4 rounded-xl text-center" style={{ background: 'rgba(0, 195, 137, 0.1)', border: '1px solid var(--color-accent-500)' }}>
-          <div className="text-3xl font-bold score-display" style={{ color: 'var(--color-accent-500)' }}>{overallSim}%</div>
-          <div className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>Projected Overall</div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Gap checklist */}
+        <div className="lg:col-span-1 max-h-[320px] overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+          {gaps.map((gap) => {
+            const checked = selectedGapIds.has(gap.id);
+            const impactColor = gap.impact === 'critical' ? 'var(--color-risk-critical)' : gap.impact === 'high' ? '#FF6B35' : gap.impact === 'medium' ? '#FFD32A' : 'var(--color-accent-400)';
+            return (
+              <label
+                key={gap.id}
+                className="flex items-start gap-3 p-3 rounded-xl cursor-pointer transition-all"
+                style={{
+                  background: checked ? 'rgba(0, 195, 137, 0.08)' : 'var(--color-primary-700)',
+                  border: `1px solid ${checked ? 'rgba(0, 195, 137, 0.3)' : 'var(--glass-border)'}`,
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => toggleGap(gap.id)}
+                  className="mt-0.5 accent-[var(--color-accent-500)]"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-semibold truncate" style={{ color: 'var(--color-text-primary)' }}>{gap.title}</div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-full" style={{ background: `${impactColor}15`, color: impactColor }}>{gap.impact}</span>
+                    <span className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>{gap.standardCode.replace('ISO', 'ISO ')}</span>
+                  </div>
+                </div>
+              </label>
+            );
+          })}
+          {gaps.length === 0 && (
+            <p className="text-sm p-4 text-center" style={{ color: 'var(--color-text-muted)' }}>No gaps to simulate</p>
+          )}
         </div>
-        {simData.map((d) => (
-          <div key={d.standard} className="p-4 rounded-xl text-center" style={{ background: 'var(--color-primary-700)', border: '1px solid var(--glass-border)' }}>
-            <div className="text-2xl font-bold score-display" style={{ color: d.score >= 75 ? 'var(--color-accent-400)' : d.score >= 60 ? '#FFD32A' : '#FF6B35' }}>
-              {d.score}%
+
+        {/* Projected scores */}
+        <div className="lg:col-span-2">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
+            <div className="p-4 rounded-xl text-center col-span-1" style={{ background: 'rgba(0, 195, 137, 0.1)', border: '1px solid var(--color-accent-500)' }}>
+              <div className="text-3xl font-bold score-display" style={{ color: 'var(--color-accent-500)' }}>{overallProjected}%</div>
+              <div className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>Projected Overall</div>
             </div>
-            <div className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>{d.standard}</div>
+            {simData.map((d) => (
+              <div key={d.standard} className="p-4 rounded-xl text-center" style={{ background: 'var(--color-primary-700)', border: '1px solid var(--glass-border)' }}>
+                <div className="text-2xl font-bold score-display" style={{ color: d.projected >= 75 ? 'var(--color-accent-400)' : d.projected >= 60 ? '#FFD32A' : '#FF6B35' }}>
+                  {d.projected}%
+                </div>
+                <div className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>{d.standard}</div>
+                {d.projected > d.current && (
+                  <div className="text-[10px] mt-0.5" style={{ color: 'var(--color-accent-400)' }}>+{d.projected - d.current}%</div>
+                )}
+              </div>
+            ))}
           </div>
-        ))}
+
+          {/* Progress bars */}
+          <div className="space-y-3">
+            {simData.map((d) => (
+              <div key={d.standard}>
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <span style={{ color: 'var(--color-text-secondary)' }}>{d.standard}</span>
+                  <span style={{ color: 'var(--color-text-muted)' }}>{d.current}% → {d.projected}%</span>
+                </div>
+                <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--color-primary-600)' }}>
+                  <div className="relative h-full rounded-full">
+                    <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${d.projected}%`, background: 'linear-gradient(90deg, var(--color-accent-500), var(--color-accent-400))', transition: 'width 0.5s ease' }} />
+                    <div className="absolute inset-y-0 left-0 rounded-full opacity-40" style={{ width: `${d.current}%`, background: 'var(--color-text-muted)' }} />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
-      {phase > 0 && (
+
+      {improvement > 0 && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-4 p-3 rounded-xl text-sm" style={{ background: 'rgba(0, 195, 137, 0.05)', border: '1px solid rgba(0, 195, 137, 0.1)', color: 'var(--color-accent-400)' }}>
-          ↑ Projected improvement of <strong>+{improvements[phase]}%</strong> after completing {phases[phase]} remediation actions
+          ↑ Fixing <strong>{selectedGapIds.size}</strong> gap{selectedGapIds.size !== 1 ? 's' : ''} would improve your overall score by <strong>+{improvement}%</strong> (from {overallCurrent}% to {overallProjected}%)
         </motion.div>
       )}
     </div>
