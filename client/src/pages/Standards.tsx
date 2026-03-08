@@ -8,7 +8,7 @@ import { getRiskColor } from '../utils/helpers';
 
 const data = standardsData as unknown as StandardsLibrary;
 const standardCodes: StandardCode[] = ['ISO37001', 'ISO37301', 'ISO27001', 'ISO9001'];
-const codeColors: Record<string, string> = { ISO37001: '#FF6B35', ISO37301: '#00C389', ISO27001: '#4A90FF', ISO9001: '#FFD32A' };
+const codeColors: Record<string, string> = { ISO37001: '#DD6B20', ISO37301: '#86BC25', ISO27001: '#00ABBD', ISO9001: '#FFD32A' };
 
 export default function Standards() {
   const [selected, setSelected] = useState<StandardCode>('ISO37001');

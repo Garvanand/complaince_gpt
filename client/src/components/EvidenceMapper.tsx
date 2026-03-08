@@ -7,7 +7,7 @@ import type { ClauseScore, StandardAssessment } from '../types';
 function getScoreColor(score: number): string {
   if (score >= 75) return 'var(--color-accent-500)';
   if (score >= 60) return '#FFD32A';
-  if (score >= 33) return '#FF6B35';
+  if (score >= 33) return '#DD6B20';
   return 'var(--color-risk-critical)';
 }
 
@@ -36,7 +36,7 @@ export default function EvidenceMapper() {
             }}
             className="px-4 py-2 rounded-xl text-sm font-medium transition-all"
             style={{
-              background: selectedStandard === s.standardCode ? 'rgba(0, 195, 137, 0.15)' : 'var(--color-primary-700)',
+              background: selectedStandard === s.standardCode ? 'rgba(134, 188, 37, 0.15)' : 'var(--color-primary-700)',
               border: `1px solid ${selectedStandard === s.standardCode ? 'var(--color-accent-500)' : 'var(--glass-border)'}`,
               color: selectedStandard === s.standardCode ? 'var(--color-accent-400)' : 'var(--color-text-secondary)',
             }}
@@ -122,7 +122,7 @@ export default function EvidenceMapper() {
               </div>
 
               {selectedClause.evidence && (
-                <div className="p-4 rounded-xl" style={{ background: 'rgba(0, 195, 137, 0.05)', border: '1px solid rgba(0, 195, 137, 0.1)' }}>
+                <div className="p-4 rounded-xl" style={{ background: 'rgba(134, 188, 37, 0.05)', border: '1px solid rgba(134, 188, 37, 0.1)' }}>
                   <div className="flex items-center gap-2 mb-2">
                     <Shield size={14} style={{ color: 'var(--color-accent-500)' }} />
                     <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-accent-500)' }}>
@@ -152,8 +152,8 @@ export default function EvidenceMapper() {
               {selectedClause.remediation && (
                 <div className="p-4 rounded-xl" style={{ background: 'rgba(74, 144, 255, 0.05)', border: '1px solid rgba(74, 144, 255, 0.1)' }}>
                   <div className="flex items-center gap-2 mb-2">
-                    <FileText size={14} style={{ color: '#4A90FF' }} />
-                    <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#4A90FF' }}>
+                    <FileText size={14} style={{ color: '#00ABBD' }} />
+                    <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#00ABBD' }}>
                       Recommended Action
                     </span>
                   </div>

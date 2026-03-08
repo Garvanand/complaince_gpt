@@ -10,11 +10,11 @@ import { ArrowRight, TrendingUp } from 'lucide-react';
 import { historicalTrend, industryBenchmarks } from '../data/demo-data';
 
 const gapDistribution = [
-  { name: 'Process', value: 6, color: '#FF6B35' },
+  { name: 'Process', value: 6, color: '#DD6B20' },
   { name: 'Training', value: 2, color: '#FFD32A' },
-  { name: 'Technology', value: 1, color: '#4A90FF' },
-  { name: 'Documentation', value: 1, color: '#00E5A0' },
-  { name: 'Policy', value: 2, color: '#FF4757' },
+  { name: 'Technology', value: 1, color: '#00ABBD' },
+  { name: 'Documentation', value: 1, color: '#A8D048' },
+  { name: 'Policy', value: 2, color: '#E53E3E' },
 ];
 
 const maturityStackData = [
@@ -72,11 +72,11 @@ export default function Analytics() {
             <YAxis tick={{ fill: 'var(--color-text-muted)', fontSize: 10 }} />
             <Tooltip {...tooltipStyle} />
             <Legend wrapperStyle={{ fontSize: 11, color: 'var(--color-text-secondary)' }} />
-            <Bar dataKey="level1" stackId="a" fill="#FF4757" name="Level 1" radius={[0, 0, 0, 0]} />
-            <Bar dataKey="level2" stackId="a" fill="#FF6B35" name="Level 2" />
+            <Bar dataKey="level1" stackId="a" fill="#E53E3E" name="Level 1" radius={[0, 0, 0, 0]} />
+            <Bar dataKey="level2" stackId="a" fill="#DD6B20" name="Level 2" />
             <Bar dataKey="level3" stackId="a" fill="#FFD32A" name="Level 3" />
-            <Bar dataKey="level4" stackId="a" fill="#00C389" name="Level 4" />
-            <Bar dataKey="level5" stackId="a" fill="#00E5A0" name="Level 5" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="level4" stackId="a" fill="#86BC25" name="Level 4" />
+            <Bar dataKey="level5" stackId="a" fill="#A8D048" name="Level 5" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </motion.div>
@@ -93,9 +93,9 @@ export default function Analytics() {
               <YAxis domain={[0, 100]} tick={{ fill: 'var(--color-text-muted)', fontSize: 10 }} />
               <Tooltip {...tooltipStyle} />
               <Legend wrapperStyle={{ fontSize: 11, color: 'var(--color-text-secondary)' }} />
-              <Line type="monotone" dataKey="ISO37001" stroke="#FF6B35" strokeWidth={2} dot={{ r: 3 }} name="ISO 37001" />
-              <Line type="monotone" dataKey="ISO37301" stroke="#00C389" strokeWidth={2} dot={{ r: 3 }} name="ISO 37301" />
-              <Line type="monotone" dataKey="ISO27001" stroke="#4A90FF" strokeWidth={2} dot={{ r: 3 }} name="ISO 27001" />
+              <Line type="monotone" dataKey="ISO37001" stroke="#DD6B20" strokeWidth={2} dot={{ r: 3 }} name="ISO 37001" />
+              <Line type="monotone" dataKey="ISO37301" stroke="#86BC25" strokeWidth={2} dot={{ r: 3 }} name="ISO 37301" />
+              <Line type="monotone" dataKey="ISO27001" stroke="#00ABBD" strokeWidth={2} dot={{ r: 3 }} name="ISO 27001" />
               <Line type="monotone" dataKey="ISO9001" stroke="#FFD32A" strokeWidth={2} dot={{ r: 3 }} name="ISO 9001" />
             </LineChart>
           </ResponsiveContainer>
@@ -228,7 +228,7 @@ function MaturitySimulator({ standards }: { standards: { standardCode: string; o
       {/* Quick phase selectors */}
       <div className="flex gap-2 mb-4 flex-wrap">
         <button onClick={() => setSelectedGapIds(new Set())} className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-          style={{ background: selectedGapIds.size === 0 ? 'rgba(0, 195, 137, 0.15)' : 'var(--color-primary-700)', border: `1px solid ${selectedGapIds.size === 0 ? 'var(--color-accent-500)' : 'var(--glass-border)'}`, color: selectedGapIds.size === 0 ? 'var(--color-accent-400)' : 'var(--color-text-secondary)' }}>
+          style={{ background: selectedGapIds.size === 0 ? 'rgba(134, 188, 37, 0.15)' : 'var(--color-primary-700)', border: `1px solid ${selectedGapIds.size === 0 ? 'var(--color-accent-500)' : 'var(--glass-border)'}`, color: selectedGapIds.size === 0 ? 'var(--color-accent-400)' : 'var(--color-text-secondary)' }}>
           Current State
         </button>
         {(['immediate', 'short-term', 'medium-term'] as const).map((p) => (
@@ -248,14 +248,14 @@ function MaturitySimulator({ standards }: { standards: { standardCode: string; o
         <div className="lg:col-span-1 max-h-[320px] overflow-y-auto space-y-2 pr-2 custom-scrollbar">
           {gaps.map((gap) => {
             const checked = selectedGapIds.has(gap.id);
-            const impactColor = gap.impact === 'critical' ? 'var(--color-risk-critical)' : gap.impact === 'high' ? '#FF6B35' : gap.impact === 'medium' ? '#FFD32A' : 'var(--color-accent-400)';
+            const impactColor = gap.impact === 'critical' ? 'var(--color-risk-critical)' : gap.impact === 'high' ? '#DD6B20' : gap.impact === 'medium' ? '#FFD32A' : 'var(--color-accent-400)';
             return (
               <label
                 key={gap.id}
                 className="flex items-start gap-3 p-3 rounded-xl cursor-pointer transition-all"
                 style={{
-                  background: checked ? 'rgba(0, 195, 137, 0.08)' : 'var(--color-primary-700)',
-                  border: `1px solid ${checked ? 'rgba(0, 195, 137, 0.3)' : 'var(--glass-border)'}`,
+                  background: checked ? 'rgba(134, 188, 37, 0.08)' : 'var(--color-primary-700)',
+                  border: `1px solid ${checked ? 'rgba(134, 188, 37, 0.3)' : 'var(--glass-border)'}`,
                 }}
               >
                 <input
@@ -282,13 +282,13 @@ function MaturitySimulator({ standards }: { standards: { standardCode: string; o
         {/* Projected scores */}
         <div className="lg:col-span-2">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
-            <div className="p-4 rounded-xl text-center col-span-1" style={{ background: 'rgba(0, 195, 137, 0.1)', border: '1px solid var(--color-accent-500)' }}>
+            <div className="p-4 rounded-xl text-center col-span-1" style={{ background: 'rgba(134, 188, 37, 0.1)', border: '1px solid var(--color-accent-500)' }}>
               <div className="text-3xl font-bold score-display" style={{ color: 'var(--color-accent-500)' }}>{overallProjected}%</div>
               <div className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>Projected Overall</div>
             </div>
             {simData.map((d) => (
               <div key={d.standard} className="p-4 rounded-xl text-center" style={{ background: 'var(--color-primary-700)', border: '1px solid var(--glass-border)' }}>
-                <div className="text-2xl font-bold score-display" style={{ color: d.projected >= 75 ? 'var(--color-accent-400)' : d.projected >= 60 ? '#FFD32A' : '#FF6B35' }}>
+                <div className="text-2xl font-bold score-display" style={{ color: d.projected >= 75 ? 'var(--color-accent-400)' : d.projected >= 60 ? '#FFD32A' : '#DD6B20' }}>
                   {d.projected}%
                 </div>
                 <div className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>{d.standard}</div>
@@ -320,7 +320,7 @@ function MaturitySimulator({ standards }: { standards: { standardCode: string; o
       </div>
 
       {improvement > 0 && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-4 p-3 rounded-xl text-sm" style={{ background: 'rgba(0, 195, 137, 0.05)', border: '1px solid rgba(0, 195, 137, 0.1)', color: 'var(--color-accent-400)' }}>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-4 p-3 rounded-xl text-sm" style={{ background: 'rgba(134, 188, 37, 0.05)', border: '1px solid rgba(134, 188, 37, 0.1)', color: 'var(--color-accent-400)' }}>
           ↑ Fixing <strong>{selectedGapIds.size}</strong> gap{selectedGapIds.size !== 1 ? 's' : ''} would improve your overall score by <strong>+{improvement}%</strong> (from {overallCurrent}% to {overallProjected}%)
         </motion.div>
       )}

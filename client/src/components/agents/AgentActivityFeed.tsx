@@ -2,13 +2,13 @@ import { motion } from 'framer-motion';
 import { Search, Bot, Scale, Shield, Award, GitBranch, Wrench, Clock } from 'lucide-react';
 
 const feedItems = [
-  { agent: 'Document Agent', icon: Search, message: 'Parsed Section 4.2 of Acme Corp Anti-Bribery Policy.pdf', time: '2 min ago', color: '#4A90FF' },
-  { agent: 'Bribery Risk Agent', icon: Scale, message: 'Scored Clause 6.1: 33% (Planned) — Risk actions not yet implemented', time: '3 min ago', color: '#FF6B35' },
-  { agent: 'Governance Agent', icon: Shield, message: 'Compliance function assessment complete — Level 3 maturity', time: '5 min ago', color: '#00C389' },
-  { agent: 'Security Agent', icon: Shield, message: 'IS risk treatment gap identified — Critical priority', time: '7 min ago', color: '#4A90FF' },
+  { agent: 'Document Agent', icon: Search, message: 'Parsed Section 4.2 of Acme Corp Anti-Bribery Policy.pdf', time: '2 min ago', color: '#00ABBD' },
+  { agent: 'Bribery Risk Agent', icon: Scale, message: 'Scored Clause 6.1: 33% (Planned) — Risk actions not yet implemented', time: '3 min ago', color: '#DD6B20' },
+  { agent: 'Governance Agent', icon: Shield, message: 'Compliance function assessment complete — Level 3 maturity', time: '5 min ago', color: '#86BC25' },
+  { agent: 'Security Agent', icon: Shield, message: 'IS risk treatment gap identified — Critical priority', time: '7 min ago', color: '#00ABBD' },
   { agent: 'Quality Agent', icon: Award, message: 'QMS process maturity at 74% — Design controls gap noted', time: '8 min ago', color: '#FFD32A' },
-  { agent: 'Gap Analysis Agent', icon: GitBranch, message: 'Identified 12 gaps across 4 standards — 5 critical', time: '10 min ago', color: '#FF4757' },
-  { agent: 'Remediation Agent', icon: Wrench, message: 'Generated 9-action remediation roadmap across 3 phases', time: '12 min ago', color: '#00E5A0' },
+  { agent: 'Gap Analysis Agent', icon: GitBranch, message: 'Identified 12 gaps across 4 standards — 5 critical', time: '10 min ago', color: '#E53E3E' },
+  { agent: 'Remediation Agent', icon: Wrench, message: 'Generated 9-action remediation roadmap across 3 phases', time: '12 min ago', color: '#A8D048' },
 ];
 
 export default function AgentActivityFeed() {

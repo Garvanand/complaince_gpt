@@ -44,7 +44,7 @@ export default function Reports() {
               <span>{a.standards.length} Standards</span>
               <span
                 className="px-2 py-0.5 rounded-full text-xs font-bold"
-                style={{ background: 'rgba(0, 195, 137, 0.15)', color: 'var(--color-accent-500)' }}
+                style={{ background: 'rgba(134, 188, 37, 0.15)', color: 'var(--color-accent-500)' }}
               >
                 Ready
               </span>

@@ -133,7 +133,7 @@ export default function ChatAssistant() {
             className="fixed bottom-6 right-6 w-14 h-14 rounded-full flex items-center justify-center z-50 shadow-lg"
             style={{
               background: 'linear-gradient(135deg, var(--color-accent-500), var(--color-accent-400))',
-              boxShadow: '0 0 30px rgba(0, 195, 137, 0.3)',
+              boxShadow: '0 0 30px rgba(134, 188, 37, 0.3)',
             }}
           >
             <MessageCircle size={24} className="text-[var(--color-primary-900)]" />

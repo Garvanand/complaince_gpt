@@ -4,10 +4,10 @@ import { Bell, Check, CheckCheck, Trash2, AlertTriangle, Info, CheckCircle, XCir
 import { useAppStore } from '../store/useAppStore';
 
 const typeConfig = {
-  info: { icon: Info, color: '#4A90FF', bg: 'rgba(74, 144, 255, 0.1)' },
-  success: { icon: CheckCircle, color: '#00C389', bg: 'rgba(0, 195, 137, 0.1)' },
+  info: { icon: Info, color: '#00ABBD', bg: 'rgba(74, 144, 255, 0.1)' },
+  success: { icon: CheckCircle, color: '#86BC25', bg: 'rgba(134, 188, 37, 0.1)' },
   warning: { icon: AlertTriangle, color: '#FFD32A', bg: 'rgba(255, 211, 42, 0.1)' },
-  error: { icon: XCircle, color: '#FF4757', bg: 'rgba(255, 71, 87, 0.1)' },
+  error: { icon: XCircle, color: '#E53E3E', bg: 'rgba(255, 71, 87, 0.1)' },
 };
 
 export default function NotificationsDropdown() {
@@ -120,7 +120,7 @@ export default function NotificationsDropdown() {
                     onClick={() => markNotificationRead(n.id)}
                     className="w-full flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--color-primary-700)]"
                     style={{
-                      background: n.read ? 'transparent' : 'rgba(0, 195, 137, 0.02)',
+                      background: n.read ? 'transparent' : 'rgba(134, 188, 37, 0.02)',
                       borderBottom: '1px solid var(--glass-border)',
                     }}
                   >

@@ -2,13 +2,13 @@ import { motion } from 'framer-motion';
 import { FileText, Bot, Search, Scale, Shield, Award, GitBranch, Wrench, ArrowRight } from 'lucide-react';
 
 const agents = [
-  { name: 'Document Agent', icon: Search, module: 'GenW RealmAI', input: 'Raw policy documents (PDF, DOCX)', output: 'Structured policy sections, controls, evidence artifacts', color: '#4A90FF', desc: 'Parses and structures compliance-relevant content from uploaded policy documents using NLP.' },
-  { name: 'Bribery Risk Agent', icon: Scale, module: 'GenW Agent Builder', input: 'Parsed document content, Org profile', output: 'ISO 37001 clause scores, evidence, gaps', color: '#FF6B35', desc: 'Specialist agent for ISO 37001:2025 Anti-Bribery Management Systems assessment.' },
-  { name: 'Governance Agent', icon: Shield, module: 'GenW Agent Builder', input: 'Parsed document content, Org profile', output: 'ISO 37301 clause scores, evidence, gaps', color: '#00C389', desc: 'Evaluates compliance management systems against ISO 37301:2021 requirements.' },
-  { name: 'Security Agent', icon: Shield, module: 'GenW Agent Builder', input: 'Parsed document content, Org profile', output: 'ISO 27001 clause scores, evidence, gaps', color: '#4A90FF', desc: 'Assesses information security management against ISO 27001:2022 controls.' },
+  { name: 'Document Agent', icon: Search, module: 'GenW RealmAI', input: 'Raw policy documents (PDF, DOCX)', output: 'Structured policy sections, controls, evidence artifacts', color: '#00ABBD', desc: 'Parses and structures compliance-relevant content from uploaded policy documents using NLP.' },
+  { name: 'Bribery Risk Agent', icon: Scale, module: 'GenW Agent Builder', input: 'Parsed document content, Org profile', output: 'ISO 37001 clause scores, evidence, gaps', color: '#DD6B20', desc: 'Specialist agent for ISO 37001:2025 Anti-Bribery Management Systems assessment.' },
+  { name: 'Governance Agent', icon: Shield, module: 'GenW Agent Builder', input: 'Parsed document content, Org profile', output: 'ISO 37301 clause scores, evidence, gaps', color: '#86BC25', desc: 'Evaluates compliance management systems against ISO 37301:2021 requirements.' },
+  { name: 'Security Agent', icon: Shield, module: 'GenW Agent Builder', input: 'Parsed document content, Org profile', output: 'ISO 27001 clause scores, evidence, gaps', color: '#00ABBD', desc: 'Assesses information security management against ISO 27001:2022 controls.' },
   { name: 'Quality Agent', icon: Award, module: 'GenW Agent Builder', input: 'Parsed document content, Org profile', output: 'ISO 9001 clause scores, evidence, gaps', color: '#FFD32A', desc: 'Reviews quality management systems against ISO 9001:2015 requirements.' },
-  { name: 'Gap Analysis Agent', icon: GitBranch, module: 'GenW Agent Builder', input: 'All standard assessment results', output: 'Prioritized gaps, cross-standard overlaps, effort estimates', color: '#FF4757', desc: 'Cross-standard gap analyser that identifies prioritized gaps and overlap opportunities.' },
-  { name: 'Remediation Agent', icon: Wrench, module: 'GenW Agent Builder', input: 'Gap analysis results, Org profile', output: 'Phased remediation roadmap with actions', color: '#00E5A0', desc: 'Generates a consultant-quality phased remediation roadmap with specific actions.' },
+  { name: 'Gap Analysis Agent', icon: GitBranch, module: 'GenW Agent Builder', input: 'All standard assessment results', output: 'Prioritized gaps, cross-standard overlaps, effort estimates', color: '#E53E3E', desc: 'Cross-standard gap analyser that identifies prioritized gaps and overlap opportunities.' },
+  { name: 'Remediation Agent', icon: Wrench, module: 'GenW Agent Builder', input: 'Gap analysis results, Org profile', output: 'Phased remediation roadmap with actions', color: '#A8D048', desc: 'Generates a consultant-quality phased remediation roadmap with specific actions.' },
 ];
 
 export default function AgentWorkflow() {
@@ -80,7 +80,7 @@ export default function AgentWorkflow() {
                     <InfoRow label="Model" value="claude-opus-4-5" />
                     <div className="flex items-center gap-2">
                       <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Status:</span>
-                      <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(0, 195, 137, 0.15)', color: 'var(--color-accent-500)' }}>
+                      <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(134, 188, 37, 0.15)', color: 'var(--color-accent-500)' }}>
                         Ready
                       </span>
                     </div>

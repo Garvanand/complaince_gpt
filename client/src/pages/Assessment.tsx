@@ -21,9 +21,9 @@ const industries = [
 const employeeRanges = ['1-50', '51-200', '201-500', '501-1000', '1000-5000', '5000+'];
 
 const standardOptions: { code: StandardCode; name: string; desc: string; color: string }[] = [
-  { code: 'ISO37001', name: 'ISO 37001', desc: 'Anti-Bribery Management Systems', color: '#FF6B35' },
-  { code: 'ISO37301', name: 'ISO 37301', desc: 'Compliance Management Systems', color: '#00C389' },
-  { code: 'ISO27001', name: 'ISO 27001', desc: 'Information Security Management', color: '#4A90FF' },
+  { code: 'ISO37001', name: 'ISO 37001', desc: 'Anti-Bribery Management Systems', color: '#DD6B20' },
+  { code: 'ISO37301', name: 'ISO 37301', desc: 'Compliance Management Systems', color: '#86BC25' },
+  { code: 'ISO27001', name: 'ISO 27001', desc: 'Information Security Management', color: '#00ABBD' },
   { code: 'ISO9001', name: 'ISO 9001', desc: 'Quality Management Systems', color: '#FFD32A' },
 ];
 
@@ -285,7 +285,7 @@ export default function Assessment() {
                         onClick={() => setOrgProfile({ assessmentScope: scope })}
                         className="flex-1 py-3 rounded-xl text-sm font-medium transition-all capitalize"
                         style={{
-                          background: orgProfile.assessmentScope === scope ? 'rgba(0, 195, 137, 0.15)' : 'var(--color-primary-700)',
+                          background: orgProfile.assessmentScope === scope ? 'rgba(134, 188, 37, 0.15)' : 'var(--color-primary-700)',
                           border: `1px solid ${orgProfile.assessmentScope === scope ? 'var(--color-accent-500)' : 'var(--glass-border)'}`,
                           color: orgProfile.assessmentScope === scope ? 'var(--color-accent-400)' : 'var(--color-text-secondary)',
                         }}
@@ -336,7 +336,7 @@ export default function Assessment() {
                 className="border-2 border-dashed rounded-2xl p-12 text-center transition-all cursor-pointer"
                 style={{
                   borderColor: dragOver ? 'var(--color-accent-500)' : 'var(--color-primary-600)',
-                  background: dragOver ? 'rgba(0, 195, 137, 0.05)' : 'transparent',
+                  background: dragOver ? 'rgba(134, 188, 37, 0.05)' : 'transparent',
                 }}
                 onClick={() => {
                   const input = document.createElement('input');
@@ -397,7 +397,7 @@ export default function Assessment() {
                     <div
                       className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all"
                       style={{
-                        background: agent.status === 'complete' ? 'rgba(0, 195, 137, 0.2)' : agent.status === 'processing' ? 'rgba(0, 195, 137, 0.1)' : 'var(--color-primary-700)',
+                        background: agent.status === 'complete' ? 'rgba(134, 188, 37, 0.2)' : agent.status === 'processing' ? 'rgba(134, 188, 37, 0.1)' : 'var(--color-primary-700)',
                         border: `2px solid ${agent.status === 'complete' ? 'var(--color-accent-500)' : agent.status === 'processing' ? 'var(--color-accent-500)' : 'var(--color-primary-600)'}`,
                         animation: agent.status === 'processing' ? 'pulse-glow 2s ease-in-out infinite' : 'none',
                       }}

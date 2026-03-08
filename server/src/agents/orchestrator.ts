@@ -2,11 +2,11 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   runAgent,
   buildDocumentAgentPrompt,
-  buildStandardAgentPrompt,
   buildGapAnalysisPrompt,
   buildRemediationPrompt,
 } from './agentRunner';
 import { isoStandards } from '../data/standards';
+import { scoreAllStandards } from '../services/HybridScoringService';
 
 export interface OrchestratorCallbacks {
   onAgentStart: (agentName: string) => void;
@@ -101,54 +101,40 @@ export async function runOrchestrator(
   const controlsIdentified = (docParsed?.controlsIdentified as number) || 0;
   callbacks.onLog(`🔍 Document Agent — Extracted content, ${controlsIdentified || 'multiple'} controls identified`);
 
-  // Step 2: Standard-specific agents (parallel)
-  const standardAgentMap: Record<string, { agentName: string; standardName: string }> = {
-    ISO37001: { agentName: 'Bribery Risk Agent', standardName: 'Anti-Bribery Management Systems' },
-    ISO37301: { agentName: 'Governance Agent', standardName: 'Compliance Management Systems' },
-    ISO27001: { agentName: 'Security Agent', standardName: 'Information Security Management' },
-    ISO9001: { agentName: 'Quality Agent', standardName: 'Quality Management Systems' },
+  // Step 2: Standard-specific scoring via HybridScoringService
+  const standardAgentNames: Record<string, string> = {
+    ISO37001: 'Bribery Risk Agent',
+    ISO37301: 'Governance Agent',
+    ISO27001: 'Security Agent',
+    ISO9001: 'Quality Agent',
   };
 
-  const standardPromises = standards.map(async (code) => {
-    const info = standardAgentMap[code];
-    if (!info) return null;
-    const std = isoStandards[code];
-    if (!std) return null;
+  for (const code of standards) {
+    const agentName = standardAgentNames[code] || `${code} Agent`;
+    callbacks.onAgentStart(agentName);
+    callbacks.onLog(`⚖️ ${agentName} — Scoring ${code} clauses via HybridScoring...`);
+  }
 
-    callbacks.onAgentStart(info.agentName);
-    callbacks.onLog(`⚖️ ${info.agentName} — Assessing ${code} clauses...`);
+  const hybridResults = await scoreAllStandards(documentText, standards, callbacks.onLog);
 
-    const prompt = `Based on the following document analysis, score each ${code} clause for ${orgProfile.company}:
+  for (const result of hybridResults) {
+    const agentName = standardAgentNames[result.standard] || `${result.standard} Agent`;
+    const std = isoStandards[result.standard];
 
-Document Analysis: ${docResult}
+    standardAssessments.push({
+      standard: result.standard,
+      name: result.name,
+      overallScore: result.overallScore,
+      maturityLevel: result.maturityLevel,
+      clauseScores: result.clauseScores.map(cs => ({
+        clauseId: cs.clauseId,
+        score: cs.score,
+        finding: cs.finding,
+      })),
+    });
 
-Clauses to evaluate:
-${std.clauses.map((c) => `- ${c.id}: ${c.title} - ${c.description}`).join('\n')}
-
-Provide a compliance score (0-100) for each clause.`;
-
-    const result = await runAgent(info.agentName, buildStandardAgentPrompt(code, info.standardName), prompt, callbacks.onLog);
-    callbacks.onAgentComplete(info.agentName, result);
-
-    const parsed = safeParseJSON(result);
-    const clauseScores = (parsed?.clauseScores as { clauseId: string; score: number; finding: string }[]) || 
-      std.clauses.map((c) => ({ clauseId: c.id, score: Math.floor(Math.random() * 40) + 40, finding: 'Assessment pending detailed review' }));
-
-    const overallScore = Math.round(clauseScores.reduce((sum, cs) => sum + cs.score, 0) / clauseScores.length);
-    callbacks.onLog(`⚖️ ${info.agentName} — Scored ${clauseScores.length} clauses: ${overallScore}% overall (Level ${getMaturityLevel(overallScore)})`);
-
-    return {
-      standard: code,
-      name: info.standardName,
-      overallScore,
-      maturityLevel: getMaturityLevel(overallScore),
-      clauseScores,
-    };
-  });
-
-  const results = await Promise.all(standardPromises);
-  for (const r of results) {
-    if (r) standardAssessments.push(r);
+    callbacks.onAgentComplete(agentName, `Scored ${result.clauseScores.length} clauses: ${result.overallScore}% (${result.scoringMethod})`);
+    callbacks.onLog(`⚖️ ${agentName} — ${result.overallScore}% overall (Level ${result.maturityLevel}, method: ${result.scoringMethod})`);
   }
 
   // Step 3: Gap Analysis Agent

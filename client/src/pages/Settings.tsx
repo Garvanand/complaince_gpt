@@ -49,7 +49,7 @@ export default function Settings() {
               key={theme}
               className="px-4 py-2 rounded-xl text-sm font-medium"
               style={{
-                background: theme === 'Dark (Default)' ? 'rgba(0, 195, 137, 0.15)' : 'var(--color-primary-700)',
+                background: theme === 'Dark (Default)' ? 'rgba(134, 188, 37, 0.15)' : 'var(--color-primary-700)',
                 border: `1px solid ${theme === 'Dark (Default)' ? 'var(--color-accent-500)' : 'var(--glass-border)'}`,
                 color: theme === 'Dark (Default)' ? 'var(--color-accent-400)' : 'var(--color-text-secondary)',
               }}

@@ -35,7 +35,7 @@ const typeIcons = {
 const typeColors = {
   clause: 'var(--color-accent-500)',
   gap: 'var(--color-risk-critical)',
-  standard: '#4A90FF',
+  standard: '#00ABBD',
   remediation: '#FFD32A',
   page: 'var(--color-text-secondary)',
 };

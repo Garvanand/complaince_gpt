@@ -21,8 +21,8 @@ createRoot(document.getElementById('root')!).render(
               borderRadius: '12px',
               fontSize: '14px',
             },
-            success: { iconTheme: { primary: '#00C389', secondary: '#0A0E1A' } },
-            error: { iconTheme: { primary: '#FF4757', secondary: '#0A0E1A' } },
+            success: { iconTheme: { primary: '#86BC25', secondary: '#0A0E1A' } },
+            error: { iconTheme: { primary: '#E53E3E', secondary: '#0A0E1A' } },
           }}
         />
       </BrowserRouter>

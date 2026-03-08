@@ -1,9 +1,9 @@
 import type { Gap } from '../../types';
 
 const standardColors: Record<string, string> = {
-  ISO37001: '#FF6B35',
-  ISO37301: '#00C389',
-  ISO27001: '#4A90FF',
+  ISO37001: '#DD6B20',
+  ISO37301: '#86BC25',
+  ISO27001: '#00ABBD',
   ISO9001: '#FFD32A',
 };
 
@@ -22,7 +22,7 @@ export default function GapPriorityMatrix({ gaps }: GapPriorityMatrixProps) {
     <div className="overflow-x-auto">
       <svg viewBox={`0 0 ${w} ${h}`} className="w-full" style={{ maxHeight: 300 }}>
         {/* Quadrant backgrounds */}
-        <rect x={pad} y={pad} width={plotW / 2} height={plotH / 2} fill="rgba(0, 195, 137, 0.05)" />
+        <rect x={pad} y={pad} width={plotW / 2} height={plotH / 2} fill="rgba(134, 188, 37, 0.05)" />
         <rect x={pad + plotW / 2} y={pad} width={plotW / 2} height={plotH / 2} fill="rgba(255, 211, 42, 0.05)" />
         <rect x={pad} y={pad + plotH / 2} width={plotW / 2} height={plotH / 2} fill="rgba(74, 86, 128, 0.03)" />
         <rect x={pad + plotW / 2} y={pad + plotH / 2} width={plotW / 2} height={plotH / 2} fill="rgba(255, 107, 53, 0.05)" />
