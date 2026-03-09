@@ -10,6 +10,7 @@ import {
 } from 'recharts';
 import ComplianceScoreRing from '../components/dashboard/ComplianceScoreRing';
 import ClauseHeatmap from '../components/analytics/ClauseHeatmap';
+import ComplianceReadinessTimeline from '../components/analytics/ComplianceReadinessTimeline';
 import RemediationTimeline from '../components/reports/RemediationTimeline';
 import GapPriorityMatrix from '../components/analytics/GapPriorityMatrix';
 import OrganizationalRiskHeatmap from '../components/analytics/OrganizationalRiskHeatmap';
@@ -171,6 +172,13 @@ export default function Dashboard() {
         <MetricCard label="Critical exposure" value={criticalGaps} caption={`${highGaps} high-severity findings also require management action`} tone="danger" />
         <MetricCard label="Last review" value={formatDate(a.timestamp)} caption="Latest completed assessment in this workspace" />
       </div>
+      <Panel
+        label="Readiness forecast"
+        title="Compliance readiness timeline"
+        description="Simulate how the score improves as remediation phases land, including top-gap and full-roadmap scenarios."
+      >
+        <ComplianceReadinessTimeline assessment={a} />
+      </Panel>
 
       <div className="dashboard-grid">
         <Panel label="Assessment results" title="Standards scorecard" description="A concise score view for business users, showing where attention is needed first.">

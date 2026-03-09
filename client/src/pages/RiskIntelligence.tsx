@@ -4,6 +4,7 @@ import { ArrowRight, ShieldAlert } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { standardsApi } from '../utils/apiClient';
 import type { KnowledgeBaseOverview } from '../types';
+import ComplianceReadinessTimeline from '../components/analytics/ComplianceReadinessTimeline';
 import { EmptyWorkspace, MetricCard, PageHero, Panel } from '../components/ui/EnterpriseLayout';
 import { DataTable, RiskIndicator, ScoreBadge } from '../components/ui/EnterpriseComponents';
 import { getRiskDistribution, getStandardLabel, sortGapsByPriority } from '../utils/enterpriseData';
@@ -77,6 +78,13 @@ export default function RiskIntelligence() {
         <MetricCard label="Benchmark pressure" value={overview?.industryBenchmark.regulatoryPressure || 'n/a'} caption="Industry regulatory intensity indicator" tone="brand" />
         <MetricCard label="Overall score" value={`${currentAssessment.overallScore}%`} caption="Cross-standard compliance posture" tone="success" />
       </div>
+      <Panel
+        label="Readiness forecast"
+        title="Compliance readiness timeline"
+        description="Model how exposure changes as the organization clears its highest-priority gaps or executes the full remediation roadmap."
+      >
+        <ComplianceReadinessTimeline assessment={currentAssessment} />
+      </Panel>
 
       <div className="enterprise-two-column">
         <Panel label="Benchmark analysis" title="Current score vs industry average" description="Negative deltas indicate areas operating below sector baseline expectations.">

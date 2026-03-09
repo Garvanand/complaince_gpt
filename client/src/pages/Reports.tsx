@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../store/useAppStore';
 import { formatDate } from '../utils/helpers';
 import { generateReport } from '../utils/generateReport';
+import ComplianceReadinessTimeline from '../components/analytics/ComplianceReadinessTimeline';
 import { EmptyWorkspace, MetricCard, PageHero, Panel } from '../components/ui/EnterpriseLayout';
 import { ClauseStatusTag, DataTable, RiskIndicator, ScoreBadge } from '../components/ui/EnterpriseComponents';
 import RemediationTimeline from '../components/reports/RemediationTimeline';
@@ -119,6 +120,13 @@ export default function Reports() {
           <EvidenceValidationPanel data={currentAssessment.evidenceValidation} />
         </Panel>
       )}
+      <Panel
+        label="Forecast outlook"
+        title="Compliance readiness timeline"
+        description="Use the same remediation scenarios from analytics to explain expected score progression inside the executive report pack."
+      >
+        <ComplianceReadinessTimeline assessment={currentAssessment} />
+      </Panel>
 
       <Panel label="Remediation roadmap" title="Generated action plan" description="Phased sequence of actions linked to identified gaps.">
         <RemediationTimeline actions={currentAssessment.remediation} />

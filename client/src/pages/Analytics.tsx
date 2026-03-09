@@ -9,6 +9,7 @@ import { AlertTriangle, ArrowRight, Scale, TrendingUp } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import type { AssessmentResult, KnowledgeBaseOverview } from '../types';
 import { standardsApi } from '../utils/apiClient';
+import ComplianceReadinessTimeline from '../components/analytics/ComplianceReadinessTimeline';
 import OrganizationalRiskHeatmap from '../components/analytics/OrganizationalRiskHeatmap';
 import { EmptyWorkspace, MetricCard, PageHero, Panel } from '../components/ui/EnterpriseLayout';
 import { getAssessmentNarrative, getRiskDistribution, getStandardLabel } from '../utils/enterpriseData';
@@ -457,163 +458,10 @@ export default function Analytics() {
       </div>
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-        <Panel label="Scenario planning" title="Maturity progression simulator" description="Model the likely score improvement from closing selected gaps or executing early remediation phases.">
-          <MaturitySimulator assessment={currentAssessment} />
+        <Panel label="Scenario planning" title="Compliance readiness timeline" description="Model the likely score improvement from closing top gaps, delivering quick wins, or executing the full remediation roadmap.">
+          <ComplianceReadinessTimeline assessment={currentAssessment} />
         </Panel>
       </motion.div>
-    </div>
-  );
-}
-
-function MaturitySimulator({ assessment }: { assessment: AssessmentResult }) {
-  const [selectedGapIds, setSelectedGapIds] = useState<Set<string>>(new Set());
-
-  const toggleGap = (id: string) => {
-    setSelectedGapIds((previous) => {
-      const next = new Set(previous);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  const selectPhase = (phase: 1 | 2 | 3) => {
-    const ids = new Set<string>();
-    assessment.remediation.forEach((action) => {
-      if (action.phase <= phase) {
-        if (action.gapIds && action.gapIds.length > 0) {
-          action.gapIds.forEach((id) => ids.add(id));
-        } else {
-          assessment.gaps
-            .filter((gap) => action.standards.includes(gap.standardCode))
-            .forEach((gap) => ids.add(gap.id));
-        }
-      }
-    });
-    setSelectedGapIds(ids);
-  };
-
-  const improvementByStandard = assessment.gaps.reduce<Record<string, number>>((accumulator, gap) => {
-    if (!selectedGapIds.has(gap.id)) {
-      return accumulator;
-    }
-
-    const uplift = gap.impact === 'critical' ? 8 : gap.impact === 'high' ? 5 : gap.impact === 'medium' ? 3 : 1;
-    accumulator[gap.standardCode] = (accumulator[gap.standardCode] || 0) + uplift;
-    return accumulator;
-  }, {});
-
-  const simulatorData = assessment.standards.map((standard) => ({
-    standard: standard.standardCode.replace('ISO', 'ISO '),
-    current: standard.overallScore,
-    projected: Math.min(100, standard.overallScore + (improvementByStandard[standard.standardCode] || 0)),
-  }));
-
-  const overallCurrent = Math.round(assessment.standards.reduce((sum, standard) => sum + standard.overallScore, 0) / assessment.standards.length);
-  const overallProjected = Math.round(simulatorData.reduce((sum, standard) => sum + standard.projected, 0) / simulatorData.length);
-  const improvement = overallProjected - overallCurrent;
-
-  return (
-    <div>
-      <div className="flex gap-2 mb-4 flex-wrap">
-        <button
-          onClick={() => setSelectedGapIds(new Set())}
-          className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
-          style={{ background: selectedGapIds.size === 0 ? 'rgba(134, 188, 37, 0.15)' : 'var(--color-primary-700)', border: `1px solid ${selectedGapIds.size === 0 ? 'var(--color-accent-500)' : 'var(--glass-border)'}`, color: selectedGapIds.size === 0 ? 'var(--color-accent-400)' : 'var(--color-text-secondary)' }}
-        >
-          Current State
-        </button>
-        {[1, 2, 3].map((phase) => (
-          <button
-            key={phase}
-            onClick={() => selectPhase(phase as 1 | 2 | 3)}
-            className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
-            style={{ background: 'var(--color-primary-700)', border: '1px solid var(--glass-border)', color: 'var(--color-text-secondary)' }}
-          >
-            Phase {phase}
-          </button>
-        ))}
-        <button
-          onClick={() => setSelectedGapIds(new Set(assessment.gaps.map((gap) => gap.id)))}
-          className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
-          style={{ background: 'var(--color-primary-700)', border: '1px solid var(--glass-border)', color: 'var(--color-text-secondary)' }}
-        >
-          Fix All Gaps
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 max-h-[320px] overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-          {assessment.gaps.map((gap) => {
-            const checked = selectedGapIds.has(gap.id);
-            const impactColor = gap.impact === 'critical' ? 'var(--color-risk-critical)' : gap.impact === 'high' ? '#DD6B20' : gap.impact === 'medium' ? '#FFD32A' : 'var(--color-accent-400)';
-            return (
-              <label
-                key={gap.id}
-                className="flex items-start gap-3 p-3 rounded-xl cursor-pointer transition-all"
-                style={{ background: checked ? 'rgba(134, 188, 37, 0.08)' : 'var(--color-primary-700)', border: `1px solid ${checked ? 'rgba(134, 188, 37, 0.3)' : 'var(--glass-border)'}` }}
-              >
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  onChange={() => toggleGap(gap.id)}
-                  className="mt-0.5 accent-[var(--color-accent-500)]"
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-semibold truncate" style={{ color: 'var(--color-text-primary)' }}>{gap.title}</div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs font-bold uppercase px-2 py-1 rounded-full" style={{ background: `${impactColor}15`, color: impactColor }}>{gap.impact}</span>
-                    <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{gap.standardCode.replace('ISO', 'ISO ')}</span>
-                  </div>
-                </div>
-              </label>
-            );
-          })}
-        </div>
-
-        <div className="lg:col-span-2">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
-            <div className="p-4 rounded-xl text-center col-span-1" style={{ background: 'rgba(134, 188, 37, 0.1)', border: '1px solid var(--color-accent-500)' }}>
-              <div className="text-3xl font-bold score-display" style={{ color: 'var(--color-accent-500)' }}>{overallProjected}%</div>
-              <div className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>Projected Overall</div>
-            </div>
-            {simulatorData.map((item) => (
-              <div key={item.standard} className="p-4 rounded-xl text-center" style={{ background: 'var(--color-primary-700)', border: '1px solid var(--glass-border)' }}>
-                <div className="text-2xl font-bold score-display" style={{ color: item.projected >= 75 ? 'var(--color-accent-400)' : item.projected >= 60 ? '#FFD32A' : '#DD6B20' }}>
-                  {item.projected}%
-                </div>
-                <div className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>{item.standard}</div>
-                {item.projected > item.current && (
-                  <div className="text-xs mt-1" style={{ color: 'var(--color-accent-400)' }}>+{item.projected - item.current}%</div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          <div className="space-y-3">
-            {simulatorData.map((item) => (
-              <div key={item.standard}>
-                <div className="flex items-center justify-between text-xs mb-1">
-                  <span style={{ color: 'var(--color-text-secondary)' }}>{item.standard}</span>
-                  <span style={{ color: 'var(--color-text-muted)' }}>{item.current}% → {item.projected}%</span>
-                </div>
-                <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--color-primary-600)' }}>
-                  <div className="relative h-full rounded-full">
-                    <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${item.projected}%`, background: 'linear-gradient(90deg, var(--color-accent-500), var(--color-accent-400))', transition: 'width 0.5s ease' }} />
-                    <div className="absolute inset-y-0 left-0 rounded-full opacity-40" style={{ width: `${item.current}%`, background: 'var(--color-text-muted)' }} />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {improvement > 0 && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-4 p-3 rounded-xl text-sm" style={{ background: 'rgba(134, 188, 37, 0.05)', border: '1px solid rgba(134, 188, 37, 0.1)', color: 'var(--color-accent-400)' }}>
-          Closing <strong>{selectedGapIds.size}</strong> gap{selectedGapIds.size !== 1 ? 's' : ''} would improve the overall score by <strong>+{improvement}%</strong>.
-        </motion.div>
-      )}
     </div>
   );
 }
