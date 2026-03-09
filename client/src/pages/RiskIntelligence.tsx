@@ -5,6 +5,7 @@ import { useAppStore } from '../store/useAppStore';
 import { standardsApi } from '../utils/apiClient';
 import type { KnowledgeBaseOverview } from '../types';
 import { EmptyWorkspace, MetricCard, PageHero, Panel } from '../components/ui/EnterpriseLayout';
+import { DataTable, RiskIndicator, ScoreBadge } from '../components/ui/EnterpriseComponents';
 import { getRiskDistribution, getStandardLabel, sortGapsByPriority } from '../utils/enterpriseData';
 
 export default function RiskIntelligence() {
@@ -55,11 +56,11 @@ export default function RiskIntelligence() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="page-stack">
       <PageHero
         eyebrow="Risk intelligence"
         title="Organizational exposure and benchmark context"
-        description={`Assessment signals for ${currentAssessment.orgProfile.companyName || 'the organization'} benchmarked against ${industry} expectations.`}
+        description={`Assessment signals for ${currentAssessment.orgProfile.companyName || 'the organization'} benchmarked against ${industry} expectations. This page prioritizes readability for executives and control owners who need quick interpretation rather than raw technical detail.`}
         actions={<button onClick={() => navigate('/remediation-tracker')} className="btn btn-primary">Open remediation tracker <ArrowRight size={14} /></button>}
         aside={
           <div className="hero-stat-stack">
@@ -79,32 +80,30 @@ export default function RiskIntelligence() {
 
       <div className="enterprise-two-column">
         <Panel label="Benchmark analysis" title="Current score vs industry average" description="Negative deltas indicate areas operating below sector baseline expectations.">
-          <div className="insight-list">
-            {benchmarkRows.map((row) => (
-              <div key={row.standard} className="insight-row">
-                <div className="insight-kicker">{row.standard}</div>
-                <div style={{ flex: 1 }}>
-                  <div className="insight-title">Current {row.score}% {row.benchmark !== null ? `· Benchmark ${row.benchmark}%` : ''}</div>
-                  <div className="benchmark-bar">
-                    <div className="benchmark-bar-fill" style={{ width: `${row.score}%` }} />
-                    {row.benchmark !== null ? <div className="benchmark-bar-marker" style={{ left: `${row.benchmark}%` }} /> : null}
-                  </div>
-                </div>
-                <div className={`delta-pill ${row.delta !== null && row.delta < 0 ? 'delta-pill-negative' : 'delta-pill-positive'}`}>
-                  {row.delta === null ? 'No benchmark' : `${row.delta > 0 ? '+' : ''}${row.delta} pts`}
-                </div>
-              </div>
-            ))}
-          </div>
+          <DataTable
+            caption="Compare each assessed standard with the available industry benchmark."
+            rows={benchmarkRows}
+            rowKey={(row) => row.standard}
+            columns={[
+              { key: 'standard', header: 'Standard', cell: (row) => row.standard },
+              { key: 'score', header: 'Current score', cell: (row) => <ScoreBadge score={row.score} /> },
+              { key: 'benchmark', header: 'Benchmark', cell: (row) => row.benchmark !== null ? `${row.benchmark}%` : 'No benchmark' },
+              {
+                key: 'delta',
+                header: 'Delta',
+                cell: (row) => row.delta === null ? '—' : <RiskIndicator level={row.delta < 0 ? 'high' : 'low'} label={`${row.delta > 0 ? '+' : ''}${row.delta} pts`} />,
+              },
+            ]}
+          />
         </Panel>
 
         <Panel label="Priority queue" title="Top risk items" description="Ranked by severity and impact score to support executive escalation.">
-          <div className="insight-list">
+          <div className="stack-list">
             {sortedGaps.slice(0, 6).map((gap) => (
-              <div key={gap.id} className="insight-row">
-                <div className={`insight-kicker insight-kicker-${gap.impact}`}>{gap.impact}</div>
+              <div key={gap.id} className="risk-register-card">
+                <div style={{ marginBottom: 8 }}><RiskIndicator level={gap.impact} label={`${gap.impact} risk`} /></div>
                 <div>
-                  <div className="insight-title">{gap.title}</div>
+                  <div className="risk-register-title">{gap.title}</div>
                   <div className="insight-copy">{getStandardLabel(gap.standardCode)} clause {gap.clauseId} · Impact {gap.impactScore}/10 · Effort {gap.effortScore}/10</div>
                 </div>
               </div>

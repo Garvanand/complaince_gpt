@@ -4,6 +4,7 @@ import type {
   ClauseScore,
   Gap,
   RemediationAction,
+  UploadedDocumentInfo,
 } from '../types';
 import { getMaturityLabel } from './helpers';
 
@@ -132,7 +133,10 @@ function buildExecutiveSummary(result: BackendAssessmentResult, gaps: Gap[]): st
   return `${result.orgProfile.company} has been assessed at ${result.overallScore}% overall maturity level ${result.maturityLevel}. The strongest domain is ${strongest?.standard || 'the current control environment'} at ${strongest?.overallScore || result.overallScore}%, while ${weakest?.standard || 'the weakest assessed area'} remains the primary legal and operational exposure. ${criticalGaps} critical and ${highGaps} high-severity gaps require priority remediation to sustain audit defensibility and support certification readiness.`;
 }
 
-export function adaptAssessmentResult(result: BackendAssessmentResult): AssessmentResult {
+export function adaptAssessmentResult(
+  result: BackendAssessmentResult,
+  options?: { sessionId?: string | null; uploadedDocuments?: UploadedDocumentInfo[] }
+): AssessmentResult {
   const gaps = buildGaps(result);
   const remediation = buildRemediationActions(result, gaps);
   const standards = result.standardAssessments.map((assessment) => {
@@ -170,5 +174,8 @@ export function adaptAssessmentResult(result: BackendAssessmentResult): Assessme
     remediation,
     policyDocuments: result.policyDocuments,
     executiveSummary: buildExecutiveSummary(result, gaps),
+    sessionId: options?.sessionId || undefined,
+    uploadedDocuments: options?.uploadedDocuments,
+    orchestration: result.orchestration,
   };
 }

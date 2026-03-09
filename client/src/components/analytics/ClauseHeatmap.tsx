@@ -7,18 +7,18 @@ interface ClauseHeatmapProps {
 
 export default function ClauseHeatmap({ standards }: ClauseHeatmapProps) {
   return (
-    <div className="space-y-4 overflow-x-auto">
+    <div className="space-y-5 overflow-x-auto">
       {standards.map((std) => (
-        <div key={std.standardCode}>
+        <div key={std.standardCode} style={{ border: '1px solid rgba(19, 35, 58, 0.08)', borderRadius: 18, padding: 16, background: 'linear-gradient(180deg, #ffffff, #f9fbfd)' }}>
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+            <span className="text-sm font-semibold" style={{ color: 'var(--slate-900)', fontFamily: 'var(--font-display)' }}>
               {std.standardCode.replace('ISO', 'ISO ')}
             </span>
-            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+            <span className="text-xs" style={{ color: 'var(--slate-500)' }}>
               {std.standardName}
             </span>
           </div>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-2">
             {std.clauseScores.map((clause) => {
               const color = getRiskColor(clause.score);
               return (
@@ -27,15 +27,17 @@ export default function ClauseHeatmap({ standards }: ClauseHeatmapProps) {
                   className="group relative"
                 >
                   <div
-                    className="w-12 h-10 rounded-lg flex items-center justify-center cursor-pointer transition-all hover:scale-110"
+                    className="w-14 h-11 rounded-xl flex items-center justify-center cursor-pointer transition-all hover:scale-105"
                     style={{
-                      background: `${color}20`,
+                      background: `${color}18`,
                       border: `1px solid ${color}40`,
+                      boxShadow: `inset 0 1px 0 ${color}10`,
                     }}
                   >
-                    <span className="score-display text-[10px] font-bold" style={{ color }}>
-                      {clause.score}%
-                    </span>
+                    <div style={{ textAlign: 'center' }}>
+                      <div className="score-display text-[11px] font-bold" style={{ color }}>{clause.score}%</div>
+                      <div style={{ fontSize: 9, color: 'var(--slate-500)', marginTop: 1 }}>{clause.clauseId}</div>
+                    </div>
                   </div>
                   {/* Tooltip */}
                   <div

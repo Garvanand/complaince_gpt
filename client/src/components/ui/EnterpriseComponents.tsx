@@ -41,6 +41,23 @@ export function RiskChip({ level }: { level: string }) {
   );
 }
 
+export function RiskIndicator({ level, label }: { level: string; label?: string }) {
+  const normalized = level.toLowerCase();
+  const colorMap: Record<string, string> = {
+    critical: 'var(--risk-critical)',
+    high: 'var(--risk-high)',
+    medium: 'var(--risk-medium)',
+    low: 'var(--risk-low)',
+  };
+
+  return (
+    <span className="risk-indicator">
+      <span className="risk-indicator-dot" style={{ background: colorMap[normalized] || 'var(--slate-400)' }} />
+      <span>{label || `${level.charAt(0).toUpperCase()}${level.slice(1)} risk`}</span>
+    </span>
+  );
+}
+
 /* ── ScoreBadge ─────────────────────────────────────────── */
 export function ScoreBadge({ score }: { score: number }) {
   let color = 'var(--status-compliant)';
@@ -66,6 +83,21 @@ export function ScoreBadge({ score }: { score: number }) {
   );
 }
 
+export function ClauseStatusTag({
+  status,
+}: {
+  status: 'implemented' | 'partial' | 'planned' | 'not-started';
+}) {
+  const labels: Record<typeof status, string> = {
+    implemented: 'Implemented',
+    partial: 'Partial',
+    planned: 'Planned',
+    'not-started': 'Not started',
+  };
+
+  return <span className={`clause-status-tag clause-status-tag-${status}`}>{labels[status]}</span>;
+}
+
 /* ── SectionHeader ──────────────────────────────────────── */
 interface SectionHeaderProps {
   label?: string;
@@ -84,6 +116,136 @@ export function SectionHeader({ label, title, description, action }: SectionHead
       </div>
       {action && <div style={{ flexShrink: 0 }}>{action}</div>}
     </div>
+  );
+}
+
+interface DataTableColumn<T> {
+  key: string;
+  header: string;
+  cell: (row: T) => ReactNode;
+}
+
+export function DataTable<T>({
+  caption,
+  columns,
+  rows,
+  rowKey,
+}: {
+  caption?: string;
+  columns: DataTableColumn<T>[];
+  rows: T[];
+  rowKey: (row: T) => string;
+}) {
+  return (
+    <div className="enterprise-table-wrap">
+      <table className="enterprise-data-table">
+        {caption ? <caption>{caption}</caption> : null}
+        <thead>
+          <tr>
+            {columns.map((column) => (
+              <th key={column.key} scope="col">{column.header}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={rowKey(row)}>
+              {columns.map((column) => (
+                <td key={column.key}>{column.cell(row)}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+export function SummaryStatCard({
+  label,
+  value,
+  description,
+  tone = 'default',
+}: {
+  label: string;
+  value: ReactNode;
+  description?: string;
+  tone?: 'default' | 'brand' | 'success' | 'warn' | 'danger';
+}) {
+  return (
+    <div className={`summary-stat-card summary-stat-card-${tone}`}>
+      <div className="summary-stat-label">{label}</div>
+      <div className="summary-stat-value">{value}</div>
+      {description ? <div className="summary-stat-copy">{description}</div> : null}
+    </div>
+  );
+}
+
+export function InsightCard({
+  eyebrow,
+  title,
+  description,
+  footer,
+  tone = 'default',
+}: {
+  eyebrow?: string;
+  title: string;
+  description: string;
+  footer?: ReactNode;
+  tone?: 'default' | 'brand' | 'success' | 'warn' | 'danger';
+}) {
+  return (
+    <article className={`insight-card insight-card-${tone}`}>
+      {eyebrow ? <div className="insight-kicker">{eyebrow}</div> : null}
+      <div className="insight-title">{title}</div>
+      <div className="insight-copy">{description}</div>
+      {footer ? <div className="insight-tags">{footer}</div> : null}
+    </article>
+  );
+}
+
+export function ActionCard({
+  label,
+  title,
+  description,
+  action,
+}: {
+  label?: string;
+  title: string;
+  description: string;
+  action?: ReactNode;
+}) {
+  return (
+    <article className="action-card">
+      <div className="action-card-copywrap">
+        {label ? <div className="insight-kicker">{label}</div> : null}
+        <div className="action-card-title">{title}</div>
+        <div className="action-card-copy">{description}</div>
+      </div>
+      {action ? <div className="action-card-action">{action}</div> : null}
+    </article>
+  );
+}
+
+export function WorkflowStage({
+  index,
+  title,
+  description,
+  state,
+}: {
+  index: number;
+  title: string;
+  description: string;
+  state: 'idle' | 'active' | 'complete';
+}) {
+  return (
+    <article className={`workflow-stage workflow-stage-${state}`}>
+      <div className="workflow-stage-index">{index}</div>
+      <div>
+        <div className="workflow-stage-title">{title}</div>
+        <div className="workflow-stage-copy">{description}</div>
+      </div>
+    </article>
   );
 }
 

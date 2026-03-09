@@ -24,13 +24,14 @@ export default function Navbar() {
 
   return (
     <header className="app-topbar">
-      {/* Page title */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div className="page-title">{page.title}</div>
-        <div className="page-subtitle">{page.subtitle}</div>
+        <div className="topbar-meta">
+          <div className="section-label" style={{ marginBottom: 0 }}>Enterprise analytics platform</div>
+          <div className="page-title">{page.title}</div>
+          <div className="topbar-context">{page.subtitle}</div>
+        </div>
       </div>
 
-      {/* Search */}
       <button
         onClick={openSearch}
         className="topbar-search"
@@ -64,13 +65,11 @@ export default function Navbar() {
         </div>
       )}
 
-      {/* Notifications */}
       <NotificationsDropdown />
 
-      {/* New Assessment */}
       <button
         onClick={() => navigate('/assessment')}
-        className="btn btn-primary"
+        className="btn btn-primary topbar-primary-action"
         style={{ gap: 6 }}
       >
         <Plus size={14} />

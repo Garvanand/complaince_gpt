@@ -5,12 +5,13 @@ import { useAppStore } from '../store/useAppStore';
 import { EmptyWorkspace, MetricCard, PageHero, Panel } from '../components/ui/EnterpriseLayout';
 
 const stages = [
-  { key: 'document', title: 'Document intelligence', description: 'Parses uploaded source material and extracts evidence candidates.', icon: Search, agents: ['Document Agent'] },
-  { key: 'assessment', title: 'Standard specialists', description: 'Runs the domain-specific ISO assessment agents in parallel.', icon: Bot, agents: ['Bribery Risk Agent', 'Governance Agent', 'Security Agent', 'Quality Agent'] },
-  { key: 'gap', title: 'Gap analysis', description: 'Consolidates standard outputs into cross-standard control gaps.', icon: GitBranch, agents: ['Gap Analysis Agent'] },
+  { key: 'document', title: 'Document parsing', description: 'Parses uploaded source material into structured governance and policy evidence.', icon: Search, agents: ['Document Parsing Agent'] },
+  { key: 'mapping', title: 'Clause mapping', description: 'Maps extracted evidence to relevant ISO clauses before scoring.', icon: Bot, agents: ['Clause Mapping Agent'] },
   { key: 'evidence', title: 'Evidence validation', description: 'Tests evidence sufficiency and cross-standard reuse.', icon: ShieldCheck, agents: ['Evidence Validation Agent'] },
-  { key: 'remediation', title: 'Remediation planning', description: 'Builds a phased action plan with owners and success metrics.', icon: Wrench, agents: ['Remediation Agent'] },
-  { key: 'policy', title: 'Policy generation', description: 'Generates policy outputs to close the identified gaps.', icon: ScrollText, agents: ['Policy Generator Agent'] },
+  { key: 'scoring', title: 'Compliance scoring', description: 'Calculates clause readiness scores and confidence levels.', icon: Bot, agents: ['Compliance Scoring Agent'] },
+  { key: 'gap', title: 'Gap detection', description: 'Consolidates scored findings into missing controls and weak implementation gaps.', icon: GitBranch, agents: ['Gap Detection Agent'] },
+  { key: 'remediation', title: 'Remediation planning', description: 'Builds a phased action plan with owners and success metrics.', icon: Wrench, agents: ['Remediation Planning Agent'] },
+  { key: 'policy', title: 'Policy generation', description: 'Generates policy outputs to close the identified gaps.', icon: ScrollText, agents: ['Policy Generation Agent'] },
 ];
 
 export default function AgentWorkflow() {

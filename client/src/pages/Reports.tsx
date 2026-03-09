@@ -4,6 +4,7 @@ import { useAppStore } from '../store/useAppStore';
 import { formatDate } from '../utils/helpers';
 import { generateReport } from '../utils/generateReport';
 import { EmptyWorkspace, MetricCard, PageHero, Panel } from '../components/ui/EnterpriseLayout';
+import { ClauseStatusTag, DataTable, RiskIndicator, ScoreBadge } from '../components/ui/EnterpriseComponents';
 import RemediationTimeline from '../components/reports/RemediationTimeline';
 import EvidenceValidationPanel from '../components/reports/EvidenceValidationPanel';
 import PolicyGeneratorPanel from '../components/reports/PolicyGeneratorPanel';
@@ -31,11 +32,11 @@ export default function Reports() {
   const criticalGaps = sortGapsByPriority(currentAssessment.gaps).filter((gap) => gap.impact === 'critical');
 
   return (
-    <div className="space-y-6">
+    <div className="page-stack">
       <PageHero
         eyebrow="Executive reporting"
         title={`${currentAssessment.orgProfile.companyName} compliance report pack`}
-        description={`Assessment date ${formatDate(currentAssessment.timestamp)} · ${currentAssessment.standards.length} assessed standards · ${currentAssessment.gaps.length} open gaps.`}
+        description={`Assessment date ${formatDate(currentAssessment.timestamp)}. This reporting pack is structured for board, audit, and compliance stakeholders and translates technical outputs into readable exposure and remediation narratives.`}
         actions={<button onClick={() => generateReport(currentAssessment)} className="btn btn-primary"><Download size={14} /> Download PDF</button>}
         aside={
           <div className="hero-stat-stack">
@@ -66,10 +67,10 @@ export default function Reports() {
                 <div key={standard.standardCode} className="insight-row">
                   <div className="insight-kicker">{getStandardLabel(standard.standardCode)}</div>
                   <div>
-                    <div className="insight-title">{standard.overallScore}% overall score</div>
+                    <div className="insight-title"><span className="data-emphasis">{standard.overallScore}%</span> overall score</div>
                     <div className="insight-copy">{standard.summary}</div>
                   </div>
-                  <span className={`badge badge-${status === 'non-compliant' ? 'critical' : status}`}>{status}</span>
+                  <RiskIndicator level={status === 'non-compliant' ? 'critical' : status === 'partial' ? 'medium' : 'low'} label={status} />
                 </div>
               );
             })}
@@ -78,46 +79,34 @@ export default function Reports() {
       </div>
 
       <Panel label="Clause findings" title="Detailed assessment register" description="Clause-level scores, status, and narrative findings.">
-        <div style={{ overflowX: 'auto' }}>
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Standard</th>
-                <th>Clause</th>
-                <th>Title</th>
-                <th>Score</th>
-                <th>Status</th>
-                <th>Gap narrative</th>
-              </tr>
-            </thead>
-            <tbody>
-              {currentAssessment.standards.flatMap((standard) =>
-                standard.clauseScores.map((clause) => {
-                  const status = getStandardStatus(clause.score);
-                  return (
-                    <tr key={`${standard.standardCode}-${clause.clauseId}`}>
-                      <td>{getStandardLabel(standard.standardCode)}</td>
-                      <td>{clause.clauseId}</td>
-                      <td>{clause.clauseTitle}</td>
-                      <td>{clause.score}%</td>
-                      <td><span className={`badge badge-${status === 'non-compliant' ? 'critical' : status}`}>{status}</span></td>
-                      <td>{clause.gap || clause.finding || 'No gap narrative recorded.'}</td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          caption="Clause-by-clause position with the plain-language narrative used in the report pack."
+          rows={currentAssessment.standards.flatMap((standard) =>
+            standard.clauseScores.map((clause) => ({
+              standardCode: standard.standardCode,
+              ...clause,
+            }))
+          )}
+          rowKey={(row) => `${row.standardCode}-${row.clauseId}`}
+          columns={[
+            { key: 'standard', header: 'Standard', cell: (row) => getStandardLabel(row.standardCode) },
+            { key: 'clause', header: 'Clause', cell: (row) => row.clauseId },
+            { key: 'title', header: 'Title', cell: (row) => row.clauseTitle },
+            { key: 'score', header: 'Score', cell: (row) => <ScoreBadge score={row.score} /> },
+            { key: 'status', header: 'Status', cell: (row) => <ClauseStatusTag status={row.status} /> },
+            { key: 'narrative', header: 'Gap narrative', cell: (row) => row.gap || row.finding || 'No gap narrative recorded.' },
+          ]}
+        />
       </Panel>
 
       {criticalGaps.length > 0 && (
         <Panel label="Critical findings" title="Immediate attention required" description="Highest-severity gaps extracted from the current report pack.">
           <div className="enterprise-two-column">
             {criticalGaps.map((gap) => (
-              <div key={gap.id} className="insight-card">
+              <div key={gap.id} className="risk-register-card">
                 <div className="insight-kicker insight-kicker-critical">{getStandardLabel(gap.standardCode)} clause {gap.clauseId}</div>
-                <div className="insight-title">{gap.title}</div>
+                <div className="risk-register-title">{gap.title}</div>
+                <div style={{ marginBottom: 8 }}><RiskIndicator level="critical" label="Immediate management attention" /></div>
                 <div className="insight-copy">{gap.description}</div>
               </div>
             ))}

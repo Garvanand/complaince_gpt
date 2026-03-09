@@ -34,8 +34,7 @@ export default function RemediationTimeline({ actions }: RemediationTimelineProp
             )}
           </div>
 
-          {/* Content */}
-          <div className="pb-4 flex-1">
+          <div className="pb-4 flex-1" style={{ padding: '10px 14px', border: '1px solid rgba(19, 35, 58, 0.08)', borderRadius: 16, background: 'linear-gradient(180deg, #ffffff, #f9fbfd)' }}>
             <div className="flex items-center gap-2 mb-1">
               <span
                 className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full"
@@ -52,6 +51,9 @@ export default function RemediationTimeline({ actions }: RemediationTimelineProp
             </h4>
             <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
               {action.standards.join(' · ')} | {action.responsibleFunction}
+            </p>
+            <p className="text-xs mt-2" style={{ color: 'var(--slate-600)', lineHeight: 1.6 }}>
+              {action.description}
             </p>
           </div>
         </motion.div>

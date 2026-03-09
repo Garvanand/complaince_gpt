@@ -9,6 +9,7 @@ import { reportRouter } from './routes/report';
 import { demoRouter } from './routes/demo';
 import { uploadRouter } from './routes/upload';
 import { policyRouter } from './routes/policy';
+import { genwRouter } from './routes/genw';
 
 dotenv.config();
 
@@ -33,6 +34,7 @@ app.use('/api/report', reportRouter);
 app.use('/api/demo', demoRouter);
 app.use('/api/upload', uploadRouter);
 app.use('/api/policy', policyRouter);
+app.use('/api/genw', genwRouter);
 
 // Health check
 app.get('/api/health', (_req, res) => {

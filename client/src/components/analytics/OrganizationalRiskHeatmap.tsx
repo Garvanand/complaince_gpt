@@ -166,20 +166,10 @@ export default function OrganizationalRiskHeatmap({
                     style={{
                       background: getCellColor(cell.maxExposure),
                     }}
+                    aria-label={`Severity ${cell.severity}, likelihood ${cell.likelihood}, ${cell.items.length} risks`}
                   >
-                    <div className="analytics-heatmap-cell-count score-display">
-                      {cell.items.length}
-                    </div>
-                    <div className="analytics-heatmap-cell-meta">
-                      {cell.items.length === 1 ? 'risk item' : 'risk items'}
-                    </div>
-                    <div className="analytics-heatmap-cell-title">
-                      {cell.items[0]?.title || 'No active risk'}
-                    </div>
-                    <div className="analytics-heatmap-cell-foot">
-                      <span>Severity {cell.severity}</span>
-                      <span>Likelihood {cell.likelihood}</span>
-                    </div>
+                    <div className="analytics-heatmap-cell-count score-display">{cell.items.length}</div>
+                    <div className="analytics-heatmap-cell-meta">{cell.items.length === 1 ? 'risk' : 'risks'}</div>
                   </button>
                 );
               })}

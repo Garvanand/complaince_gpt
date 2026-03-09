@@ -4,6 +4,7 @@ import { standardsApi } from '../utils/apiClient';
 import type { KnowledgeBaseOverview, StandardLibraryItem } from '../types';
 import { useAppStore } from '../store/useAppStore';
 import { EmptyWorkspace, MetricCard, PageHero, Panel } from '../components/ui/EnterpriseLayout';
+import { ActionCard, DataTable, InsightCard, SummaryStatCard } from '../components/ui/EnterpriseComponents';
 
 export default function KnowledgeBase() {
   const { currentAssessment, orgProfile } = useAppStore();
@@ -58,7 +59,7 @@ export default function KnowledgeBase() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="page-stack">
       <PageHero
         eyebrow="Compliance intelligence"
         title="Knowledge Base"
@@ -82,51 +83,47 @@ export default function KnowledgeBase() {
 
       <div className="enterprise-two-column">
         <Panel label="Standards library" title="Assurance content inventory" description="Each standard exposes clauses, questionnaire coverage, and category metadata.">
-          <div style={{ overflowX: 'auto' }}>
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Standard</th>
-                  <th>Version</th>
-                  <th>Clauses</th>
-                  <th>Questions</th>
-                  <th>Mandatory</th>
-                </tr>
-              </thead>
-              <tbody>
-                {library.map((standard) => (
-                  <tr key={standard.code}>
-                    <td>
-                      <div style={{ fontWeight: 700, color: 'var(--slate-900)' }}>{standard.fullName}</div>
-                      <div style={{ fontSize: 12, color: 'var(--slate-500)' }}>{standard.code.replace('ISO', 'ISO ')}</div>
-                    </td>
-                    <td>{standard.version}</td>
-                    <td>{standard.clauseCount}</td>
-                    <td>{standard.totalQuestions}</td>
-                    <td>{standard.mandatoryQuestions}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable<StandardLibraryItem>
+            caption="Supported standards loaded from the live standards service."
+            columns={[
+              {
+                key: 'standard',
+                header: 'Standard',
+                cell: (standard) => (
+                  <div>
+                    <div style={{ fontWeight: 700, color: 'var(--slate-900)' }}>{standard.fullName}</div>
+                    <div style={{ fontSize: 12, color: 'var(--slate-500)' }}>{standard.code.replace('ISO', 'ISO ')}</div>
+                  </div>
+                ),
+              },
+              { key: 'version', header: 'Version', cell: (standard) => standard.version },
+              { key: 'clauses', header: 'Clauses', cell: (standard) => standard.clauseCount },
+              { key: 'questions', header: 'Questions', cell: (standard) => standard.totalQuestions },
+              { key: 'mandatory', header: 'Mandatory', cell: (standard) => standard.mandatoryQuestions },
+            ]}
+            rows={library}
+            rowKey={(standard) => standard.code}
+          />
         </Panel>
 
         <Panel label="Maturity model" title="Readiness progression" description="Use the model to frame executive reporting and remediation sequencing.">
-          <div className="insight-list">
+          <div className="enterprise-three-column">
             {overview.maturityModel.map((item) => (
-              <div key={item.level} className="insight-row">
-                <div className="insight-kicker">Level {item.level}</div>
-                <div>
-                  <div className="insight-title">{item.name}</div>
-                  <div className="insight-copy">{item.description}</div>
-                  <div className="insight-tags">
+              <InsightCard
+                key={item.level}
+                eyebrow={`Level ${item.level}`}
+                title={item.name}
+                description={item.description}
+                tone={item.level >= 4 ? 'success' : item.level === 3 ? 'brand' : 'default'}
+                footer={
+                  <>
                     <span className="badge badge-pending">Score {item.scoreRange[0]}-{item.scoreRange[1]}</span>
                     {item.characteristics.slice(0, 2).map((characteristic) => (
                       <span key={characteristic} className="badge badge-pending">{characteristic}</span>
                     ))}
-                  </div>
-                </div>
-              </div>
+                  </>
+                }
+              />
             ))}
           </div>
         </Panel>
@@ -134,21 +131,17 @@ export default function KnowledgeBase() {
 
       <div className="enterprise-two-column">
         <Panel label="Legal references" title="Framework map" description="Reference sources captured by the standards knowledge service.">
-          <div className="insight-list">
+          <div className="action-grid">
             {Object.entries(overview.legalFrameworkReferences).map(([standardCode, references]) => (
-              <div key={standardCode} className="insight-row">
-                <div className="insight-kicker">{standardCode.replace('ISO', 'ISO ')}</div>
-                <div>
-                  <div className="insight-title">{references.length} related instruments</div>
-                  <div className="insight-tags">
-                    {references.slice(0, 3).map((reference, index) => (
-                      <span key={`${standardCode}-${index}`} className="badge badge-pending">
-                        {String(reference.name || reference.title || reference.jurisdiction || 'Reference')}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              <ActionCard
+                key={standardCode}
+                label={standardCode.replace('ISO', 'ISO ')}
+                title={`${references.length} related instruments`}
+                description={references
+                  .slice(0, 3)
+                  .map((reference) => String(reference.name || reference.title || reference.jurisdiction || 'Reference'))
+                  .join(' • ')}
+              />
             ))}
           </div>
         </Panel>
@@ -171,34 +164,42 @@ export default function KnowledgeBase() {
       <Panel label="Audit findings" title="Frequent failure patterns" description="Use these archetypes to calibrate assessment narratives and remediation playbooks.">
         <div className="enterprise-three-column">
           {overview.commonAuditFindings.map((finding, index) => (
-            <div key={`${finding.standardCode}-${finding.clauseCategory}-${index}`} className="insight-card">
-              <div className="insight-kicker">{finding.standardCode.replace('ISO', 'ISO ')} · {finding.criticality}</div>
-              <div className="insight-title">{finding.clauseCategory}</div>
-              <div className="insight-copy">Typical score: {finding.typicalScore}%. Common issues are summarized below.</div>
-              <ul className="compact-list">
-                {finding.commonFindings.slice(0, 3).map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </div>
+            <InsightCard
+              key={`${finding.standardCode}-${finding.clauseCategory}-${index}`}
+              eyebrow={`${finding.standardCode.replace('ISO', 'ISO ')} · ${finding.criticality}`}
+              title={finding.clauseCategory}
+              description={`Typical score: ${finding.typicalScore}%. ${finding.commonFindings.slice(0, 2).join(' ')}`}
+              tone={finding.criticality === 'critical' ? 'danger' : finding.criticality === 'high' ? 'warn' : 'default'}
+              footer={
+                <>
+                  {finding.commonFindings.slice(0, 3).map((item) => (
+                    <span key={item} className="badge badge-pending">{item}</span>
+                  ))}
+                </>
+              }
+            />
           ))}
         </div>
       </Panel>
 
       <Panel label="Benchmarks" title="Industry context" description="Benchmark data enriches narrative quality and remediation prioritization.">
-        <div className="insight-row">
-          <div className="insight-kicker">{overview.industryBenchmark.industry}</div>
-          <div>
-            <div className="insight-title">Benchmark references available for all supported standards</div>
-            <div className="insight-copy">Use the benchmark set as contextual evidence, not a substitute for clause-level verification.</div>
-            <div className="insight-tags">
-              {Object.entries(overview.industryBenchmark.averageScores).map(([code, value]) => (
-                <span key={code} className="badge badge-pending">{code.replace('ISO', 'ISO ')} {value}%</span>
-              ))}
-              <a href="/risk-intelligence" className="btn btn-ghost">
-                Review risk intelligence <ExternalLink size={14} />
-              </a>
-            </div>
+        <div className="enterprise-two-column">
+          <ActionCard
+            label={overview.industryBenchmark.industry}
+            title="Benchmark references available for all supported standards"
+            description="Use the benchmark set as contextual evidence, not a substitute for clause-level verification."
+            action={<a href="/risk-intelligence" className="btn btn-ghost">Review risk intelligence <ExternalLink size={14} /></a>}
+          />
+          <div className="summary-grid-responsive">
+            {Object.entries(overview.industryBenchmark.averageScores).map(([code, value]) => (
+              <SummaryStatCard
+                key={code}
+                label={code.replace('ISO', 'ISO ')}
+                value={`${value}%`}
+                description="Industry benchmark score"
+                tone="brand"
+              />
+            ))}
           </div>
         </div>
       </Panel>

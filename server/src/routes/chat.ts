@@ -1,9 +1,29 @@
 import { Router, Request, Response } from 'express';
 import Groq from 'groq-sdk';
+import { ComplianceCopilotService } from '../services/ComplianceCopilotService';
+import type { ComplianceCopilotRequest } from '../types/copilot';
 
 export const chatRouter = Router();
 
 const GROQ_MODEL = 'openai/gpt-oss-120b';
+const copilotService = new ComplianceCopilotService();
+
+chatRouter.post('/copilot', async (req: Request, res: Response) => {
+  const body = req.body as ComplianceCopilotRequest;
+
+  if (!body?.message?.trim()) {
+    res.status(400).json({ error: 'Message is required' });
+    return;
+  }
+
+  try {
+    const response = await copilotService.answer(body);
+    res.json(response);
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : 'Unknown error';
+    res.status(500).json({ error: errMsg });
+  }
+});
 
 // Streaming chat endpoint
 chatRouter.post('/stream', async (req: Request, res: Response) => {

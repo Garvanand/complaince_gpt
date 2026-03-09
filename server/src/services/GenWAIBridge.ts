@@ -3,6 +3,8 @@
  * Maps ComplianceGPT agents to GenW.AI module capabilities
  */
 
+import type { GenWAgentName, PipelineAgentName } from '../types/assessment';
+
 export interface GenWAIModule {
   id: string;
   name: string;
@@ -53,32 +55,238 @@ export const genWAIModules: Record<string, GenWAIModule> = {
     capability: 'AI-powered compliant policy document generation with clause-level coverage and download capability',
     endpoint: '/api/genw/policy-generation',
   },
+  complianceCopilot: {
+    id: 'genw-copilot',
+    name: 'Compliance Copilot Advisor',
+    capability: 'Context-aware compliance Q&A, report summarization, and remediation guidance',
+    endpoint: '/api/genw/compliance-copilot',
+  },
 };
 
 export interface GenWAIAgentMapping {
-  agentName: string;
+  agentName: GenWAgentName;
   genWAIModule: string;
   description: string;
 }
 
 export const agentModuleMappings: GenWAIAgentMapping[] = [
-  { agentName: 'Document Agent', genWAIModule: 'documentIntelligence', description: 'Leverages GenW.AI Document Intelligence for multi-format parsing and structural understanding' },
-  { agentName: 'Bribery Risk Agent', genWAIModule: 'riskAnalytics', description: 'Uses GenW.AI Risk Analytics for probabilistic bribery risk scoring' },
-  { agentName: 'Governance Agent', genWAIModule: 'complianceKnowledge', description: 'Queries GenW.AI Compliance Knowledge Graph for governance mapping' },
-  { agentName: 'Security Agent', genWAIModule: 'riskAnalytics', description: 'Applies GenW.AI Risk Analytics to information security posture' },
-  { agentName: 'Quality Agent', genWAIModule: 'complianceKnowledge', description: 'Uses GenW.AI Knowledge Graph for quality management cross-referencing' },
-  { agentName: 'Gap Analysis Agent', genWAIModule: 'complianceKnowledge', description: 'Cross-references all standards via GenW.AI Knowledge Graph' },
-  { agentName: 'Remediation Agent', genWAIModule: 'remediationEngine', description: 'Generates phased roadmaps via GenW.AI Remediation Planning Engine' },
+  { agentName: 'Document Parsing Agent', genWAIModule: 'documentIntelligence', description: 'Leverages GenW.AI Document Intelligence for multi-format parsing and structural understanding' },
+  { agentName: 'Clause Mapping Agent', genWAIModule: 'complianceKnowledge', description: 'Uses GenW.AI Compliance Knowledge Graph for semantic clause alignment' },
   { agentName: 'Evidence Validation Agent', genWAIModule: 'evidenceValidator', description: 'Validates evidence sufficiency and quality via GenW.AI Evidence Validation Engine' },
-  { agentName: 'Policy Generator Agent', genWAIModule: 'policyGenerator', description: 'Generates 100% compliant policy documents via GenW.AI Policy Generation Engine' },
+  { agentName: 'Compliance Scoring Agent', genWAIModule: 'riskAnalytics', description: 'Applies GenW.AI scoring and confidence logic to clause readiness' },
+  { agentName: 'Gap Detection Agent', genWAIModule: 'complianceKnowledge', description: 'Cross-references standards and control gaps via GenW.AI Knowledge Graph' },
+  { agentName: 'Remediation Planning Agent', genWAIModule: 'remediationEngine', description: 'Generates phased roadmaps via GenW.AI Remediation Planning Engine' },
+  { agentName: 'Policy Generation Agent', genWAIModule: 'policyGenerator', description: 'Generates compliant policy sections via GenW.AI Policy Generation Engine' },
+  { agentName: 'Compliance Copilot Agent', genWAIModule: 'complianceCopilot', description: 'Answers contextual compliance questions using pipeline outputs, uploaded documents, and assessment evidence' },
 ];
 
-/**
- * In production, this would call GenW.AI APIs.
- * For the hackathon demo, agents use the Groq-backed compliance agents directly.
- */
-export function getGenWAIModuleForAgent(agentName: string): GenWAIModule | undefined {
+export interface GenWStreamChunk {
+  message: string;
+}
+
+export interface GenWHealthStatus {
+  configured: boolean;
+  reachable: boolean;
+  baseUrl: string | null;
+  timeoutMs: number;
+  healthEndpoint: string;
+  checkedAt: string;
+  error?: string;
+}
+
+export const pipelineAgentOrder: PipelineAgentName[] = [
+  'Document Parsing Agent',
+  'Clause Mapping Agent',
+  'Evidence Validation Agent',
+  'Compliance Scoring Agent',
+  'Gap Detection Agent',
+  'Remediation Planning Agent',
+  'Policy Generation Agent',
+];
+
+function parseJsonPayload<T>(raw: string): T {
+  const trimmed = raw.trim();
+  const jsonMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
+  return JSON.parse((jsonMatch ? jsonMatch[1] : trimmed).trim()) as T;
+}
+
+async function streamResponse<T>(response: Response, onStream?: (message: string) => void): Promise<T> {
+  const reader = response.body?.getReader();
+  if (!reader) {
+    throw new Error('GenW stream was empty.');
+  }
+
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let finalPayload = '';
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const chunks = buffer.split(/\n\n|\r\n\r\n/);
+    buffer = chunks.pop() || '';
+
+    chunks.forEach((chunk) => {
+      const lines = chunk.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+      const dataLine = lines.find((line) => line.startsWith('data:'));
+      if (!dataLine) {
+        return;
+      }
+
+      const data = dataLine.replace(/^data:\s*/, '');
+      if (data === '[DONE]') {
+        return;
+      }
+
+      try {
+        const parsed = JSON.parse(data) as { type?: string; chunk?: string; message?: string; result?: unknown; data?: unknown };
+        if (typeof parsed.chunk === 'string') {
+          onStream?.(parsed.chunk);
+          finalPayload += parsed.chunk;
+        } else if (typeof parsed.message === 'string' && parsed.type !== 'complete') {
+          onStream?.(parsed.message);
+        }
+
+        if (parsed.result !== undefined) {
+          finalPayload = JSON.stringify(parsed.result);
+        } else if (parsed.data !== undefined) {
+          finalPayload = JSON.stringify(parsed.data);
+        }
+      } catch {
+        onStream?.(data);
+        finalPayload += data;
+      }
+    });
+  }
+
+  if (!finalPayload.trim()) {
+    throw new Error('GenW stream completed without a final payload.');
+  }
+
+  return parseJsonPayload<T>(finalPayload);
+}
+
+export function getGenWAIModuleForAgent(agentName: GenWAgentName): GenWAIModule | undefined {
   const mapping = agentModuleMappings.find((m) => m.agentName === agentName);
   if (!mapping) return undefined;
   return genWAIModules[mapping.genWAIModule];
+}
+
+export class GenWAIClient {
+  private readonly baseUrl = process.env.GENW_API_BASE_URL?.replace(/\/$/, '') || '';
+  private readonly apiKey = process.env.GENW_API_KEY || '';
+  private readonly timeoutMs = Number(process.env.GENW_TIMEOUT_MS || 45000);
+  private readonly healthEndpoint = process.env.GENW_HEALTH_ENDPOINT || '/health';
+
+  isConfigured() {
+    return Boolean(this.baseUrl && this.apiKey);
+  }
+
+  getConfigurationSummary() {
+    return {
+      configured: this.isConfigured(),
+      baseUrl: this.baseUrl || null,
+      timeoutMs: this.timeoutMs,
+      healthEndpoint: this.healthEndpoint,
+    };
+  }
+
+  async getHealthStatus(): Promise<GenWHealthStatus> {
+    const checkedAt = new Date().toISOString();
+
+    if (!this.isConfigured()) {
+      return {
+        configured: false,
+        reachable: false,
+        baseUrl: this.baseUrl || null,
+        timeoutMs: this.timeoutMs,
+        healthEndpoint: this.healthEndpoint,
+        checkedAt,
+        error: 'GenW is not configured. Set GENW_API_BASE_URL and GENW_API_KEY.',
+      };
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}${this.healthEndpoint}`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+        },
+        signal: AbortSignal.timeout(Math.min(this.timeoutMs, 8000)),
+      });
+
+      if (!response.ok) {
+        return {
+          configured: true,
+          reachable: false,
+          baseUrl: this.baseUrl,
+          timeoutMs: this.timeoutMs,
+          healthEndpoint: this.healthEndpoint,
+          checkedAt,
+          error: `Health check failed with ${response.status} ${response.statusText}`,
+        };
+      }
+
+      return {
+        configured: true,
+        reachable: true,
+        baseUrl: this.baseUrl,
+        timeoutMs: this.timeoutMs,
+        healthEndpoint: this.healthEndpoint,
+        checkedAt,
+      };
+    } catch (error) {
+      return {
+        configured: true,
+        reachable: false,
+        baseUrl: this.baseUrl,
+        timeoutMs: this.timeoutMs,
+        healthEndpoint: this.healthEndpoint,
+        checkedAt,
+        error: error instanceof Error ? error.message : 'Unknown GenW connectivity error',
+      };
+    }
+  }
+
+  async executeAgent<T>(agentName: GenWAgentName, payload: Record<string, unknown>, onStream?: (message: string) => void): Promise<T> {
+    const module = getGenWAIModuleForAgent(agentName);
+    if (!module) {
+      throw new Error(`No GenW module mapping exists for ${agentName}.`);
+    }
+
+    if (!this.isConfigured()) {
+      throw new Error('GenW is not configured. Set GENW_API_BASE_URL and GENW_API_KEY.');
+    }
+
+    const response = await fetch(`${this.baseUrl}${module.endpoint}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.apiKey}`,
+        'X-GenW-Agent': agentName,
+      },
+      body: JSON.stringify({
+        agentName,
+        moduleId: module.id,
+        stream: true,
+        payload,
+      }),
+      signal: AbortSignal.timeout(this.timeoutMs),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`GenW request failed with ${response.status}: ${errorText || response.statusText}`);
+    }
+
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('text/event-stream') || contentType.includes('application/x-ndjson')) {
+      return streamResponse<T>(response, onStream);
+    }
+
+    const text = await response.text();
+    return parseJsonPayload<T>(text);
+  }
 }

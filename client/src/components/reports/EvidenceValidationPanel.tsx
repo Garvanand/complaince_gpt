@@ -23,16 +23,11 @@ function EvidenceRow({ item }: { item: EvidenceValidationItem }) {
   const Icon = v.icon;
 
   return (
-    <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+    <div className="evidence-row-shell">
       <button
         onClick={() => setExpanded(!expanded)}
-        style={{
-          width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-          padding: '12px 16px', background: 'var(--white)', cursor: 'pointer',
-          textAlign: 'left', transition: 'background 80ms ease',
-        }}
-        onMouseEnter={e => e.currentTarget.style.background = 'var(--slate-50)'}
-        onMouseLeave={e => e.currentTarget.style.background = 'var(--white)'}
+        aria-expanded={expanded}
+        className="disclosure-trigger"
       >
         <Icon size={16} style={{ color: v.color, flexShrink: 0 }} />
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -68,7 +63,7 @@ function EvidenceRow({ item }: { item: EvidenceValidationItem }) {
       </button>
 
       {expanded && (
-        <div style={{ padding: '0 16px 16px', borderTop: '1px solid var(--border)', background: 'var(--slate-50)' }}>
+        <div className="disclosure-panel">
           <div style={{ paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
             {item.issues.length > 0 && (
               <div>
@@ -131,52 +126,32 @@ export default function EvidenceValidationPanel({ data }: { data: EvidenceValida
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {/* Summary KPIs */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 12 }}>
+      <div className="summary-grid-responsive">
         {summaryCards.map(c => (
-          <div key={c.label} style={{
-            textAlign: 'center', padding: '14px 8px',
-            border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)',
-            background: 'var(--white)',
-          }}>
-            <div style={{
-              fontFamily: 'var(--font-mono)', fontSize: 24, fontWeight: 700,
-              color: c.color, lineHeight: 1, marginBottom: 4,
-            }}>{c.value}</div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--slate-500)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{c.label}</div>
+          <div key={c.label} className="summary-stat-card">
+            <div className="summary-stat-value" style={{ color: c.color }}>{c.value}</div>
+            <div className="summary-stat-label">{c.label}</div>
           </div>
         ))}
       </div>
 
-      {/* Summary text */}
-      <div style={{
-        padding: '12px 16px', background: '#E6F4FA', borderRadius: 'var(--radius-lg)',
-        border: '1px solid #B3DFF0', fontSize: 13, color: '#005A80', lineHeight: 1.6,
-      }}>
+      <div className="report-banner">
         {data.summary}
       </div>
 
-      {/* Filter pills */}
-      <div style={{ display: 'flex', gap: 6 }}>
+      <div className="segmented-filter-row" role="tablist" aria-label="Evidence validation filters">
         {filters.map(f => (
           <button
             key={f.key}
             onClick={() => setFilter(f.key)}
-            style={{
-              padding: '5px 14px', borderRadius: 999, fontSize: 12, fontWeight: 600,
-              border: '1px solid',
-              background: filter === f.key ? '#0076A8' : 'var(--white)',
-              color: filter === f.key ? '#FFFFFF' : 'var(--slate-600)',
-              borderColor: filter === f.key ? '#0076A8' : 'var(--border)',
-              cursor: 'pointer', transition: 'all 120ms ease',
-            }}
+            className={`segmented-filter-button ${filter === f.key ? 'active' : ''}`}
+            aria-pressed={filter === f.key}
           >
             {f.label}
           </button>
         ))}
       </div>
 
-      {/* Evidence items */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {filtered.map(item => (
           <EvidenceRow key={item.id} item={item} />

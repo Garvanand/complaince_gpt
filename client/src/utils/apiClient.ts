@@ -2,11 +2,14 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import type {
   BackendAssessmentResult,
+  ComplianceCopilotResponse,
+  CopilotContextSnapshot,
   KnowledgeBaseOverview,
   QuestionnaireResponse,
   StandardCode,
   GovernanceLibraryItem,
   StandardLibraryItem,
+  UploadedDocumentInfo,
 } from '../types';
 
 const apiClient = axios.create({
@@ -38,7 +41,7 @@ apiClient.interceptors.response.use(
 );
 
 export const assessmentApi = {
-  async uploadDocuments(files: File[]): Promise<string[]> {
+  async uploadDocuments(files: File[]): Promise<UploadedDocumentInfo[]> {
     if (files.length === 0) {
       return [];
     }
@@ -50,13 +53,14 @@ export const assessmentApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
 
-    return response.data.files.map((file: { savedPath: string }) => file.savedPath);
+    return response.data.files;
   },
 
   async startAssessment(payload: {
     filePaths: string[];
     standards: StandardCode[];
     orgProfile: { company: string; industry: string; employees: string; scope: string };
+    uploadedDocuments: UploadedDocumentInfo[];
   }): Promise<{ assessmentId: string; status: string }> {
     const response = await apiClient.post('/assessment/start', payload);
     return response.data;
@@ -64,6 +68,18 @@ export const assessmentApi = {
 
   async getResults(assessmentId: string): Promise<{ status: string; result?: BackendAssessmentResult }> {
     const response = await apiClient.get(`/assessment/${assessmentId}/results`);
+    return response.data;
+  },
+};
+
+export const copilotApi = {
+  async askQuestion(payload: {
+    message: string;
+    assessmentId?: string | null;
+    conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
+    context?: CopilotContextSnapshot;
+  }): Promise<ComplianceCopilotResponse> {
+    const response = await apiClient.post('/chat/copilot', payload);
     return response.data;
   },
 };

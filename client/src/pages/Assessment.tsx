@@ -1,9 +1,17 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useMemo, useState, type DragEvent, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Building2, Upload, FileText, X, CheckCircle,
-  Loader2, ArrowRight, ArrowLeft, Play, AlertCircle,
+  AlertCircle,
+  ArrowLeft,
+  ArrowRight,
+  Building2,
+  CheckCircle,
   ChevronDown,
+  FileText,
+  Loader2,
+  Play,
+  Upload,
+  X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAppStore } from '../store/useAppStore';
@@ -11,9 +19,10 @@ import { demoAssessmentResult } from '../data/demo-data';
 import { useAssessmentStream } from '../hooks/useAssessmentStream';
 import { assessmentApi } from '../utils/apiClient';
 import { adaptAssessmentResult } from '../utils/assessmentAdapter';
-import type { AssessmentResult, OrgProfile, StandardCode } from '../types';
+import type { AssessmentResult, OrgProfile, StandardCode, UploadedDocumentInfo } from '../types';
+import { MetricCard, PageHero, Panel } from '../components/ui/EnterpriseLayout';
+import { ActionCard, InsightCard, SummaryStatCard, WorkflowStage } from '../components/ui/EnterpriseComponents';
 
-/* ── Static data ─────────────────────────────────────── */
 const industries = [
   'Financial Services', 'Healthcare', 'Technology', 'Manufacturing',
   'Energy & Utilities', 'Retail & Consumer', 'Government', 'Professional Services',
@@ -27,174 +36,167 @@ const jurisdictions = [
 ];
 
 const maturityOptions: Array<{ value: NonNullable<OrgProfile['currentMaturity']>; label: string; desc: string }> = [
-  { value: 'initial',     label: 'Initial (Level 1)',     desc: 'Ad-hoc processes, no formal program' },
-  { value: 'developing',  label: 'Developing (Level 2)',  desc: 'Some documented policies, inconsistent' },
-  { value: 'defined',     label: 'Defined (Level 3)',     desc: 'Formal program established and maintained' },
-  { value: 'managed',     label: 'Managed (Level 4)',     desc: 'Monitored, measured and controlled' },
-  { value: 'optimizing',  label: 'Optimizing (Level 5)', desc: 'Continuous improvement culture' },
+  { value: 'initial', label: 'Initial', desc: 'Ad-hoc processes and no formal program baseline.' },
+  { value: 'developing', label: 'Developing', desc: 'Some documented policies but inconsistent execution.' },
+  { value: 'defined', label: 'Defined', desc: 'Formal program established and maintained.' },
+  { value: 'managed', label: 'Managed', desc: 'Monitored, measured, and controlled across functions.' },
+  { value: 'optimizing', label: 'Optimizing', desc: 'Continuous improvement and evidence-driven governance.' },
 ];
 
 const standardOptions: { code: StandardCode; name: string; desc: string; clauses: number; scope: string }[] = [
-  { code: 'ISO37001', name: 'ISO 37001:2025', desc: 'Anti-Bribery Management Systems', clauses: 33, scope: 'Anti-bribery, gifts & hospitality, third-party risk' },
+  { code: 'ISO37001', name: 'ISO 37001:2025', desc: 'Anti-Bribery Management Systems', clauses: 33, scope: 'Anti-bribery, gifts and hospitality, third-party risk' },
   { code: 'ISO37301', name: 'ISO 37301:2021', desc: 'Compliance Management Systems', clauses: 28, scope: 'Governance framework, obligations register, culture' },
-  { code: 'ISO27001', name: 'ISO 27001:2022', desc: 'Information Security Management', clauses: 24, scope: 'ISMS, controls, risk treatment, incident response' },
-  { code: 'ISO9001',  name: 'ISO 9001:2015',  desc: 'Quality Management Systems',    clauses: 28, scope: 'Process control, customer focus, continual improvement' },
+  { code: 'ISO27001', name: 'ISO 27001:2022', desc: 'Information Security Management', clauses: 24, scope: 'ISMS, risk treatment, incident response' },
+  { code: 'ISO9001', name: 'ISO 9001:2015', desc: 'Quality Management Systems', clauses: 28, scope: 'Process control, customer focus, continual improvement' },
 ];
 
 const steps = [
-  { id: 0, label: 'Organization' },
-  { id: 1, label: 'Documents' },
-  { id: 2, label: 'Standards' },
-  { id: 3, label: 'Analysis' },
-  { id: 4, label: 'Results' },
+  { id: 0, label: 'Step 1', title: 'Organization', copy: 'Frame the assessment around industry, size, and maturity context.' },
+  { id: 1, label: 'Step 2', title: 'Documents', copy: 'Provide policy and governance evidence for better clause scoring.' },
+  { id: 2, label: 'Step 3', title: 'Standards', copy: 'Select the standards set for the current review.' },
+  { id: 3, label: 'Step 4', title: 'Analysis', copy: 'Run the multi-agent workflow and observe execution state.' },
+  { id: 4, label: 'Step 5', title: 'Results', copy: 'Review the readiness outcome and commit it to the workspace.' },
 ];
 
 const agentNodes = [
-  { name: 'Document Agent', task: 'Parsing uploaded policies and extracting control evidence' },
-  { name: 'Bribery Risk Agent', task: 'Scoring ISO 37001 controls against anti-bribery evidence' },
-  { name: 'Governance Agent', task: 'Assessing ISO 37301 governance and compliance obligations' },
-  { name: 'Security Agent', task: 'Evaluating ISO 27001 information security controls' },
-  { name: 'Quality Agent', task: 'Assessing ISO 9001 quality management controls' },
-  { name: 'Gap Analysis Agent', task: 'Synthesizing legal, control, and certification gaps' },
-  { name: 'Evidence Validation Agent', task: 'Testing evidence sufficiency and cross-standard reuse' },
-  { name: 'Remediation Agent', task: 'Generating a phased remediation program' },
-  { name: 'Policy Generator Agent', task: 'Drafting policy artifacts for weak control areas' },
+  { name: 'Document Parsing Agent', task: 'Extracting structured governance, policy, and control evidence from uploaded material.' },
+  { name: 'Clause Mapping Agent', task: 'Aligning evidence to relevant ISO clauses using semantic and standards knowledge.' },
+  { name: 'Evidence Validation Agent', task: 'Testing evidence sufficiency and cross-standard reuse.' },
+  { name: 'Compliance Scoring Agent', task: 'Calculating clause readiness scores and confidence levels.' },
+  { name: 'Gap Detection Agent', task: 'Detecting missing controls, weak implementations, and legal exposure points.' },
+  { name: 'Remediation Planning Agent', task: 'Generating a phased remediation program with owners and sequencing.' },
+  { name: 'Policy Generation Agent', task: 'Drafting policy artifacts for weak control areas.' },
 ];
 
-/* ── Step Progress Header ─────────────────────────────── */
 function StepProgress({ step }: { step: number }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 0, marginBottom: 24 }}>
-      {steps.map((s, i) => (
-        <div key={s.id} style={{ display: 'flex', alignItems: 'center', flex: i < steps.length - 1 ? 1 : undefined }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-            <div style={{
-              width: 28,
-              height: 28,
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 12,
-              fontWeight: 700,
-              background: i < step ? 'var(--blue-800)' : i === step ? 'var(--blue-800)' : 'var(--white)',
-              color: i <= step ? 'var(--white)' : 'var(--slate-400)',
-              border: `2px solid ${i <= step ? 'var(--blue-800)' : 'var(--border-strong)'}`,
-              transition: 'all 200ms ease',
-              flexShrink: 0,
-            }}>
-              {i < step ? <CheckCircle size={14} /> : i + 1}
+    <div className="assessment-progress">
+      {steps.map((item, index) => {
+        const state = index < step ? 'is-complete' : index === step ? 'is-active' : '';
+
+        return (
+          <div key={item.id} className={`assessment-progress-step ${state}`.trim()}>
+            <div className="assessment-progress-top">
+              <div className="assessment-progress-index">{index < step ? <CheckCircle size={16} /> : index + 1}</div>
+              <div className="assessment-progress-label">{item.label}</div>
             </div>
-            <span style={{
-              fontSize: 10,
-              fontWeight: i === step ? 700 : 500,
-              color: i === step ? 'var(--blue-800)' : i < step ? 'var(--slate-600)' : 'var(--slate-400)',
-              whiteSpace: 'nowrap',
-              textTransform: 'uppercase',
-              letterSpacing: '0.04em',
-            }}>
-              {s.label}
-            </span>
+            <div>
+              <div className="assessment-progress-title">{item.title}</div>
+              <div className="assessment-progress-copy">{item.copy}</div>
+            </div>
           </div>
-          {i < steps.length - 1 && (
-            <div style={{
-              flex: 1,
-              height: 1,
-              background: i < step ? 'var(--blue-800)' : 'var(--border)',
-              margin: '0 8px',
-              marginBottom: 18,
-              transition: 'background 200ms ease',
-            }} />
-          )}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
 
-/* ── Form Field ───────────────────────────────────────── */
-function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+function Field({ label, required, children }: { label: string; required?: boolean; children: ReactNode }) {
   return (
     <div>
       <label className="form-label">
         {label}
-        {required && <span style={{ color: 'var(--risk-critical)', marginLeft: 2 }}>*</span>}
+        {required ? <span style={{ color: 'var(--risk-critical)', marginLeft: 2 }}>*</span> : null}
       </label>
       {children}
     </div>
   );
 }
 
-/* ── Main Component ───────────────────────────────────── */
 export default function Assessment() {
   const navigate = useNavigate();
-  const { orgProfile, setOrgProfile, selectedStandards, setSelectedStandards, setAssessment, isDemoMode, addNotification } = useAppStore();
+  const {
+    orgProfile,
+    setOrgProfile,
+    selectedStandards,
+    setSelectedStandards,
+    setAssessment,
+    setAssessmentContext,
+    clearChat,
+    isDemoMode,
+    addNotification,
+  } = useAppStore();
   const { startStream } = useAssessmentStream();
   const [step, setStep] = useState(0);
   const [files, setFiles] = useState<File[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [agentStates, setAgentStates] = useState(
-    agentNodes.map(a => ({ ...a, status: 'idle' as 'idle' | 'processing' | 'complete', progress: 0 }))
+    agentNodes.map((agent) => ({ ...agent, status: 'idle' as 'idle' | 'processing' | 'complete', progress: 0 }))
   );
   const [logs, setLogs] = useState<string[]>([]);
   const [done, setDone] = useState(false);
   const [finalScore, setFinalScore] = useState(62);
   const [completedAssessment, setCompletedAssessment] = useState<AssessmentResult | null>(null);
 
+  const buildUploadedDocumentContext = (uploads: UploadedDocumentInfo[]) => uploads.map((upload) => ({
+    originalName: upload.originalName,
+    savedPath: upload.savedPath,
+    size: upload.size,
+    mimetype: upload.mimetype,
+  }));
+
   const toggleStandard = (code: StandardCode) => {
     setSelectedStandards(
       selectedStandards.includes(code)
-        ? selectedStandards.filter(s => s !== code)
+        ? selectedStandards.filter((standard) => standard !== code)
         : [...selectedStandards, code]
     );
   };
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
+  const handleDrop = useCallback((event: DragEvent) => {
+    event.preventDefault();
     setDragOver(false);
-    const newFiles = Array.from(e.dataTransfer.files).filter(
-      f => ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'].includes(f.type)
-    );
-    setFiles(prev => [...prev, ...newFiles]);
+    const newFiles = Array.from(event.dataTransfer.files).filter((file) => (
+      ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'].includes(file.type)
+    ));
+    setFiles((current) => [...current, ...newFiles]);
   }, []);
 
-  const removeFile = (i: number) => setFiles(prev => prev.filter((_, idx) => idx !== i));
+  const removeFile = (index: number) => setFiles((current) => current.filter((_, currentIndex) => currentIndex !== index));
 
   const runDemoSimulation = async () => {
     setProcessing(true);
     setDone(false);
     setCompletedAssessment(null);
+
     const sequence = [
-      { idx: 0, msg: 'Document Agent — Extracting content from uploaded policy documents...' },
-      { idx: 1, msg: 'Bribery Risk Agent — Evaluating anti-bribery control evidence...' },
-      { idx: 2, msg: 'Governance Agent — Reviewing obligations register and governance structure...' },
-      { idx: 3, msg: 'Security Agent — Mapping security controls to ISO 27001 clauses...' },
-      { idx: 4, msg: 'Quality Agent — Assessing process consistency and ownership evidence...' },
-      { idx: 5, msg: 'Gap Analysis Agent — Identified 12 compliance gaps, 5 critical severity...' },
-      { idx: 6, msg: 'Evidence Validation Agent — Testing sufficiency and reuse potential...' },
-      { idx: 7, msg: 'Remediation Agent — Building a phased remediation roadmap...' },
-      { idx: 8, msg: 'Policy Generator Agent — Drafting policies for missing controls...' },
+      { idx: 0, msg: 'Document Parsing Agent — Extracting content from uploaded policy documents...' },
+      { idx: 1, msg: 'Clause Mapping Agent — Linking policy evidence to the live ISO clause architecture...' },
+      { idx: 2, msg: 'Evidence Validation Agent — Classifying evidence as direct, indirect, anecdotal, or missing...' },
+      { idx: 3, msg: 'Compliance Scoring Agent — Calculating readiness scores and confidence levels...' },
+      { idx: 4, msg: 'Gap Detection Agent — Identified 12 compliance gaps, 5 critical severity...' },
+      { idx: 5, msg: 'Remediation Planning Agent — Building a phased remediation roadmap...' },
+      { idx: 6, msg: 'Policy Generation Agent — Drafting policies for missing controls...' },
     ];
 
-    for (let i = 0; i < sequence.length; i++) {
-      await new Promise(r => setTimeout(r, 750));
-      const { idx, msg } = sequence[i];
-      setAgentStates(prev => prev.map((a, j) => {
-        if (j === idx) return { ...a, status: 'processing' as const };
-        if (j < idx && prev[j].status !== 'complete') return { ...a, status: 'complete' as const };
-        return a;
+    for (let index = 0; index < sequence.length; index += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 750));
+      const { idx, msg } = sequence[index];
+      setAgentStates((current) => current.map((agent, agentIndex) => {
+        if (agentIndex === idx) {
+          return { ...agent, status: 'processing' as const };
+        }
+        if (agentIndex < idx && current[agentIndex].status !== 'complete') {
+          return { ...agent, status: 'complete' as const };
+        }
+        return agent;
       }));
-      setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
+      setLogs((current) => [...current, `[${new Date().toLocaleTimeString()}] ${msg}`]);
     }
 
-    setAgentStates(prev => prev.map(a => ({ ...a, status: 'complete' as const })));
-    setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Assessment complete — Overall Score: 62%`]);
+    setAgentStates((current) => current.map((agent) => ({ ...agent, status: 'complete' as const })));
+    setLogs((current) => [...current, `[${new Date().toLocaleTimeString()}] Assessment complete — Overall Score: 62%`]);
     setCompletedAssessment({
       ...demoAssessmentResult,
       orgProfile: { ...demoAssessmentResult.orgProfile, ...orgProfile },
       timestamp: new Date().toISOString(),
       overallScore: 62,
+      uploadedDocuments: files.map((file) => ({
+        originalName: file.name,
+        size: file.size,
+        mimetype: file.type || undefined,
+      })),
     });
     setProcessing(false);
     setDone(true);
@@ -207,30 +209,48 @@ export default function Assessment() {
     setLogs([]);
     setCompletedAssessment(null);
     setAgentStates(agentNodes.map((agent) => ({ ...agent, status: 'idle' as const, progress: 0 })));
+
     if (!isDemoMode) {
       try {
-        const filePaths = await assessmentApi.uploadDocuments(files);
-        const res = await assessmentApi.startAssessment({
+        const uploadedDocuments = await assessmentApi.uploadDocuments(files);
+        const filePaths = uploadedDocuments.map((document) => document.savedPath).filter((path): path is string => Boolean(path));
+        const response = await assessmentApi.startAssessment({
           filePaths,
           standards: selectedStandards,
-          orgProfile: { company: orgProfile.companyName, industry: orgProfile.industrySector, employees: orgProfile.employeeCount, scope: orgProfile.assessmentScope },
+          orgProfile: {
+            company: orgProfile.companyName,
+            industry: orgProfile.industrySector,
+            employees: orgProfile.employeeCount,
+            scope: orgProfile.assessmentScope,
+          },
+          uploadedDocuments: buildUploadedDocumentContext(uploadedDocuments),
         });
+
         startStream(
-          res.assessmentId,
+          response.assessmentId,
           (event) => {
             if (event.type === 'agent-start' && event.agent) {
-              setAgentStates(prev => prev.map(a => a.name === event.agent ? { ...a, status: 'processing' as const } : a));
+              setAgentStates((current) => current.map((agent) => (
+                agent.name === event.agent ? { ...agent, status: 'processing' as const } : agent
+              )));
             }
             if (event.type === 'agent-complete' && event.agent) {
-              setAgentStates(prev => prev.map(a => a.name === event.agent ? { ...a, status: 'complete' as const } : a));
+              setAgentStates((current) => current.map((agent) => (
+                agent.name === event.agent ? { ...agent, status: 'complete' as const } : agent
+              )));
             }
             if (event.type === 'log' && event.message) {
-              setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${event.message}`]);
+              setLogs((current) => [...current, `[${new Date().toLocaleTimeString()}] ${event.message}`]);
             }
           },
-          (result) => {
-            const normalizedResult = adaptAssessmentResult(result);
-            setAgentStates(prev => prev.map(a => ({ ...a, status: 'complete' as const })));
+          (result, sessionId) => {
+            const normalizedResult = adaptAssessmentResult(result, {
+              sessionId: sessionId || response.assessmentId,
+              uploadedDocuments,
+            });
+            setAgentStates((current) => current.map((agent) => ({ ...agent, status: 'complete' as const })));
+            clearChat();
+            setAssessmentContext(sessionId || response.assessmentId, uploadedDocuments);
             setCompletedAssessment(normalizedResult);
             setFinalScore(normalizedResult.overallScore || 62);
             setProcessing(false);
@@ -240,7 +260,7 @@ export default function Assessment() {
           },
           (error) => {
             setProcessing(false);
-            setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Assessment failed: ${error}`]);
+            setLogs((current) => [...current, `[${new Date().toLocaleTimeString()}] Assessment failed: ${error}`]);
             toast.error(`Assessment failed: ${error}`);
             addNotification({ type: 'error', title: 'Assessment Failed', message: String(error) });
           }
@@ -253,6 +273,7 @@ export default function Assessment() {
       }
       return;
     }
+
     runDemoSimulation();
   };
 
@@ -263,17 +284,23 @@ export default function Assessment() {
     }
 
     setAssessment(completedAssessment);
+    setAssessmentContext(completedAssessment.sessionId || null, completedAssessment.uploadedDocuments || []);
     addNotification({ type: 'success', title: 'Assessment Saved', message: `Score: ${finalScore}%` });
     navigate('/dashboard');
   };
 
   const canProceed = () => {
-    if (step === 0) return !!(orgProfile.companyName && orgProfile.industrySector);
+    if (step === 0) return Boolean(orgProfile.companyName && orgProfile.industrySector);
     if (step === 1) return true;
     if (step === 2) return selectedStandards.length > 0;
     if (step === 3) return done;
     return true;
   };
+
+  const selectedStandardDetails = useMemo(
+    () => standardOptions.filter((option) => selectedStandards.includes(option.code)),
+    [selectedStandards]
+  );
 
   const scoreColor = finalScore >= 75 ? 'var(--status-compliant)' : finalScore >= 50 ? 'var(--risk-medium)' : 'var(--risk-critical)';
   const scoreLabel = finalScore >= 75 ? 'Compliant' : finalScore >= 50 ? 'Partially Compliant' : 'Non-Compliant';
@@ -281,29 +308,52 @@ export default function Assessment() {
   const highGapCount = completedAssessment?.gaps.filter((gap) => gap.impact === 'high').length || 0;
   const remediationCount = completedAssessment?.remediation.length || 0;
   const assessedStandardsCount = completedAssessment?.standards.length || selectedStandards.length || 0;
+  const currentStep = steps[step];
+  const modeLabel = isDemoMode ? 'Demo simulation' : 'Live orchestration';
 
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto' }}>
+    <div className="assessment-shell">
+      <PageHero
+        eyebrow="Assessment workflow"
+        title="Run an AI-led compliance assessment"
+        description="Capture organization context, attach governance evidence, choose standards, and launch the multi-agent pipeline that scores readiness and generates remediation output."
+        actions={(
+          <>
+            <button className="btn btn-secondary" onClick={() => navigate('/knowledge-base')}>Review knowledge base</button>
+            {step === 3 && !processing && !done ? (
+              <button className="btn btn-primary" onClick={startAnalysis}><Play size={14} /> Start analysis</button>
+            ) : null}
+          </>
+        )}
+        aside={
+          <div className="hero-stat-stack">
+            <div className="hero-stat-label">Execution mode</div>
+            <div className="hero-stat-value">{modeLabel}</div>
+            <div className="hero-stat-copy">{selectedStandards.length || 0} standards selected · {files.length} evidence files queued · {steps.length} guided stages.</div>
+          </div>
+        }
+      />
+
+      <div className="metric-grid">
+        <MetricCard label="Selected standards" value={selectedStandards.length} caption="Frameworks included in this run" tone="brand" />
+        <MetricCard label="Evidence files" value={files.length} caption="Documents uploaded for clause mapping" />
+        <MetricCard label="Execution state" value={done ? 'Complete' : processing ? 'Running' : 'Ready'} caption="Pipeline readiness for the current run" tone={done ? 'success' : processing ? 'brand' : 'default'} />
+        <MetricCard label="Workspace mode" value={isDemoMode ? 'Demo' : 'Live'} caption="Assessment backend execution source" tone="warn" />
+      </div>
+
       <StepProgress step={step} />
 
-      {/* Step 0 — Organization Setup */}
-      {step === 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div className="card">
-            <div className="card-header">
-              <div>
-                <span className="section-label">Step 1 of 5</span>
-                <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--slate-900)' }}>Organization Profile</h2>
-              </div>
-            </div>
-            <div className="card-body">
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                <Field label="Legal Entity Name" required>
+      <div className="assessment-grid">
+        <div className="assessment-main">
+          {step === 0 ? (
+            <Panel label={currentStep.label} title="Organization context" description="This profile informs benchmark selection, legal context, and narrative quality in the report.">
+              <div className="assessment-form-grid">
+                <Field label="Legal entity name" required>
                   <div style={{ position: 'relative' }}>
                     <Building2 size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--slate-400)' }} />
                     <input
                       value={orgProfile.companyName}
-                      onChange={e => setOrgProfile({ companyName: e.target.value })}
+                      onChange={(event) => setOrgProfile({ companyName: event.target.value })}
                       placeholder="Acme Corporation"
                       className="form-input"
                       style={{ paddingLeft: 30 }}
@@ -311,29 +361,29 @@ export default function Assessment() {
                   </div>
                 </Field>
 
-                <Field label="Industry Sector" required>
+                <Field label="Industry sector" required>
                   <div style={{ position: 'relative' }}>
                     <select
                       value={orgProfile.industrySector}
-                      onChange={e => setOrgProfile({ industrySector: e.target.value })}
+                      onChange={(event) => setOrgProfile({ industrySector: event.target.value })}
                       className="form-select"
                     >
                       <option value="">Select sector...</option>
-                      {industries.map(i => <option key={i} value={i}>{i}</option>)}
+                      {industries.map((industry) => <option key={industry} value={industry}>{industry}</option>)}
                     </select>
                     <ChevronDown size={13} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--slate-400)', pointerEvents: 'none' }} />
                   </div>
                 </Field>
 
-                <Field label="Employee Count">
+                <Field label="Employee count">
                   <div style={{ position: 'relative' }}>
                     <select
                       value={orgProfile.employeeCount}
-                      onChange={e => setOrgProfile({ employeeCount: e.target.value })}
+                      onChange={(event) => setOrgProfile({ employeeCount: event.target.value })}
                       className="form-select"
                     >
                       <option value="">Select range...</option>
-                      {employeeRanges.map(r => <option key={r} value={r}>{r}</option>)}
+                      {employeeRanges.map((range) => <option key={range} value={range}>{range}</option>)}
                     </select>
                     <ChevronDown size={13} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--slate-400)', pointerEvents: 'none' }} />
                   </div>
@@ -343,438 +393,309 @@ export default function Assessment() {
                   <div style={{ position: 'relative' }}>
                     <select
                       value={orgProfile.jurisdiction || ''}
-                      onChange={e => setOrgProfile({ jurisdiction: e.target.value })}
+                      onChange={(event) => setOrgProfile({ jurisdiction: event.target.value })}
                       className="form-select"
                     >
                       <option value="">Select jurisdiction...</option>
-                      {jurisdictions.map(j => <option key={j} value={j}>{j}</option>)}
+                      {jurisdictions.map((jurisdiction) => <option key={jurisdiction} value={jurisdiction}>{jurisdiction}</option>)}
                     </select>
                     <ChevronDown size={13} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--slate-400)', pointerEvents: 'none' }} />
                   </div>
                 </Field>
 
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <Field label="Current Compliance Maturity">
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8, marginTop: 4 }}>
-                      {maturityOptions.map(m => (
+                <div className="assessment-full-span">
+                  <Field label="Current compliance maturity">
+                    <div className="assessment-choice-grid">
+                      {maturityOptions.map((option) => (
                         <button
-                          key={m.value}
+                          key={option.value}
                           type="button"
-                          onClick={() => setOrgProfile({ currentMaturity: m.value })}
-                          style={{
-                            padding: '10px 8px',
-                            borderRadius: 'var(--radius-md)',
-                            border: `2px solid ${orgProfile.currentMaturity === m.value ? 'var(--blue-700)' : 'var(--border)'}`,
-                            background: orgProfile.currentMaturity === m.value ? 'var(--blue-50)' : 'var(--white)',
-                            cursor: 'pointer',
-                            textAlign: 'left',
-                            transition: 'all 120ms ease',
-                          }}
+                          className={`assessment-choice-card ${orgProfile.currentMaturity === option.value ? 'is-selected' : ''}`.trim()}
+                          onClick={() => setOrgProfile({ currentMaturity: option.value })}
                         >
-                          <div style={{ fontSize: 12, fontWeight: 700, color: orgProfile.currentMaturity === m.value ? 'var(--blue-800)' : 'var(--slate-700)', marginBottom: 2 }}>
-                            {m.label}
-                          </div>
-                          <div style={{ fontSize: 10, color: 'var(--slate-500)', lineHeight: 1.3 }}>{m.desc}</div>
+                          <div className="assessment-choice-title">{option.label}</div>
+                          <div className="assessment-choice-copy">{option.desc}</div>
                         </button>
                       ))}
                     </div>
                   </Field>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
+            </Panel>
+          ) : null}
 
-      {/* Step 1 — Document Upload */}
-      {step === 1 && (
-        <div className="card">
-          <div className="card-header">
-            <div>
-              <span className="section-label">Step 2 of 5</span>
-              <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--slate-900)' }}>Document Ingestion</h2>
-            </div>
-          </div>
-          <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <p style={{ fontSize: 13, color: 'var(--slate-600)' }}>
-              Upload policy documents, procedures, and governance frameworks for analysis. Supported formats: PDF, DOCX, TXT.
-            </p>
-
-            {/* Drop zone */}
-            <div
-              onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={handleDrop}
-              onClick={() => {
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.multiple = true;
-                input.accept = '.pdf,.docx,.txt';
-                input.onchange = e => {
-                  const t = e.target as HTMLInputElement;
-                  if (t.files) setFiles(prev => [...prev, ...Array.from(t.files!)]);
-                };
-                input.click();
-              }}
-              style={{
-                border: `2px dashed ${dragOver ? 'var(--blue-500)' : 'var(--border-strong)'}`,
-                borderRadius: 'var(--radius-lg)',
-                padding: '32px 24px',
-                textAlign: 'center',
-                cursor: 'pointer',
-                background: dragOver ? 'var(--blue-50)' : 'var(--slate-50)',
-                transition: 'all 150ms ease',
-              }}
-            >
-              <Upload size={28} style={{ color: dragOver ? 'var(--blue-700)' : 'var(--slate-400)', marginBottom: 12 }} />
-              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--slate-700)', marginBottom: 4 }}>
-                Drag files here or click to browse
-              </div>
-              <div style={{ fontSize: 12, color: 'var(--slate-500)' }}>
-                PDF, DOCX, TXT — Documents are processed securely and not stored
-              </div>
-            </div>
-
-            {/* File list */}
-            {files.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--slate-500)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  {files.length} Document{files.length !== 1 ? 's' : ''} Queued
-                </div>
-                {files.map((f, i) => (
-                  <div key={i} style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 12,
-                    padding: '10px 14px',
-                    background: 'var(--white)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 'var(--radius-md)',
-                  }}>
-                    <FileText size={16} style={{ color: 'var(--blue-600)', flexShrink: 0 }} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--slate-800)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</div>
-                      <div style={{ fontSize: 11, color: 'var(--slate-500)' }}>{(f.size / 1024).toFixed(1)} KB • {f.name.split('.').pop()?.toUpperCase()}</div>
-                    </div>
-                    <span className="badge badge-compliant" style={{ flexShrink: 0 }}>Ready</span>
-                    <button
-                      onClick={e => { e.stopPropagation(); removeFile(i); }}
-                      style={{ padding: 4, borderRadius: 'var(--radius-sm)', background: 'transparent', border: 'none', color: 'var(--slate-400)', cursor: 'pointer', flexShrink: 0 }}
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '10px 14px',
-              background: 'var(--blue-50)',
-              border: '1px solid var(--blue-100)',
-              borderRadius: 'var(--radius-md)',
-              fontSize: 12,
-              color: 'var(--blue-800)',
-            }}>
-              <AlertCircle size={14} style={{ flexShrink: 0 }} />
-              Real assessments can run without uploaded files, but document evidence produces materially better clause scoring and remediation outputs.
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Step 2 — Standards Selection */}
-      {step === 2 && (
-        <div className="card">
-          <div className="card-header">
-            <div>
-              <span className="section-label">Step 3 of 5</span>
-              <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--slate-900)' }}>Standards Selection</h2>
-            </div>
-          </div>
-          <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <p style={{ fontSize: 13, color: 'var(--slate-600)', marginBottom: 4 }}>
-              Select the ISO standards to assess. Each standard is evaluated independently with cross-standard gap analysis.
-            </p>
-            {standardOptions.map(s => {
-              const selected = selectedStandards.includes(s.code);
-              return (
-                <button
-                  key={s.code}
-                  onClick={() => toggleStandard(s.code)}
-                  type="button"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: 16,
-                    padding: '16px',
-                    borderRadius: 'var(--radius-lg)',
-                    border: `2px solid ${selected ? 'var(--blue-700)' : 'var(--border)'}`,
-                    background: selected ? 'var(--blue-50)' : 'var(--white)',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    transition: 'all 120ms ease',
-                    width: '100%',
-                  }}
-                >
-                  <div style={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: 4,
-                    border: `2px solid ${selected ? 'var(--blue-700)' : 'var(--slate-400)'}`,
-                    background: selected ? 'var(--blue-800)' : 'transparent',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    marginTop: 1,
-                  }}>
-                    {selected && <CheckCircle size={12} color="white" />}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 3 }}>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: selected ? 'var(--blue-900)' : 'var(--slate-800)', fontFamily: 'var(--font-mono)' }}>
-                        {s.name}
-                      </span>
-                      <span style={{ fontSize: 12, color: 'var(--slate-600)', fontFamily: 'var(--font-sans)' }}>{s.desc}</span>
-                    </div>
-                    <div style={{ fontSize: 11, color: 'var(--slate-500)' }}>
-                      {s.clauses} clauses · {s.scope}
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <span className="badge badge-pending">{s.clauses} clauses</span>
-                  </div>
-                </button>
-              );
-            })}
-
-            {selectedStandards.length === 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: '#FEF2F2', border: '1px solid var(--risk-critical-border)', borderRadius: 'var(--radius-md)', fontSize: 12, color: 'var(--risk-critical)' }}>
-                <AlertCircle size={14} />
-                Select at least one ISO standard to proceed.
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Step 3 — AI Analysis */}
-      {step === 3 && (
-        <div className="card">
-          <div className="card-header">
-            <div>
-              <span className="section-label">Step 4 of 5</span>
-              <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--slate-900)' }}>AI Agent Analysis</h2>
-            </div>
-          </div>
-          <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-
-            {/* Agent Status Table */}
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--slate-500)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>
-                Agent Pipeline Status
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {agentStates.map((agent, i) => (
-                  <div key={agent.name} style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 12,
-                    padding: '12px 14px',
-                    borderRadius: 'var(--radius-md)',
-                    border: '1px solid var(--border)',
-                    background: agent.status === 'complete' ? 'var(--status-compliant-bg)' : agent.status === 'processing' ? 'var(--blue-50)' : 'var(--white)',
-                    transition: 'all 200ms ease',
-                  }}>
-                    <div style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: '50%',
-                      background: agent.status === 'complete' ? 'var(--status-compliant-bg)' : agent.status === 'processing' ? 'var(--blue-100)' : 'var(--slate-100)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                    }}>
-                      {agent.status === 'complete' ? (
-                        <CheckCircle size={14} color="var(--status-compliant)" />
-                      ) : agent.status === 'processing' ? (
-                        <Loader2 size={14} color="var(--blue-700)" className="animate-spin" />
-                      ) : (
-                        <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--slate-400)' }}>{i + 1}</span>
-                      )}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--slate-800)' }}>{agent.name}</div>
-                      <div style={{ fontSize: 11, color: 'var(--slate-500)' }}>
-                        {agent.status === 'processing' ? agent.task : agent.status === 'complete' ? 'Completed' : 'Waiting'}
-                      </div>
-                    </div>
-                    <span style={{
-                      fontSize: 10,
-                      fontWeight: 600,
-                      padding: '2px 8px',
-                      borderRadius: 3,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.04em',
-                      background: agent.status === 'complete' ? 'var(--status-compliant-bg)' : agent.status === 'processing' ? 'var(--blue-100)' : 'var(--slate-100)',
-                      color: agent.status === 'complete' ? 'var(--status-compliant)' : agent.status === 'processing' ? 'var(--blue-800)' : 'var(--slate-500)',
-                    }}>
-                      {agent.status === 'processing' ? 'Active' : agent.status === 'complete' ? 'Done' : 'Idle'}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Start button */}
-            {!processing && !done && (
-              <div style={{ textAlign: 'center' }}>
-                <button onClick={startAnalysis} className="btn btn-primary" style={{ padding: '10px 28px', fontSize: 14 }}>
-                  <Play size={15} /> Start Analysis
-                </button>
-              </div>
-            )}
-
-            {/* Log console */}
-            {logs.length > 0 && (
-              <div>
-                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--slate-500)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
-                  Analysis Log
-                </div>
+          {step === 1 ? (
+            <Panel label={currentStep.label} title="Document ingestion" description="Evidence quality materially improves clause-level scoring, validation confidence, and remediation specificity.">
+              <div className="page-stack">
                 <div
-                  className="custom-scrollbar"
-                  style={{
-                    background: 'var(--slate-900)',
-                    borderRadius: 'var(--radius-md)',
-                    padding: '12px 16px',
-                    maxHeight: 220,
-                    overflowY: 'auto',
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: 11,
-                    lineHeight: 1.6,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 3,
+                  className={`assessment-upload-zone ${dragOver ? 'is-dragover' : ''}`.trim()}
+                  onDragOver={(event) => { event.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={handleDrop}
+                  onClick={() => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.multiple = true;
+                    input.accept = '.pdf,.docx,.txt';
+                    input.onchange = (event) => {
+                      const target = event.target as HTMLInputElement;
+                      const selectedFiles = target.files;
+                      if (selectedFiles) {
+                        setFiles((current) => [...current, ...Array.from(selectedFiles)]);
+                      }
+                    };
+                    input.click();
                   }}
                 >
-                  {logs.map((log, i) => (
-                    <div key={i} style={{
-                      color: log.includes('complete') || log.includes('Complete') ? '#86EFAC'
-                        : log.includes('critical') || log.includes('Critical') || log.includes('Error') ? '#FCA5A5'
-                        : '#94A3B8',
-                    }}>
-                      {log}
-                    </div>
-                  ))}
-                  {processing && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#93C5FD' }}>
-                      <Loader2 size={10} className="animate-spin" /> Processing...
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Step 4 — Results */}
-      {step === 4 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div className="card">
-            <div className="card-header">
-              <div>
-                <span className="section-label">Step 5 of 5</span>
-                <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--slate-900)' }}>Assessment Results</h2>
-              </div>
-              <span className="badge badge-compliant">Complete</span>
-            </div>
-            <div className="card-body">
-              {/* Score summary */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 24, alignItems: 'center' }}>
-                <div style={{ textAlign: 'center', padding: 24, background: 'var(--slate-50)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
-                  <div style={{ fontSize: 48, fontWeight: 800, color: scoreColor, lineHeight: 1 }} className="score-display">{finalScore}%</div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: scoreColor, marginTop: 6 }}>{scoreLabel}</div>
-                  <div style={{ fontSize: 11, color: 'var(--slate-500)', marginTop: 2 }}>Overall Compliance Score</div>
+                  <Upload size={28} style={{ color: dragOver ? 'var(--blue-800)' : 'var(--slate-400)', marginBottom: 12 }} />
+                  <div className="assessment-standard-title">Drag files here or click to browse</div>
+                  <div className="assessment-standard-copy">PDF, DOCX, and TXT are supported. Real assessments can run without documents, but evidence improves output quality.</div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                  {[
-                    { label: 'Critical Gaps', value: String(criticalGapCount), color: 'var(--risk-critical)' },
-                    { label: 'High Gaps', value: String(highGapCount), color: 'var(--risk-high)' },
-                    { label: 'Standards Assessed', value: String(assessedStandardsCount), color: 'var(--blue-700)' },
-                    { label: 'Remediation Actions', value: String(remediationCount), color: 'var(--status-partial)' },
-                  ].map(stat => (
-                    <div key={stat.label} style={{
-                      padding: '14px',
-                      borderRadius: 'var(--radius-md)',
-                      border: '1px solid var(--border)',
-                      background: 'var(--white)',
-                    }}>
-                      <div style={{ fontSize: 22, fontWeight: 800, color: stat.color }} className="score-display">{stat.value}</div>
-                      <div style={{ fontSize: 11, color: 'var(--slate-500)', marginTop: 2 }}>{stat.label}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {completedAssessment && (
-                <div style={{ marginTop: 18, padding: 16, borderRadius: 'var(--radius-lg)', background: 'var(--blue-50)', border: '1px solid var(--blue-100)' }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--blue-800)', marginBottom: 8 }}>
-                    Executive Summary
+                {files.length > 0 ? (
+                  <div className="assessment-file-list">
+                    {files.map((file, index) => (
+                      <div key={`${file.name}-${index}`} className="assessment-file-row">
+                        <div className="assessment-row-head">
+                          <div className="assessment-row-meta">
+                            <FileText size={16} style={{ color: 'var(--blue-700)', flexShrink: 0 }} />
+                            <div>
+                              <div className="assessment-standard-title" style={{ marginBottom: 2 }}>{file.name}</div>
+                              <div className="assessment-subcopy">{(file.size / 1024).toFixed(1)} KB · {file.name.split('.').pop()?.toUpperCase()}</div>
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <span className="badge badge-compliant">Ready</span>
+                            <button onClick={(event) => { event.stopPropagation(); removeFile(index); }} style={{ color: 'var(--slate-400)' }}>
+                              <X size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <div style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--slate-700)' }}>
-                    {completedAssessment.executiveSummary}
+                ) : null}
+
+                <ActionCard
+                  label="Evidence guidance"
+                  title="Stronger source packs produce better clause mapping"
+                  description="Prioritize policies, procedures, committee terms, registers, and control standards. Weak or sparse evidence increases narrative caveats and reduces scoring confidence."
+                />
+              </div>
+            </Panel>
+          ) : null}
+
+          {step === 2 ? (
+            <Panel label={currentStep.label} title="Standards selection" description="Each framework is assessed independently while the system also looks for cross-standard reuse opportunities.">
+              <div className="assessment-file-list">
+                {standardOptions.map((option) => {
+                  const isSelected = selectedStandards.includes(option.code);
+
+                  return (
+                    <button
+                      key={option.code}
+                      type="button"
+                      className={`assessment-standard-card ${isSelected ? 'is-selected' : ''}`.trim()}
+                      onClick={() => toggleStandard(option.code)}
+                      style={{ padding: 18, textAlign: 'left' }}
+                    >
+                      <div className="assessment-row-head">
+                        <div>
+                          <div className="assessment-standard-title">{option.name}</div>
+                          <div className="assessment-standard-copy">{option.desc}</div>
+                          <div className="assessment-subcopy" style={{ marginTop: 8 }}>{option.scope}</div>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+                          <span className="badge badge-pending">{option.clauses} clauses</span>
+                          {isSelected ? <span className="badge badge-compliant">Selected</span> : null}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {selectedStandards.length === 0 ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: 'var(--risk-critical-bg)', border: '1px solid var(--risk-critical-border)', borderRadius: 'var(--radius-md)', fontSize: 12, color: 'var(--risk-critical)' }}>
+                  <AlertCircle size={14} /> Select at least one ISO standard to proceed.
+                </div>
+              ) : null}
+            </Panel>
+          ) : null}
+
+          {step === 3 ? (
+            <>
+              <Panel label={currentStep.label} title="Multi-agent analysis" description="The orchestration layer parses evidence, maps clauses, validates sufficiency, scores controls, detects gaps, and drafts remediation outputs.">
+                <div className="workflow-stage-grid">
+                  {agentStates.map((agent, index) => (
+                    <WorkflowStage
+                      key={agent.name}
+                      index={index + 1}
+                      title={agent.name}
+                      description={agent.status === 'processing' ? agent.task : agent.status === 'complete' ? 'Completed for the current run.' : 'Waiting for execution.'}
+                      state={agent.status === 'processing' ? 'active' : agent.status === 'complete' ? 'complete' : 'idle'}
+                    />
+                  ))}
+                </div>
+
+                {!processing && !done ? (
+                  <div style={{ marginTop: 18 }}>
+                    <button onClick={startAnalysis} className="btn btn-primary"><Play size={15} /> Start analysis</button>
+                  </div>
+                ) : null}
+              </Panel>
+
+              <Panel label="Execution log" title="Pipeline activity" description="Use the log to inspect execution order, warnings, and key scoring milestones.">
+                {logs.length > 0 ? (
+                  <div className="assessment-log">
+                    {logs.map((log, index) => (
+                      <div
+                        key={`${log}-${index}`}
+                        style={{
+                          color:
+                            log.includes('complete') || log.includes('Complete') ? '#86EFAC'
+                              : log.includes('critical') || log.includes('Critical') || log.includes('Error') ? '#FCA5A5'
+                                : '#94A3B8',
+                        }}
+                      >
+                        {log}
+                      </div>
+                    ))}
+                    {processing ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#93C5FD', marginTop: 6 }}>
+                        <Loader2 size={10} className="animate-spin" /> Processing...
+                      </div>
+                    ) : null}
+                  </div>
+                ) : (
+                  <ActionCard
+                    label="Execution trace"
+                    title="No live events yet"
+                    description="Start the pipeline to populate the execution log with agent activity, scoring milestones, and any failure messages returned by the assessment service."
+                  />
+                )}
+              </Panel>
+            </>
+          ) : null}
+
+          {step === 4 ? (
+            <>
+              <Panel label={currentStep.label} title="Assessment results" description="Review the readiness posture, confirm the summary, and commit the completed run to the workspace.">
+                <div className="assessment-results-grid">
+                  <div className="assessment-score-card">
+                    <div className="assessment-score-value" style={{ color: scoreColor }}>{finalScore}%</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: scoreColor }}>{scoreLabel}</div>
+                    <div className="assessment-subcopy">Overall compliance score</div>
+                  </div>
+
+                  <div className="summary-grid-responsive">
+                    <SummaryStatCard label="Critical gaps" value={criticalGapCount} description="Items requiring immediate executive attention" tone="danger" />
+                    <SummaryStatCard label="High gaps" value={highGapCount} description="Priority actions for the next remediation cycle" tone="warn" />
+                    <SummaryStatCard label="Standards assessed" value={assessedStandardsCount} description="Frameworks evaluated in the completed run" tone="brand" />
+                    <SummaryStatCard label="Remediation actions" value={remediationCount} description="Actions generated for follow-through" tone="success" />
                   </div>
                 </div>
+
+                {completedAssessment ? (
+                  <div style={{ marginTop: 18 }}>
+                    <ActionCard
+                      label="Executive summary"
+                      title="Board-ready narrative generated"
+                      description={completedAssessment.executiveSummary}
+                    />
+                  </div>
+                ) : null}
+              </Panel>
+
+              {completedAssessment ? (
+                <Panel label="Immediate follow-through" title="Top remediation priorities" description="The first actions below are pulled from the generated remediation plan.">
+                  <div className="action-grid">
+                    {completedAssessment.remediation.slice(0, 4).map((action) => (
+                      <ActionCard
+                        key={action.id}
+                        label={`${action.priority} priority · ${action.phase}`}
+                        title={action.title}
+                        description={action.description}
+                        action={<span className="badge badge-pending">{action.responsibleFunction}</span>}
+                      />
+                    ))}
+                  </div>
+                </Panel>
+              ) : null}
+            </>
+          ) : null}
+
+          <div className="assessment-navigation">
+            <button onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0} className="btn btn-ghost">
+              <ArrowLeft size={14} /> Back
+            </button>
+
+            <div className="assessment-navigation-meta">
+              <span style={{ fontSize: 12, color: 'var(--slate-500)' }}>{currentStep.label} of {steps.length}</span>
+              {step < 4 ? (
+                <button
+                  onClick={() => setStep((current) => Math.min(4, current + 1))}
+                  disabled={!canProceed() || (step === 3 && !done)}
+                  className="btn btn-primary"
+                >
+                  {step === 3 ? 'View results' : 'Continue'} <ArrowRight size={14} />
+                </button>
+              ) : (
+                <>
+                  <button onClick={() => navigate('/reports')} className="btn btn-secondary">View full report</button>
+                  <button onClick={finishAssessment} className="btn btn-primary">Open dashboard <ArrowRight size={13} /></button>
+                </>
               )}
             </div>
-            <div className="card-footer" style={{ display: 'flex', gap: 10 }}>
-              <button onClick={finishAssessment} className="btn btn-primary">
-                Open Dashboard <ArrowRight size={13} />
-              </button>
-              <button onClick={() => navigate('/reports')} className="btn btn-secondary">
-                View Full Report
-              </button>
-            </div>
           </div>
         </div>
-      )}
 
-      {/* Navigation */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginTop: 20,
-        padding: '14px 0',
-        borderTop: '1px solid var(--border)',
-      }}>
-        <button
-          onClick={() => setStep(Math.max(0, step - 1))}
-          disabled={step === 0}
-          className="btn btn-ghost"
-        >
-          <ArrowLeft size={14} /> Back
-        </button>
+        <div className="assessment-aside">
+          <Panel label="Run brief" title="Current assessment frame" description="These details follow the workflow and update as the run matures.">
+            <div className="summary-grid-responsive">
+              <SummaryStatCard label="Company" value={orgProfile.companyName || 'Pending'} description="Legal entity in scope" tone="brand" />
+              <SummaryStatCard label="Industry" value={orgProfile.industrySector || 'Pending'} description="Benchmark context" />
+              <SummaryStatCard label="Evidence" value={files.length} description="Queued documents" />
+              <SummaryStatCard label="Maturity" value={orgProfile.currentMaturity || 'Unstated'} description="Starting operating model" />
+            </div>
+          </Panel>
 
-        {step < 4 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 12, color: 'var(--slate-500)' }}>Step {step + 1} of {steps.length}</span>
-            <button
-              onClick={() => setStep(s => Math.min(4, s + 1))}
-              disabled={!canProceed() || (step === 3 && !done)}
-              className="btn btn-primary"
-            >
-              {step === 3 ? 'View Results' : 'Continue'} <ArrowRight size={14} />
-            </button>
-          </div>
-        )}
+          <Panel label="Selected standards" title="Framework pack" description="Use this view to confirm scope before the pipeline runs.">
+            {selectedStandardDetails.length > 0 ? (
+              <div className="insight-list">
+                {selectedStandardDetails.map((standard) => (
+                  <div key={standard.code} className="insight-row">
+                    <div className="insight-kicker">{standard.name}</div>
+                    <div>
+                      <div className="insight-title">{standard.clauses} clauses in scope</div>
+                      <div className="insight-copy">{standard.scope}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <InsightCard
+                title="No standards selected yet"
+                description="Choose at least one framework to activate the analysis stage and generate a cross-standard findings set."
+              />
+            )}
+          </Panel>
+
+          <Panel label="Execution notes" title="What the pipeline is doing" description="This remains visible even before execution so the operating model is clear.">
+            <div className="action-grid">
+              <ActionCard
+                label="Context"
+                title={isDemoMode ? 'Demo orchestration' : 'Live backend orchestration'}
+                description="The workflow reuses uploaded evidence, organization profile data, and the selected standards pack to build an auditable assessment result."
+              />
+              <ActionCard
+                label="Output"
+                title="Readiness score, gaps, and remediation"
+                description="Completed runs populate the dashboard, reports, and copilot context automatically after you save the assessment into the workspace."
+              />
+            </div>
+          </Panel>
+        </div>
       </div>
     </div>
   );

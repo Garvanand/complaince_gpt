@@ -6,19 +6,21 @@ import './styles/globals.css'
 import './index.css'
 import App from './App'
 import ErrorBoundary from './components/ErrorBoundary'
+import ThemeController from './components/ThemeController'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
       <BrowserRouter>
+        <ThemeController />
         <App />
         <Toaster
           position="top-right"
           toastOptions={{
             style: {
-              background: 'var(--white)',
-              color: 'var(--slate-800)',
-              border: '1px solid var(--border)',
+              background: 'var(--chart-tooltip-bg)',
+              color: 'var(--color-text-primary)',
+              border: '1px solid var(--chart-tooltip-border)',
               borderRadius: '8px',
               fontSize: '14px',
               boxShadow: 'var(--shadow-lg)',

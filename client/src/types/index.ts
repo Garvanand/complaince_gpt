@@ -135,6 +135,13 @@ export interface PolicyGeneratorResult {
   summary: string;
 }
 
+export interface UploadedDocumentInfo {
+  originalName: string;
+  savedPath?: string;
+  size?: number;
+  mimetype?: string;
+}
+
 export interface AssessmentResult {
   id: string;
   orgProfile: OrgProfile;
@@ -148,6 +155,19 @@ export interface AssessmentResult {
   remediation: RemediationAction[];
   policyDocuments?: PolicyDocument[];
   executiveSummary: string;
+  sessionId?: string;
+  uploadedDocuments?: UploadedDocumentInfo[];
+  orchestration?: {
+    provider: 'genw' | 'local' | 'hybrid';
+    executions: Array<{
+      agentName: string;
+      provider: 'genw' | 'local';
+      status: 'completed' | 'fallback' | 'error';
+      startedAt: string;
+      completedAt: string;
+      summary: string;
+    }>;
+  };
 }
 
 export interface BackendClauseScore {
@@ -198,7 +218,98 @@ export interface BackendAssessmentResult {
   evidenceValidation: EvidenceValidation;
   remediationActions: BackendRemediationAction[];
   policyDocuments: PolicyDocument[];
+  orchestration?: {
+    provider: 'genw' | 'local' | 'hybrid';
+    executions: Array<{
+      agentName: string;
+      provider: 'genw' | 'local';
+      status: 'completed' | 'fallback' | 'error';
+      startedAt: string;
+      completedAt: string;
+      summary: string;
+    }>;
+  };
   timestamp: string;
+}
+
+export interface CopilotContextSnapshot {
+  orgProfile?: { company: string; industry: string; employees: string; scope: string };
+  uploadedDocuments?: UploadedDocumentInfo[];
+  overallScore?: number;
+  maturityLevel?: number;
+  executiveSummary?: string;
+  evidenceSummary?: string;
+  standards?: Array<{
+    code: string;
+    name: string;
+    overallScore: number;
+    maturityLevel: number;
+    summary?: string;
+  }>;
+  clauseScores?: Array<{
+    standard: string;
+    clauseId: string;
+    clauseTitle?: string;
+    score: number;
+    finding: string;
+  }>;
+  gaps?: Array<{
+    id: string;
+    standard: string;
+    clauseRef: string;
+    title: string;
+    severity: string;
+    description: string;
+  }>;
+  remediationActions?: Array<{
+    id: string;
+    title: string;
+    priority: string;
+    phase: number;
+    description: string;
+    standard?: string;
+    responsible?: string;
+  }>;
+  orchestration?: {
+    provider?: string;
+    executionCount?: number;
+  };
+}
+
+export interface ComplianceCopilotResponse {
+  headline: string;
+  directAnswer: string;
+  explanation: string;
+  evidence: Array<{
+    source: string;
+    label: string;
+    detail: string;
+  }>;
+  recommendedActions: Array<{
+    title: string;
+    priority: 'critical' | 'high' | 'medium' | 'low';
+    rationale: string;
+    owner?: string;
+    standard?: string;
+    clause?: string;
+  }>;
+  isoGuidance: Array<{
+    standard: string;
+    clause?: string;
+    requirement: string;
+    guidance: string;
+  }>;
+  reportSummary: string[];
+  followUpQuestions: string[];
+  auditTrail: {
+    responseMode: 'genw' | 'groq' | 'local';
+    structuredFormat: 'compliance-copilot-v1';
+    assessmentReference?: string;
+    contextSources: string[];
+    pipelineProvider: 'genw' | 'local' | 'hybrid' | 'unknown';
+    generatedAt: string;
+    caveats: string[];
+  };
 }
 
 export interface StandardLibraryItem {
@@ -321,6 +432,7 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
+  structuredResponse?: ComplianceCopilotResponse;
 }
 
 export type StandardCode = 'ISO37001' | 'ISO37301' | 'ISO27001' | 'ISO9001';

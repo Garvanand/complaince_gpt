@@ -13,16 +13,11 @@ function SectionRow({ section }: { section: PolicySection }) {
   const s = statusMeta[section.status] || statusMeta.new;
 
   return (
-    <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+    <div className="policy-row-shell">
       <button
         onClick={() => setExpanded(!expanded)}
-        style={{
-          width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-          padding: '10px 14px', background: 'var(--white)', cursor: 'pointer',
-          textAlign: 'left', transition: 'background 80ms ease',
-        }}
-        onMouseEnter={e => e.currentTarget.style.background = 'var(--slate-50)'}
-        onMouseLeave={e => e.currentTarget.style.background = 'var(--white)'}
+        aria-expanded={expanded}
+        className="disclosure-trigger"
       >
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, color: '#0076A8', minWidth: 28 }}>
           {section.sectionNumber}
@@ -38,7 +33,7 @@ function SectionRow({ section }: { section: PolicySection }) {
         {expanded ? <ChevronDown size={14} style={{ color: 'var(--slate-400)' }} /> : <ChevronRight size={14} style={{ color: 'var(--slate-400)' }} />}
       </button>
       {expanded && (
-        <div style={{ padding: '12px 14px', borderTop: '1px solid var(--border)', background: 'var(--slate-50)' }}>
+        <div className="disclosure-panel">
           <p style={{ fontSize: 13, color: 'var(--slate-700)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{section.content}</p>
         </div>
       )}
@@ -124,6 +119,7 @@ function PolicyCard({ doc }: { doc: PolicyDocument }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <button
             onClick={() => setExpanded(!expanded)}
+            aria-expanded={expanded}
             style={{
               padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 600,
               border: '1px solid var(--border)', background: 'var(--white)', color: 'var(--slate-600)',
@@ -232,29 +228,16 @@ export default function PolicyGeneratorPanel({ documents }: { documents: PolicyD
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {/* Summary KPIs */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 12 }}>
+      <div className="summary-grid-responsive">
         {summaryCards.map(c => (
-          <div key={c.label} style={{
-            textAlign: 'center', padding: '14px 8px',
-            border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)',
-            background: 'var(--white)',
-          }}>
-            <div style={{
-              fontFamily: 'var(--font-mono)', fontSize: 24, fontWeight: 700,
-              color: c.color, lineHeight: 1, marginBottom: 4,
-            }}>{c.value}</div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--slate-500)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{c.label}</div>
+          <div key={c.label} className="summary-stat-card">
+            <div className="summary-stat-value" style={{ color: c.color }}>{c.value}</div>
+            <div className="summary-stat-label">{c.label}</div>
           </div>
         ))}
       </div>
 
-      {/* Info banner */}
-      <div style={{
-        padding: '12px 16px', background: '#F0FDF4', borderRadius: 'var(--radius-lg)',
-        border: '1px solid #BBF7D0', fontSize: 13, color: '#166534', lineHeight: 1.6,
-        display: 'flex', alignItems: 'center', gap: 10,
-      }}>
+      <div className="report-banner report-banner-success" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <CheckCircle2 size={16} style={{ flexShrink: 0 }} />
         <span>
           <strong>{documents.length} policy documents</strong> generated targeting <strong>100% compliance</strong>.
@@ -263,7 +246,6 @@ export default function PolicyGeneratorPanel({ documents }: { documents: PolicyD
         </span>
       </div>
 
-      {/* Download All button */}
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <button
           onClick={handleDownloadAll}
@@ -277,7 +259,6 @@ export default function PolicyGeneratorPanel({ documents }: { documents: PolicyD
         </button>
       </div>
 
-      {/* Policy document cards */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {documents.map(doc => (
           <PolicyCard key={doc.id} doc={doc} />

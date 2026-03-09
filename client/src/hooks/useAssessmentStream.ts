@@ -7,11 +7,12 @@ interface SSEEvent {
   message?: string;
   error?: string;
   result?: any;
+  assessmentId?: string;
   timestamp?: string;
 }
 
 type OnEvent = (event: SSEEvent) => void;
-type OnComplete = (result: any) => void;
+type OnComplete = (result: any, assessmentId?: string) => void;
 type OnError = (error: string) => void;
 
 export function useAssessmentStream() {
@@ -33,7 +34,7 @@ export function useAssessmentStream() {
           onEvent(data);
 
           if (data.type === 'complete' && data.result) {
-            onComplete(data.result);
+            onComplete(data.result, data.assessmentId);
             es.close();
           }
 

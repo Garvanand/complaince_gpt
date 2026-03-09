@@ -1,78 +1,124 @@
 import { motion } from 'framer-motion';
-import { Info, Key, Palette, Bell } from 'lucide-react';
+import { Info, Key, Palette, Monitor, Moon, Sun } from 'lucide-react';
+import { PageHero, Panel } from '../components/ui/EnterpriseLayout';
+import { useAppStore } from '../store/useAppStore';
+
+const themeOptions = [
+  {
+    id: 'light',
+    label: 'Light',
+    description: 'Bright neutral dashboard palette for daytime and shared review sessions.',
+    icon: Sun,
+  },
+  {
+    id: 'dark',
+    label: 'Dark',
+    description: 'High-contrast executive dashboard palette optimized for long analytics sessions.',
+    icon: Moon,
+  },
+  {
+    id: 'system',
+    label: 'System',
+    description: 'Automatically match the operating system theme preference.',
+    icon: Monitor,
+  },
+] as const;
 
 export default function Settings() {
+  const themeMode = useAppStore((state) => state.themeMode);
+  const setThemeMode = useAppStore((state) => state.setThemeMode);
+
   return (
-    <div className="max-w-3xl space-y-8">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        <span className="section-label">Configuration</span>
-        <h2 className="font-display text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Settings</h2>
-      </motion.div>
+    <div className="page-stack">
+      <PageHero
+        eyebrow="Configuration"
+        title="Workspace settings"
+        description="Manage appearance, integrations, and workspace defaults. Theme selection is persisted and applied across dashboards, tables, and charts."
+      />
 
-      {/* API Keys */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card space-y-4">
-        <div className="flex items-center gap-3">
-          <Key size={20} style={{ color: 'var(--color-accent-500)' }} />
-          <h3 className="text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>API Configuration</h3>
-        </div>
-        <div className="space-y-4">
-          <div>
-            <label className="text-sm font-medium mb-2 block" style={{ color: 'var(--color-text-secondary)' }}>Groq API Key</label>
-            <input
-              type="password"
-              placeholder="gsk_..."
-              className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-              style={{ background: 'var(--color-primary-700)', border: '1px solid var(--glass-border)', color: 'var(--color-text-primary)' }}
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium mb-2 block" style={{ color: 'var(--color-text-secondary)' }}>GenW.AI Endpoint</label>
-            <input
-              type="text"
-              placeholder="https://api.genw.ai"
-              className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-              style={{ background: 'var(--color-primary-700)', border: '1px solid var(--glass-border)', color: 'var(--color-text-primary)' }}
-            />
-          </div>
-        </div>
-      </motion.div>
+      <div className="enterprise-two-column">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+          <Panel label="Appearance" title="Theme mode" description="Choose the dashboard palette that should drive all analytics surfaces and charts.">
+            <div className="settings-theme-grid">
+              {themeOptions.map((option) => {
+                const Icon = option.icon;
+                const isActive = themeMode === option.id;
 
-      {/* Theme */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-card space-y-4">
-        <div className="flex items-center gap-3">
-          <Palette size={20} style={{ color: 'var(--color-accent-500)' }} />
-          <h3 className="text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>Appearance</h3>
-        </div>
-        <div className="flex gap-3">
-          {['Dark (Default)', 'System'].map((theme) => (
-            <button
-              key={theme}
-              className="px-4 py-2 rounded-xl text-sm font-medium"
-              style={{
-                background: theme === 'Dark (Default)' ? 'rgba(134, 188, 37, 0.15)' : 'var(--color-primary-700)',
-                border: `1px solid ${theme === 'Dark (Default)' ? 'var(--color-accent-500)' : 'var(--glass-border)'}`,
-                color: theme === 'Dark (Default)' ? 'var(--color-accent-400)' : 'var(--color-text-secondary)',
-              }}
-            >
-              {theme}
-            </button>
-          ))}
-        </div>
-      </motion.div>
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => setThemeMode(option.id)}
+                    className={`settings-theme-card ${isActive ? 'active' : ''}`}
+                    aria-pressed={isActive}
+                  >
+                    <div className="settings-theme-card-head">
+                      <div className="settings-theme-icon"><Icon size={18} /></div>
+                      <div>
+                        <div className="settings-theme-title">{option.label}</div>
+                        <div className="settings-theme-copy">{option.description}</div>
+                      </div>
+                    </div>
+                    <div className="settings-theme-preview">
+                      <span className="settings-theme-swatch settings-theme-swatch-strong" />
+                      <span className="settings-theme-swatch settings-theme-swatch-soft" />
+                      <span className="settings-theme-swatch settings-theme-swatch-accent" />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </Panel>
+        </motion.div>
 
-      {/* About */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="glass-card space-y-3">
-        <div className="flex items-center gap-3">
-          <Info size={20} style={{ color: 'var(--color-accent-500)' }} />
-          <h3 className="text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>About ComplianceGPT</h3>
-        </div>
-        <div className="space-y-2 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-          <p>Version: 1.0.0</p>
-          <p>AI Model: openai/gpt-oss-120b</p>
-          <p>Platform: Deloitte GenW.AI™</p>
-          <p>Built for Hacksplosion 2026</p>
-        </div>
-      </motion.div>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+          <Panel label="Integrations" title="API configuration" description="Integration keys remain local to this workspace and are not transmitted until you save them to the backend.">
+            <div className="page-stack" style={{ gap: 16 }}>
+              <div>
+                <label className="form-label">Groq API Key</label>
+                <input type="password" placeholder="gsk_..." className="form-input" />
+              </div>
+              <div>
+                <label className="form-label">GenW.AI Endpoint</label>
+                <input type="text" placeholder="https://api.genw.ai" className="form-input" />
+              </div>
+            </div>
+          </Panel>
+        </motion.div>
+      </div>
+
+      <div className="enterprise-two-column">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+          <Panel label="Display behavior" title="Theme behavior notes" description="All dashboards, tables, and charts consume shared tokens so the same components render correctly in both light and dark mode.">
+            <div className="stack-list">
+              <div className="insight-card">
+                <div className="insight-kicker"><Palette size={14} /></div>
+                <div className="insight-title">Shared theme tokens</div>
+                <div className="insight-copy">Light and dark modes are driven by CSS variables, so components are not duplicated to support them.</div>
+              </div>
+              <div className="insight-card">
+                <div className="insight-kicker"><Monitor size={14} /></div>
+                <div className="insight-title">Chart adaptation</div>
+                <div className="insight-copy">Graph grids, axis labels, tooltips, and dashboard surfaces adapt automatically when the theme changes.</div>
+              </div>
+            </div>
+          </Panel>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          <Panel label="About" title="ComplianceGPT platform" description="Workspace, product, and model metadata for the current build.">
+            <div className="stack-list">
+              <div className="insight-row">
+                <div className="insight-kicker"><Info size={14} /></div>
+                <div>
+                  <div className="insight-title">Version 1.0.0</div>
+                  <div className="insight-copy">AI model: openai/gpt-oss-120b · Platform: Deloitte GenW.AI™ · Built for Hacksplosion 2026.</div>
+                </div>
+              </div>
+            </div>
+          </Panel>
+        </motion.div>
+      </div>
     </div>
   );
 }

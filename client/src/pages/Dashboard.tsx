@@ -2,29 +2,32 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Shield, AlertTriangle, CalendarDays, FileCheck,
-  ArrowRight, Upload, BarChart3, TrendingUp, ChevronRight,
+  ArrowRight, Upload, BarChart3, ChevronRight, Target, ShieldAlert,
 } from 'lucide-react';
 import {
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
   Legend, ResponsiveContainer, Tooltip,
 } from 'recharts';
-import KPICard from '../components/dashboard/KPICard';
+import ComplianceScoreRing from '../components/dashboard/ComplianceScoreRing';
 import ClauseHeatmap from '../components/analytics/ClauseHeatmap';
 import RemediationTimeline from '../components/reports/RemediationTimeline';
 import GapPriorityMatrix from '../components/analytics/GapPriorityMatrix';
+import OrganizationalRiskHeatmap from '../components/analytics/OrganizationalRiskHeatmap';
 import EvidenceValidationPanel from '../components/reports/EvidenceValidationPanel';
 import PolicyGeneratorPanel from '../components/reports/PolicyGeneratorPanel';
-import { StatusBadge, ScoreBadge, SectionHeader, EmptyState } from '../components/ui/EnterpriseComponents';
+import { ClauseStatusTag, DataTable, RiskIndicator, ScoreBadge, StatusBadge } from '../components/ui/EnterpriseComponents';
+import { EmptyWorkspace, MetricCard, PageHero, Panel } from '../components/ui/EnterpriseLayout';
 import { useAppStore } from '../store/useAppStore';
 import { formatDate } from '../utils/helpers';
+import { sortGapsByPriority } from '../utils/enterpriseData';
 
 const tooltipStyle = {
   contentStyle: {
-    background: 'var(--white)',
-    border: '1px solid var(--border)',
+    background: 'var(--chart-tooltip-bg)',
+    border: '1px solid var(--chart-tooltip-border)',
     borderRadius: 'var(--radius-lg)',
     fontSize: 12,
-    color: 'var(--slate-700)',
+    color: 'var(--color-text-primary)',
     boxShadow: 'var(--shadow-lg)',
   },
 };
@@ -41,101 +44,37 @@ function EmptyDashboard() {
   const { loadDemoData } = useAppStore();
 
   return (
-    <div style={{ maxWidth: 700, margin: '40px auto', padding: '0 16px' }}>
-      {/* KPI placeholders */}
-      <div className="kpi-grid" style={{ marginBottom: 24 }}>
-        {['Overall Score', 'Standards Assessed', 'Critical Gaps', 'Last Assessment'].map((label) => (
-          <div key={label} className="kpi-card">
-            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--slate-500)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>{label}</div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--slate-300)', marginBottom: 4 }}>—</div>
-            <div className="skeleton" style={{ height: 10, width: '60%', marginTop: 4 }} />
+    <div className="page-stack">
+      <PageHero
+        eyebrow="Enterprise workspace"
+        title="Compliance posture command center"
+        description="Run an assessment to populate executive metrics, risk analytics, clause evidence, and remediation priorities in a single governed workspace."
+        actions={
+          <>
+            <button onClick={() => navigate('/assessment')} className="btn btn-primary">Start assessment</button>
+            <button onClick={loadDemoData} className="btn btn-secondary">Load demo dataset</button>
+          </>
+        }
+        aside={
+          <div className="hero-stat-stack">
+            <div className="hero-stat-label">Platform mode</div>
+            <div className="hero-stat-value">Ready</div>
+            <div className="hero-stat-copy">Upload governance material and the analytics workspace will populate with scorecards, clause exposure, and risk visuals.</div>
           </div>
-        ))}
+        }
+      />
+
+      <div className="metric-grid">
+        <MetricCard label="Overall score" value="-" caption="Awaiting first assessment" tone="brand" />
+        <MetricCard label="Assessed standards" value="0" caption="No active standards selected" />
+        <MetricCard label="Critical gaps" value="0" caption="No findings on record yet" />
+        <MetricCard label="Report pack" value="Idle" caption="Executive summary appears after analysis" />
       </div>
 
-      {/* CTAs */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
-        <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: 4,
-            background: '#0076A8', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <Upload size={16} color="white" />
-          </div>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#1A1A1A', marginBottom: 4 }}>Start New Assessment</div>
-            <div style={{ fontSize: 12, color: '#767676', lineHeight: 1.5 }}>
-              Upload governance documents and run multi-standard ISO compliance analysis.
-            </div>
-          </div>
-          <button
-            onClick={() => navigate('/assessment')}
-            className="btn btn-primary"
-            style={{ alignSelf: 'flex-start', marginTop: 4 }}
-          >
-            Start Assessment <ArrowRight size={13} />
-          </button>
-        </div>
-
-        <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: 4,
-            background: '#F2F2F2', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <BarChart3 size={16} color="#5C5C5C" />
-          </div>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#1A1A1A', marginBottom: 4 }}>Load Demo Data</div>
-            <div style={{ fontSize: 12, color: '#767676', lineHeight: 1.5 }}>
-              Explore a sample assessment for Acme Corp across all four ISO standards.
-            </div>
-          </div>
-          <button
-            onClick={loadDemoData}
-            className="btn btn-secondary"
-            style={{ alignSelf: 'flex-start', marginTop: 4 }}
-          >
-            Load Demo
-          </button>
-        </div>
-      </div>
-
-      {/* Standards reference table */}
-      <div className="card">
-        <div className="card-header">
-          <SectionHeader label="Reference" title="Supported ISO Standards" />
-          <button onClick={() => navigate('/standards')} className="btn btn-ghost" style={{ fontSize: 12 }}>
-            View Library <ChevronRight size={13} />
-          </button>
-        </div>
-        <div style={{ overflowX: 'auto' }}>
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Standard</th>
-                <th>Title</th>
-                <th>Clauses</th>
-                <th>Domain</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                { code: 'ISO 37001', name: 'Anti-Bribery Management Systems', clauses: 33, domain: 'Anti-Bribery' },
-                { code: 'ISO 37301', name: 'Compliance Management Systems', clauses: 28, domain: 'Governance' },
-                { code: 'ISO 27001', name: 'Information Security Management', clauses: 24, domain: 'InfoSec' },
-                { code: 'ISO 9001',  name: 'Quality Management Systems', clauses: 28, domain: 'Quality' },
-              ].map((s) => (
-                <tr key={s.code}>
-                  <td><span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 12, color: 'var(--blue-700)' }}>{s.code}</span></td>
-                  <td style={{ color: 'var(--slate-700)' }}>{s.name}</td>
-                  <td style={{ color: 'var(--slate-600)' }}>{s.clauses}</td>
-                  <td><span className="badge badge-pending">{s.domain}</span></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <EmptyWorkspace
+        title="No assessment data yet"
+        description="This dashboard is designed for non-technical users. Once an assessment runs, it will show clear scorecards, risk clusters, clause status, and recommended actions."
+      />
     </div>
   );
 }
@@ -157,6 +96,12 @@ export default function Dashboard() {
   const highGaps = a.gaps.filter((g) => g.impact === 'high').length;
   const previousAssessment = [...assessmentHistory].reverse().find((entry) => entry.id !== a.id);
   const trendDelta = previousAssessment ? a.overallScore - previousAssessment.overallScore : 0;
+  const weakestClauses = a.standards
+    .flatMap((standard) => standard.clauseScores.map((clause) => ({ ...clause, standardCode: standard.standardCode })))
+    .sort((left, right) => left.score - right.score)
+    .slice(0, 6);
+  const priorityActions = a.remediation.slice(0, 4);
+  const sortedGaps = sortGapsByPriority(a.gaps).slice(0, 4);
 
   if (loading) {
     return (
@@ -185,9 +130,8 @@ export default function Dashboard() {
   }));
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div className="page-stack analytics-page">
 
-      {/* Demo banner */}
       {isDemoMode && (
         <div style={{
           display: 'flex',
@@ -208,98 +152,68 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* KPI Row */}
-      <div className="kpi-grid">
-        <KPICard
-          title="Overall Compliance Score"
-          value={a.overallScore}
-          suffix="%"
-          icon={<Shield size={15} />}
-          color="var(--blue-700)"
-          subtitle={`Maturity Level ${a.overallMaturity} — ${a.overallMaturityLabel}`}
-          trend={previousAssessment ? { value: trendDelta, label: 'vs. last assessment' } : undefined}
-        />
-        <KPICard
-          title="Standards Assessed"
-          value={a.standards.length}
-          icon={<FileCheck size={15} />}
-          color="var(--chart-3)"
-          subtitle={a.standards.map(s => standardsMeta[s.standardCode]?.short || s.standardCode).join(', ')}
-        />
-        <KPICard
-          title="Critical Gaps"
-          value={criticalGaps}
-          icon={<AlertTriangle size={15} />}
-          color="var(--risk-critical)"
-          subtitle={`${highGaps} high severity, ${a.gaps.length - criticalGaps - highGaps} others`}
-        />
-        <KPICard
-          title="Last Assessment"
-          value={0}
-          hideValue
-          icon={<CalendarDays size={15} />}
-          color="var(--slate-500)"
-          subtitle={formatDate(a.timestamp)}
-        />
+      <PageHero
+        eyebrow="Executive dashboard"
+        title={`${a.orgProfile.companyName} posture overview`}
+        description={`Designed for compliance, audit, and operations leaders. Review score trends, risk concentration, clause exposure, and the next recommended remediation moves without needing raw technical logs.`}
+        actions={
+          <>
+            <button onClick={() => navigate('/reports')} className="btn btn-primary">Open report pack</button>
+            <button onClick={() => navigate('/analytics')} className="btn btn-secondary">Open analytics</button>
+          </>
+        }
+        aside={<ComplianceScoreRing score={a.overallScore} maturityLevel={a.overallMaturity} label="overall posture" size={180} />}
+      />
+
+      <div className="metric-grid">
+        <MetricCard label="Overall score" value={`${a.overallScore}%`} caption={`Maturity ${a.overallMaturityLabel}${previousAssessment ? ` · ${trendDelta >= 0 ? '+' : ''}${trendDelta}% vs last assessment` : ''}`} tone="brand" />
+        <MetricCard label="Standards in scope" value={a.standards.length} caption={a.standards.map((s) => standardsMeta[s.standardCode]?.short || s.standardCode).join(', ')} />
+        <MetricCard label="Critical exposure" value={criticalGaps} caption={`${highGaps} high-severity findings also require management action`} tone="danger" />
+        <MetricCard label="Last review" value={formatDate(a.timestamp)} caption="Latest completed assessment in this workspace" />
       </div>
 
-      {/* Standards Compliance Table + Radar */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: 16 }}>
+      <div className="dashboard-grid">
+        <Panel label="Assessment results" title="Standards scorecard" description="A concise score view for business users, showing where attention is needed first.">
+          <DataTable
+            caption="Each row summarizes one assessed ISO standard."
+            rowKey={(row) => row.standardCode}
+            rows={a.standards}
+            columns={[
+              {
+                key: 'standard',
+                header: 'Standard',
+                cell: (row) => (
+                  <div>
+                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--slate-900)' }}>{standardsMeta[row.standardCode]?.short || row.standardCode}</div>
+                    <div style={{ fontSize: 12, color: 'var(--slate-500)' }}>{row.standardName}</div>
+                  </div>
+                ),
+              },
+              { key: 'score', header: 'Score', cell: (row) => <ScoreBadge score={row.overallScore} /> },
+              {
+                key: 'status',
+                header: 'Status',
+                cell: (row) => <StatusBadge status={row.overallScore >= 75 ? 'compliant' : row.overallScore >= 50 ? 'partial' : 'non-compliant'} />,
+              },
+              {
+                key: 'risk',
+                header: 'Priority risk',
+                cell: (row) => {
+                  const count = a.gaps.filter((gap) => gap.standardCode === row.standardCode && gap.impact === 'critical').length;
+                  return count > 0 ? <RiskIndicator level="critical" label={`${count} critical gaps`} /> : <RiskIndicator level="low" label="No critical gaps" />;
+                },
+              },
+            ]}
+          />
+        </Panel>
 
-        {/* Standards table */}
-        <div className="card">
-          <div className="card-header">
-            <SectionHeader label="Assessment Results" title="Standards Compliance Summary" />
-          </div>
-          <div style={{ overflowX: 'auto' }}>
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Standard</th>
-                  <th>Score</th>
-                  <th>Status</th>
-                  <th>Critical Gaps</th>
-                  <th>Clauses</th>
-                </tr>
-              </thead>
-              <tbody>
-                {a.standards.map((s) => {
-                  const statusStr = s.overallScore >= 75 ? 'compliant' : s.overallScore >= 50 ? 'partial' : 'non-compliant';
-                  const critCount = a.gaps.filter(g => g.standardCode === s.standardCode && g.impact === 'critical').length;
-                  return (
-                    <tr key={s.standardCode}>
-                      <td>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 12, color: 'var(--blue-700)' }}>
-                          {standardsMeta[s.standardCode]?.short || s.standardCode}
-                        </span>
-                      </td>
-                      <td><ScoreBadge score={s.overallScore} /></td>
-                      <td><StatusBadge status={statusStr} /></td>
-                      <td>
-                        {critCount > 0
-                          ? <span style={{ color: 'var(--risk-critical)', fontWeight: 700 }}>{critCount}</span>
-                          : <span style={{ color: 'var(--status-compliant)' }}>0</span>}
-                      </td>
-                      <td style={{ color: 'var(--slate-500)' }}>{s.clauseScores.length}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Compliance Radar */}
-        <div className="card">
-          <div className="card-header">
-            <SectionHeader label="Compliance Maturity" title="Current vs. Target" />
-          </div>
-          <div style={{ padding: '12px 16px' }}>
+        <Panel label="Target comparison" title="Current vs target maturity" description="This view compares the current posture against a management target of 85% across standards.">
+          <div style={{ padding: '8px 4px 0' }}>
             <ResponsiveContainer width="100%" height={260}>
               <RadarChart data={radarData} margin={{ top: 8, right: 20, bottom: 8, left: 20 }}>
-                <PolarGrid stroke="var(--slate-200)" />
-                <PolarAngleAxis dataKey="standard" tick={{ fill: 'var(--slate-600)', fontSize: 11 }} />
-                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: 'var(--slate-400)', fontSize: 10 }} />
+                <PolarGrid stroke="var(--chart-grid)" />
+                <PolarAngleAxis dataKey="standard" tick={{ fill: 'var(--chart-axis)', fontSize: 11 }} />
+                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: 'var(--chart-axis-muted)', fontSize: 10 }} />
                 <Radar
                   name="Current"
                   dataKey="Current"
@@ -317,95 +231,102 @@ export default function Dashboard() {
                   strokeWidth={1.5}
                 />
                 <Tooltip {...tooltipStyle} />
-                <Legend wrapperStyle={{ fontSize: 11, color: 'var(--slate-500)', paddingTop: 4 }} />
+                <Legend wrapperStyle={{ fontSize: 11, color: 'var(--chart-axis)', paddingTop: 4 }} />
               </RadarChart>
             </ResponsiveContainer>
           </div>
-        </div>
+        </Panel>
       </div>
 
-      {/* Gap Priority Matrix + Remediation Timeline */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-        <div className="card">
-          <div className="card-header">
-            <SectionHeader label="Risk Analysis" title="Gap Priority Matrix" description="Impact vs. implementation effort" />
-          </div>
-          <div className="card-body" style={{ paddingTop: 8 }}>
+      <div className="dashboard-risk-grid">
+        <Panel label="Risk visualization" title="Organizational exposure heatmap" description="Risks are grouped into severity and likelihood buckets for rapid executive review.">
+          <OrganizationalRiskHeatmap assessment={a} regulatoryPressure="high" />
+        </Panel>
+
+        <div className="dashboard-stack">
+          <Panel label="Action focus" title="Priority remediation actions" description="The most immediate actions translated into a business-readable execution list.">
+            <div className="dashboard-priority-list">
+              {priorityActions.map((action) => (
+                <div key={action.id} className="dashboard-priority-item">
+                  <div className="dashboard-priority-head">
+                    <div>
+                      <div className="dashboard-priority-title">{action.title}</div>
+                      <div className="dashboard-priority-meta">Phase {action.phaseLabel} · {action.responsibleFunction}</div>
+                    </div>
+                    <RiskIndicator level={action.priority} label={action.priority} />
+                  </div>
+                  <div style={{ color: 'var(--slate-600)', fontSize: 13, lineHeight: 1.6 }}>{action.description}</div>
+                </div>
+              ))}
+            </div>
+          </Panel>
+
+          <Panel label="Risk prioritization" title="Impact vs implementation effort" description="Use this matrix to identify quick wins versus longer strategic remediation work.">
             <GapPriorityMatrix gaps={a.gaps} />
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="card-header">
-            <SectionHeader label="Remediation Roadmap" title="Priority Actions" />
-            <button onClick={() => navigate('/reports')} className="btn btn-ghost" style={{ fontSize: 12, flexShrink: 0 }}>
-              View All <ChevronRight size={12} />
-            </button>
-          </div>
-          <div className="card-body" style={{ paddingTop: 8 }}>
-            <RemediationTimeline actions={a.remediation.slice(0, 5)} />
-          </div>
+          </Panel>
         </div>
       </div>
 
-      {/* Clause Heatmap */}
-      <div className="card">
-        <div className="card-header">
-          <SectionHeader label="Clause Analysis" title="Compliance Heatmap" description="Clause-level compliance across all assessed standards" />
-          <button onClick={() => navigate('/analytics')} className="btn btn-ghost" style={{ fontSize: 12, flexShrink: 0 }}>
-            Full Analytics <ChevronRight size={12} />
-          </button>
-        </div>
-        <div className="card-body" style={{ paddingTop: 8 }}>
+      <div className="dashboard-grid">
+        <Panel label="Clause analysis" title="Clause exposure heatmap" description="Clause-level scoring is condensed into a visual register so weak controls can be found quickly.">
           <ClauseHeatmap standards={a.standards} />
-        </div>
+        </Panel>
+
+        <Panel label="Weakest clauses" title="Immediate control attention" description="These clauses are the most likely to drive audit challenge or certification delay.">
+          <DataTable
+            rows={weakestClauses}
+            rowKey={(row) => `${row.standardCode}-${row.clauseId}`}
+            columns={[
+              {
+                key: 'clause',
+                header: 'Clause',
+                cell: (row) => (
+                  <div>
+                    <div style={{ fontWeight: 700, color: 'var(--slate-900)' }}>{row.standardCode.replace('ISO', 'ISO ')} {row.clauseId}</div>
+                    <div style={{ fontSize: 12, color: 'var(--slate-500)' }}>{row.clauseTitle}</div>
+                  </div>
+                ),
+              },
+              { key: 'score', header: 'Score', cell: (row) => <ScoreBadge score={row.score} /> },
+              { key: 'status', header: 'Status', cell: (row) => <ClauseStatusTag status={row.status} /> },
+            ]}
+          />
+        </Panel>
       </div>
 
-      {/* Evidence Validation */}
       {a.evidenceValidation && a.evidenceValidation.evidenceItems.length > 0 && (
-        <div className="card">
-          <div className="card-header">
-            <SectionHeader label="Evidence Intelligence" title="Evidence Validation" description="AI-powered validation of evidence sufficiency, quality, and cross-standard reuse" />
-            <button onClick={() => navigate('/reports')} className="btn btn-ghost" style={{ fontSize: 12, flexShrink: 0 }}>
+        <Panel
+          label="Evidence intelligence"
+          title="Evidence validation review"
+          description="The assistant tested evidence quality, sufficiency, and reuse potential across standards."
+          action={<button onClick={() => navigate('/reports')} className="btn btn-ghost" style={{ fontSize: 12, flexShrink: 0 }}>
               Full Report <ChevronRight size={12} />
-            </button>
-          </div>
-          <div className="card-body" style={{ paddingTop: 8 }}>
-            <EvidenceValidationPanel data={a.evidenceValidation} />
-          </div>
-        </div>
+            </button>}
+        >
+          <EvidenceValidationPanel data={a.evidenceValidation} />
+        </Panel>
       )}
 
-      {/* Policy Generator */}
       {a.policyDocuments && a.policyDocuments.length > 0 && (
-        <div className="card">
-          <div className="card-header">
-            <SectionHeader label="Policy Intelligence" title="Generated Compliant Policies" description="AI-generated 100% compliant policy documents ready for download and adoption" />
-          </div>
-          <div className="card-body" style={{ paddingTop: 8 }}>
-            <PolicyGeneratorPanel documents={a.policyDocuments} />
-          </div>
-        </div>
+        <Panel label="Policy intelligence" title="Generated compliant policy packs" description="Drafted policy outputs linked directly to the gaps identified in this assessment.">
+          <PolicyGeneratorPanel documents={a.policyDocuments} />
+        </Panel>
       )}
 
-      {/* Critical Gaps Summary */}
       {criticalGaps > 0 && (
-        <div className="card">
-          <div className="card-header">
-            <SectionHeader
-              label="Immediate Attention Required"
-              title={`Critical Gaps (${criticalGaps})`}
-              description="These findings require immediate remediation action"
-            />
-            <button onClick={() => navigate('/reports')} className="btn btn-ghost" style={{ fontSize: 12, flexShrink: 0 }}>
-              View Report <ChevronRight size={12} />
-            </button>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12, padding: 16 }}>
-            {a.gaps.filter(g => g.impact === 'critical').map((gap) => (
+        <Panel
+          label="Immediate attention required"
+          title={`Critical findings requiring action`}
+          description="These findings should be reviewed before lower-severity items because they carry the highest operational or audit exposure."
+          action={<button onClick={() => navigate('/reports')} className="btn btn-ghost" style={{ fontSize: 12, flexShrink: 0 }}>
+            View report <ChevronRight size={12} />
+          </button>}
+        >
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+            {sortedGaps.map((gap) => (
               <div key={gap.id} style={{
                 padding: 14,
-                borderRadius: 'var(--radius-md)',
+                borderRadius: 16,
                 background: 'var(--risk-critical-bg)',
                 border: '1px solid var(--risk-critical-border)',
               }}>
@@ -420,7 +341,7 @@ export default function Dashboard() {
               </div>
             ))}
           </div>
-        </div>
+        </Panel>
       )}
     </div>
   );

@@ -61,7 +61,7 @@ export function Panel({
   children: ReactNode;
 }) {
   return (
-    <section className="card">
+    <section className="card analytics-panel">
       <div className="card-header">
         <div>
           <span className="section-label">{label}</span>
@@ -70,7 +70,7 @@ export function Panel({
         </div>
         {action}
       </div>
-      <div className="card-body">{children}</div>
+      <div className="card-body analytics-panel-body">{children}</div>
     </section>
   );
 }

@@ -8,8 +8,11 @@ import type {
   ChatMessage,
   StandardCode,
   Notification,
+  UploadedDocumentInfo,
 } from '../types';
 import { demoAssessmentResult } from '../data/demo-data';
+
+export type ThemeMode = 'light' | 'dark' | 'system';
 
 interface AppState {
   // Assessment
@@ -30,9 +33,14 @@ interface AppState {
   chatMessages: ChatMessage[];
   isChatOpen: boolean;
 
+  // Assessment context
+  activeAssessmentSessionId: string | null;
+  uploadedDocuments: UploadedDocumentInfo[];
+
   // UI
   isDemoMode: boolean;
   sidebarCollapsed: boolean;
+  themeMode: ThemeMode;
 
   // Notifications
   notifications: Notification[];
@@ -48,10 +56,13 @@ interface AppState {
   updateAgentStatus: (name: string, update: Partial<AgentStatus>) => void;
   resetAgentStatuses: () => void;
   addChatMessage: (msg: ChatMessage) => void;
+  clearChat: () => void;
   toggleChat: () => void;
+  setAssessmentContext: (sessionId: string | null, uploadedDocuments: UploadedDocumentInfo[]) => void;
   toggleDemoMode: () => void;
   loadDemoData: () => void;
   toggleSidebar: () => void;
+  setThemeMode: (mode: ThemeMode) => void;
   resetAssessment: () => void;
   addNotification: (n: Omit<Notification, 'id' | 'timestamp' | 'read'>) => void;
   markNotificationRead: (id: string) => void;
@@ -60,15 +71,13 @@ interface AppState {
 }
 
 const defaultAgentStatuses: AgentStatus[] = [
-  { name: 'Document Agent', status: 'idle', progress: 0, currentAction: '' },
-  { name: 'Bribery Risk Agent', status: 'idle', progress: 0, currentAction: '' },
-  { name: 'Governance Agent', status: 'idle', progress: 0, currentAction: '' },
-  { name: 'Security Agent', status: 'idle', progress: 0, currentAction: '' },
-  { name: 'Quality Agent', status: 'idle', progress: 0, currentAction: '' },
-  { name: 'Gap Analysis Agent', status: 'idle', progress: 0, currentAction: '' },
+  { name: 'Document Parsing Agent', status: 'idle', progress: 0, currentAction: '' },
+  { name: 'Clause Mapping Agent', status: 'idle', progress: 0, currentAction: '' },
   { name: 'Evidence Validation Agent', status: 'idle', progress: 0, currentAction: '' },
-  { name: 'Remediation Agent', status: 'idle', progress: 0, currentAction: '' },
-  { name: 'Policy Generator Agent', status: 'idle', progress: 0, currentAction: '' },
+  { name: 'Compliance Scoring Agent', status: 'idle', progress: 0, currentAction: '' },
+  { name: 'Gap Detection Agent', status: 'idle', progress: 0, currentAction: '' },
+  { name: 'Remediation Planning Agent', status: 'idle', progress: 0, currentAction: '' },
+  { name: 'Policy Generation Agent', status: 'idle', progress: 0, currentAction: '' },
 ];
 
 export const useAppStore = create<AppState>()(
@@ -89,8 +98,11 @@ export const useAppStore = create<AppState>()(
   agentLog: [],
   chatMessages: [],
   isChatOpen: false,
+  activeAssessmentSessionId: null,
+  uploadedDocuments: [],
   isDemoMode: false,
   sidebarCollapsed: false,
+  themeMode: 'system',
   notifications: [],
   unreadCount: 0,
 
@@ -124,20 +136,31 @@ export const useAppStore = create<AppState>()(
   addChatMessage: (msg) =>
     set((s) => ({ chatMessages: [...s.chatMessages, msg] })),
 
+  clearChat: () => set({ chatMessages: [] }),
+
   toggleChat: () => set((s) => ({ isChatOpen: !s.isChatOpen })),
+
+  setAssessmentContext: (sessionId, uploadedDocuments) => set({ activeAssessmentSessionId: sessionId, uploadedDocuments }),
 
   toggleDemoMode: () =>
     set((s) => {
       if (!s.isDemoMode) {
-        return { isDemoMode: true, currentAssessment: demoAssessmentResult };
+        return {
+          isDemoMode: true,
+          currentAssessment: demoAssessmentResult,
+          activeAssessmentSessionId: null,
+          uploadedDocuments: demoAssessmentResult.uploadedDocuments || [],
+        };
       }
-      return { isDemoMode: false, currentAssessment: null };
+      return { isDemoMode: false, currentAssessment: null, activeAssessmentSessionId: null, uploadedDocuments: [] };
     }),
 
   loadDemoData: () =>
     set((s) => ({
       isDemoMode: true,
       currentAssessment: demoAssessmentResult,
+      activeAssessmentSessionId: null,
+      uploadedDocuments: demoAssessmentResult.uploadedDocuments || [],
       orgProfile: {
         companyName: 'Acme Corp Financial Services',
         industrySector: 'Financial Services',
@@ -156,13 +179,18 @@ export const useAppStore = create<AppState>()(
 
   toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
 
+  setThemeMode: (mode) => set({ themeMode: mode }),
+
   resetAssessment: () =>
     set({
       currentAssessment: null,
       isAssessing: false,
       assessmentStep: 0,
+      activeAssessmentSessionId: null,
+      uploadedDocuments: [],
       agentStatuses: [...defaultAgentStatuses],
       agentLog: [],
+      chatMessages: [],
     }),
 
   addNotification: (n) =>
@@ -195,8 +223,11 @@ export const useAppStore = create<AppState>()(
         assessmentHistory: state.assessmentHistory,
         orgProfile: state.orgProfile,
         selectedStandards: state.selectedStandards,
+        activeAssessmentSessionId: state.activeAssessmentSessionId,
+        uploadedDocuments: state.uploadedDocuments,
         isDemoMode: state.isDemoMode,
         sidebarCollapsed: state.sidebarCollapsed,
+        themeMode: state.themeMode,
         notifications: state.notifications,
         unreadCount: state.unreadCount,
       }),

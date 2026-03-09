@@ -1,14 +1,14 @@
 import { motion } from 'framer-motion';
-import { Search, Bot, Scale, Shield, Award, GitBranch, Wrench, Clock } from 'lucide-react';
+import { Search, Bot, ShieldCheck, GitBranch, Wrench, Clock, ScrollText } from 'lucide-react';
 
 const feedItems = [
-  { agent: 'Document Agent', icon: Search, message: 'Parsed Section 4.2 of Acme Corp Anti-Bribery Policy.pdf', time: '2 min ago', color: '#00ABBD' },
-  { agent: 'Bribery Risk Agent', icon: Scale, message: 'Scored Clause 6.1: 33% (Planned) — Risk actions not yet implemented', time: '3 min ago', color: '#DD6B20' },
-  { agent: 'Governance Agent', icon: Shield, message: 'Compliance function assessment complete — Level 3 maturity', time: '5 min ago', color: '#86BC25' },
-  { agent: 'Security Agent', icon: Shield, message: 'IS risk treatment gap identified — Critical priority', time: '7 min ago', color: '#00ABBD' },
-  { agent: 'Quality Agent', icon: Award, message: 'QMS process maturity at 74% — Design controls gap noted', time: '8 min ago', color: '#FFD32A' },
-  { agent: 'Gap Analysis Agent', icon: GitBranch, message: 'Identified 12 gaps across 4 standards — 5 critical', time: '10 min ago', color: '#E53E3E' },
-  { agent: 'Remediation Agent', icon: Wrench, message: 'Generated 9-action remediation roadmap across 3 phases', time: '12 min ago', color: '#A8D048' },
+  { agent: 'Document Parsing Agent', icon: Search, message: 'Structured 42 policy sections and extracted control evidence from uploaded governance documents', time: '2 min ago', color: '#00ABBD' },
+  { agent: 'Clause Mapping Agent', icon: Bot, message: 'Mapped anti-bribery and compliance evidence to high-relevance ISO clauses with semantic matches', time: '4 min ago', color: '#0076A8' },
+  { agent: 'Evidence Validation Agent', icon: ShieldCheck, message: 'Classified evidence quality and flagged weak support as indirect or missing', time: '6 min ago', color: '#86BC25' },
+  { agent: 'Compliance Scoring Agent', icon: Bot, message: 'Calculated clause readiness and confidence levels across the assessed standards set', time: '8 min ago', color: '#DD6B20' },
+  { agent: 'Gap Detection Agent', icon: GitBranch, message: 'Identified missing controls and weak implementations across mapped clause evidence', time: '10 min ago', color: '#E53E3E' },
+  { agent: 'Remediation Planning Agent', icon: Wrench, message: 'Generated a prioritized remediation roadmap with phases, owners, and effort signals', time: '12 min ago', color: '#A8D048' },
+  { agent: 'Policy Generation Agent', icon: ScrollText, message: 'Drafted compliant policy sections to close the highest-priority control gaps', time: '14 min ago', color: '#70563C' },
 ];
 
 export default function AgentActivityFeed() {

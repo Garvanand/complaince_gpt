@@ -15,8 +15,8 @@ import { getAssessmentNarrative, getRiskDistribution, getStandardLabel } from '.
 
 const tooltipStyle = {
   contentStyle: {
-    background: 'var(--color-primary-700)',
-    border: '1px solid var(--glass-border)',
+    background: 'var(--chart-tooltip-bg)',
+    border: '1px solid var(--chart-tooltip-border)',
     borderRadius: '12px',
     color: 'var(--color-text-primary)',
     fontSize: 12,
@@ -24,14 +24,25 @@ const tooltipStyle = {
 };
 
 const gapColors: Record<string, string> = {
-  process: '#DD6B20',
-  training: '#FFD32A',
-  technology: '#00ABBD',
-  documentation: '#A8D048',
-  policy: '#E53E3E',
+  process: 'var(--chart-5)',
+  training: 'var(--risk-medium)',
+  technology: 'var(--chart-2)',
+  documentation: 'var(--green-light)',
+  policy: 'var(--risk-critical)',
 };
 
-const renderGapLabel = (props: any) => `${props?.name || ''} ${(((props?.percent as number | undefined) || 0) * 100).toFixed(0)}%`;
+const renderGapLabel = (props: any) => {
+  const { cx, cy, midAngle, innerRadius, outerRadius, percent, name } = props;
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.62;
+  const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
+  const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
+
+  return (
+    <text x={x} y={y} fill="var(--chart-axis)" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={11} fontWeight={600}>
+      {`${name} ${((percent || 0) * 100).toFixed(0)}%`}
+    </text>
+  );
+};
 
 function buildTrendData(history: AssessmentResult[], current: AssessmentResult) {
   const items = [...history];
@@ -306,10 +317,10 @@ export default function Analytics() {
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={maturityData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-primary-600)" />
-                <XAxis dataKey="standard" tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }} />
-                <YAxis tick={{ fill: 'var(--color-text-muted)', fontSize: 10 }} />
+                <XAxis dataKey="standard" tick={{ fill: 'var(--chart-axis)', fontSize: 12 }} />
+                <YAxis tick={{ fill: 'var(--chart-axis-muted)', fontSize: 10 }} />
                 <Tooltip {...tooltipStyle} />
-                <Legend wrapperStyle={{ fontSize: 11, color: 'var(--color-text-secondary)' }} />
+                <Legend wrapperStyle={{ fontSize: 11, color: 'var(--chart-axis)' }} />
                 <Bar dataKey="level1" stackId="a" fill="#E53E3E" name="Level 1" />
                 <Bar dataKey="level2" stackId="a" fill="#DD6B20" name="Level 2" />
                 <Bar dataKey="level3" stackId="a" fill="#FFD32A" name="Level 3" />
@@ -332,6 +343,7 @@ export default function Analytics() {
                   outerRadius={100}
                   paddingAngle={3}
                   dataKey="value"
+                  labelLine={false}
                   label={renderGapLabel}
                 >
                   {gapDistribution.map((entry) => (
@@ -351,10 +363,10 @@ export default function Analytics() {
             <ResponsiveContainer width="100%" height={280}>
               <LineChart data={trendData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-primary-600)" />
-                <XAxis dataKey="label" tick={{ fill: 'var(--color-text-secondary)', fontSize: 11 }} />
-                <YAxis domain={[0, 100]} tick={{ fill: 'var(--color-text-muted)', fontSize: 10 }} />
+                <XAxis dataKey="label" tick={{ fill: 'var(--chart-axis)', fontSize: 11 }} />
+                <YAxis domain={[0, 100]} tick={{ fill: 'var(--chart-axis-muted)', fontSize: 10 }} />
                 <Tooltip {...tooltipStyle} />
-                <Legend wrapperStyle={{ fontSize: 11, color: 'var(--color-text-secondary)' }} />
+                <Legend wrapperStyle={{ fontSize: 11, color: 'var(--chart-axis)' }} />
                 <Line type="monotone" dataKey="overall" stroke="var(--color-accent-500)" strokeWidth={2.5} dot={{ r: 3 }} name="Overall" />
                 <Line type="monotone" dataKey="ISO37001" stroke="#DD6B20" strokeWidth={2} dot={{ r: 2 }} name="ISO 37001" />
                 <Line type="monotone" dataKey="ISO37301" stroke="#86BC25" strokeWidth={2} dot={{ r: 2 }} name="ISO 37301" />
@@ -370,10 +382,10 @@ export default function Analytics() {
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={benchmarkData} barGap={8}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-primary-600)" />
-                <XAxis dataKey="standard" tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }} />
-                <YAxis domain={[0, 100]} tick={{ fill: 'var(--color-text-muted)', fontSize: 10 }} />
+                <XAxis dataKey="standard" tick={{ fill: 'var(--chart-axis)', fontSize: 12 }} />
+                <YAxis domain={[0, 100]} tick={{ fill: 'var(--chart-axis-muted)', fontSize: 10 }} />
                 <Tooltip {...tooltipStyle} />
-                <Legend wrapperStyle={{ fontSize: 11, color: 'var(--color-text-secondary)' }} />
+                <Legend wrapperStyle={{ fontSize: 11, color: 'var(--chart-axis)' }} />
                 <Bar dataKey="yours" fill="var(--color-accent-500)" name="Your Score" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="benchmark" fill="var(--color-primary-600)" name="Industry Avg" radius={[4, 4, 0, 0]} />
               </BarChart>

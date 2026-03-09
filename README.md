@@ -286,16 +286,25 @@ The **Evidence Validation Agent** is an industry-first capability that validates
 
 ## GenW.AI Integration
 
-ComplianceGPT is architected to integrate with Deloitte's GenW.AI platform through a clean bridge layer (`GenWAIBridge.ts`):
+ComplianceGPT now exposes a GenW-powered orchestration layer through a clean bridge and pipeline service architecture. The assessment backend routes each pipeline stage through GenW when available and falls back to local scoring and local agent execution when GenW is unavailable.
 
-| GenW.AI Module | ComplianceGPT Agent(s) | Capability |
+| GenW.AI Module | ComplianceGPT Pipeline Agent(s) | Capability |
 |---|---|---|
-| Document Intelligence | Document Agent | Multi-format parsing with structural understanding |
-| Risk Analytics Engine | Bribery Risk + Security Agents | Probabilistic risk scoring and heat mapping |
-| Compliance Knowledge Graph | Governance + Quality + Gap Analysis Agents | Standards cross-referencing and clause mapping |
+| Document Intelligence | Document Parsing Agent | Multi-format parsing with structural understanding |
+| Compliance Knowledge Graph | Clause Mapping Agent, Gap Detection Agent | Standards cross-referencing and clause mapping |
 | Evidence Validation Engine | Evidence Validation Agent | AI-powered evidence sufficiency analysis |
-| Remediation Planning Engine | Remediation Agent | Phased roadmap generation with cost estimation |
-| Audit Trail | All Agents | Immutable audit logging and evidence management |
+| Risk Analytics Engine | Compliance Scoring Agent | Clause readiness scoring and confidence calculation |
+| Remediation Planning Engine | Remediation Planning Agent | Phased roadmap generation with cost estimation |
+| Policy Generation Engine | Policy Generation Agent | Drafting compliant policy sections to close gaps |
+| Audit Trail | Platform support module | Reserved for immutable audit logging and evidence governance |
+
+Operational discovery endpoints are also available:
+
+| Endpoint | Purpose |
+|---|---|
+| `/api/genw/status` | Returns GenW configuration, connectivity, fallback state, and pipeline runtime status |
+| `/api/genw/modules` | Returns the GenW module catalog used by the bridge layer |
+| `/api/genw/pipeline` | Returns the ordered 7-agent GenW pipeline definition |
 
 > See [docs/GENW_AI_INTEGRATION.md](docs/GENW_AI_INTEGRATION.md) for the integration architecture.
 

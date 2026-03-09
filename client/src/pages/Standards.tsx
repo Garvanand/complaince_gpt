@@ -4,6 +4,7 @@ import type { KnowledgeBaseOverview, QuestionnaireResponse, StandardCode, Standa
 import { useAppStore } from '../store/useAppStore';
 import { standardsApi } from '../utils/apiClient';
 import { EmptyWorkspace, MetricCard, PageHero, Panel } from '../components/ui/EnterpriseLayout';
+import { ClauseStatusTag, DataTable, RiskIndicator, ScoreBadge } from '../components/ui/EnterpriseComponents';
 import { getStandardLabel, getStandardStatus, standardColors } from '../utils/enterpriseData';
 
 const supportedStandards: StandardCode[] = ['ISO37001', 'ISO37301', 'ISO27001', 'ISO9001'];
@@ -127,7 +128,7 @@ export default function Standards() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="page-stack">
       <PageHero
         eyebrow="Standards intelligence"
         title={`${getStandardLabel(selected)} clause and questionnaire workspace`}
@@ -208,7 +209,7 @@ export default function Standards() {
                 </div>
                 {commonFindings.slice(0, 4).map((finding, index) => (
                   <div key={`${finding.clauseCategory}-${index}`} className="insight-row">
-                    <div className="insight-kicker">{finding.criticality}</div>
+                    <div className="insight-kicker"><RiskIndicator level={finding.criticality === 'critical' ? 'critical' : finding.criticality === 'high' ? 'high' : 'medium'} label={finding.criticality} /></div>
                     <div>
                       <div className="insight-title">{finding.clauseCategory}</div>
                       <div className="insight-copy">{finding.commonFindings[0] || 'Common audit issue available in the knowledge base.'}</div>
@@ -220,37 +221,34 @@ export default function Standards() {
           </div>
 
           <Panel label="Clause breakdown" title="Detailed clause register" description="Each row shows the live library content and the latest assessment overlay status.">
-            <div style={{ overflowX: 'auto' }}>
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Clause</th>
-                    <th>Category</th>
-                    <th>Description</th>
-                    <th>Status</th>
-                    <th>Score</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredClauses.map((clause) => {
-                    const overlay = standardOverlay?.clauseScores.find((item) => item.clauseId === clause.id);
-                    const status = overlay ? getStandardStatus(overlay.score) : null;
-                    return (
-                      <tr key={clause.id}>
-                        <td>
-                          <div style={{ fontWeight: 700, color: standardColors[selected] || 'var(--teal)' }}>{clause.id}</div>
-                          <div style={{ color: 'var(--slate-900)' }}>{clause.title}</div>
-                        </td>
-                        <td>{clause.category}</td>
-                        <td>{clause.description}</td>
-                        <td>{status ? <span className={`badge badge-${status === 'non-compliant' ? 'critical' : status}`}>{status}</span> : 'Not assessed'}</td>
-                        <td>{overlay ? `${overlay.score}%` : '—'}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <DataTable
+              caption="Library clauses shown alongside current assessment overlay, if one exists."
+              rows={filteredClauses.map((clause) => {
+                const overlay = standardOverlay?.clauseScores.find((item) => item.clauseId === clause.id);
+                return { clause, overlay };
+              })}
+              rowKey={(row) => row.clause.id}
+              columns={[
+                {
+                  key: 'clause',
+                  header: 'Clause',
+                  cell: (row) => (
+                    <div>
+                      <div style={{ fontWeight: 700, color: standardColors[selected] || 'var(--teal)' }}>{row.clause.id}</div>
+                      <div style={{ color: 'var(--slate-900)' }}>{row.clause.title}</div>
+                    </div>
+                  ),
+                },
+                { key: 'category', header: 'Category', cell: (row) => row.clause.category },
+                { key: 'description', header: 'Description', cell: (row) => row.clause.description },
+                {
+                  key: 'status',
+                  header: 'Status',
+                  cell: (row) => row.overlay ? <ClauseStatusTag status={row.overlay.status} /> : <span style={{ color: 'var(--slate-500)' }}>Not assessed</span>,
+                },
+                { key: 'score', header: 'Score', cell: (row) => row.overlay ? <ScoreBadge score={row.overlay.score} /> : '—' },
+              ]}
+            />
           </Panel>
 
           <Panel label="Questionnaire" title="Audit prompts, legal basis, and consequences" description="The questionnaire section is fully expanded and searchable to avoid hidden or empty content states.">

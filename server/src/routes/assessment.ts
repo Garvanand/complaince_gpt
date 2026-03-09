@@ -1,16 +1,29 @@
 import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { parseDocument, combineDocumentTexts } from '../services/documentParser';
-import { runOrchestrator, AssessmentResult } from '../agents/orchestrator';
+import { runOrchestrator } from '../agents/orchestrator';
+import {
+  appendAssessmentRuntimeLog,
+  createAssessmentRuntimeSession,
+  getAssessmentRuntimeSession,
+  markAssessmentRuntimeError,
+  registerAssessmentRuntimeResult,
+  updateAssessmentRuntimeSession,
+} from '../services/AssessmentRuntimeStore';
+import type { AssessmentResult } from '../types/assessment';
+import type { UploadedDocumentReference } from '../types/copilot';
 
 export const assessmentRouter = Router();
 
-// In-memory store for assessments
-const assessments = new Map<string, { status: string; result?: AssessmentResult; logs: string[] }>();
 const sseClients = new Map<string, Response[]>();
 
 assessmentRouter.post('/start', async (req: Request, res: Response) => {
-  const { filePaths, standards, orgProfile } = req.body;
+  const { filePaths, standards, orgProfile, uploadedDocuments } = req.body as {
+    filePaths?: string[];
+    standards: string[];
+    orgProfile: { company: string; industry: string; employees: string; scope: string };
+    uploadedDocuments?: UploadedDocumentReference[];
+  };
 
   if (!standards || !Array.isArray(standards) || standards.length === 0) {
     res.status(400).json({ error: 'At least one standard is required' });
@@ -18,7 +31,11 @@ assessmentRouter.post('/start', async (req: Request, res: Response) => {
   }
 
   const assessmentId = uuidv4();
-  assessments.set(assessmentId, { status: 'processing', logs: [] });
+  createAssessmentRuntimeSession(assessmentId, {
+    standards,
+    orgProfile,
+    uploadedDocuments: uploadedDocuments || [],
+  });
 
   res.json({ assessmentId, status: 'processing' });
 
@@ -32,6 +49,7 @@ assessmentRouter.post('/start', async (req: Request, res: Response) => {
       } else {
         documentText = 'No documents uploaded. Using organizational profile for assessment.';
       }
+      updateAssessmentRuntimeSession(assessmentId, { documentText });
 
       const sendSSE = (data: Record<string, unknown>) => {
         const clients = sseClients.get(assessmentId) || [];
@@ -47,24 +65,18 @@ assessmentRouter.post('/start', async (req: Request, res: Response) => {
         },
         onAgentComplete: (agentName, result) => {
           sendSSE({ type: 'agent-complete', agent: agentName, timestamp: new Date().toISOString() });
-          const entry = assessments.get(assessmentId);
-          if (entry) entry.logs.push(`${agentName} completed`);
+          appendAssessmentRuntimeLog(assessmentId, `${agentName} completed`);
         },
         onAgentError: (agentName, error) => {
           sendSSE({ type: 'agent-error', agent: agentName, error, timestamp: new Date().toISOString() });
         },
         onLog: (message) => {
           sendSSE({ type: 'log', message, timestamp: new Date().toISOString() });
-          const entry = assessments.get(assessmentId);
-          if (entry) entry.logs.push(message);
+          appendAssessmentRuntimeLog(assessmentId, message);
         },
         onComplete: (result) => {
-          const entry = assessments.get(assessmentId);
-          if (entry) {
-            entry.status = 'complete';
-            entry.result = result;
-          }
-          sendSSE({ type: 'complete', result, timestamp: new Date().toISOString() });
+          registerAssessmentRuntimeResult(assessmentId, result);
+          sendSSE({ type: 'complete', assessmentId, result, timestamp: new Date().toISOString() });
 
           // Close SSE connections
           const clients = sseClients.get(assessmentId) || [];
@@ -75,8 +87,7 @@ assessmentRouter.post('/start', async (req: Request, res: Response) => {
         },
       });
     } catch (error) {
-      const entry = assessments.get(assessmentId);
-      if (entry) entry.status = 'error';
+      markAssessmentRuntimeError(assessmentId);
       const clients = sseClients.get(assessmentId) || [];
       const errMsg = error instanceof Error ? error.message : 'Unknown error';
       clients.forEach((client) => {
@@ -91,7 +102,8 @@ assessmentRouter.post('/start', async (req: Request, res: Response) => {
 
 assessmentRouter.get('/:id/stream', (req: Request, res: Response) => {
   const id = req.params.id as string;
-  const entry = assessments.get(id);
+  const runtime = getAssessmentRuntimeSession(id);
+  const entry = runtime?.session;
 
   if (!entry) {
     res.status(404).json({ error: 'Assessment not found' });
@@ -128,7 +140,8 @@ assessmentRouter.get('/:id/stream', (req: Request, res: Response) => {
 
 assessmentRouter.get('/:id/results', (req: Request, res: Response) => {
   const id = req.params.id as string;
-  const entry = assessments.get(id);
+  const runtime = getAssessmentRuntimeSession(id);
+  const entry = runtime?.session;
 
   if (!entry) {
     res.status(404).json({ error: 'Assessment not found' });

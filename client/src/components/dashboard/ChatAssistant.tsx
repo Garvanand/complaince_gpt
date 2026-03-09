@@ -1,285 +1,370 @@
-import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, X, Send, Sparkles } from 'lucide-react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowRight, ClipboardList, FileSearch, MessageCircle, Scale, Send, ShieldCheck, Sparkles, X } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
-import type { ChatMessage } from '../../types';
+import { copilotApi } from '../../utils/apiClient';
+import type { ChatMessage, CopilotContextSnapshot } from '../../types';
 
 const suggestedQuestions = [
-  "What's my biggest compliance risk?",
-  "How do I fix Clause 8.2?",
-  "What's my ISO 37001 maturity?",
-  "Show me quick wins for this month",
+  'Why are my lowest clause scores low?',
+  'Recommend the top remediation actions for the next 30 days.',
+  'Summarize the current report for an audit committee.',
+  'Guide me through the most relevant ISO requirements.',
 ];
 
+function buildCopilotContext(
+  currentAssessment: ReturnType<typeof useAppStore.getState>['currentAssessment'],
+  uploadedDocuments: ReturnType<typeof useAppStore.getState>['uploadedDocuments']
+): CopilotContextSnapshot | undefined {
+  if (!currentAssessment) {
+    return undefined;
+  }
+
+  const weakestClauses = currentAssessment.standards
+    .flatMap((standard) => standard.clauseScores.map((clause) => ({
+      standard: standard.standardCode,
+      clauseId: clause.clauseId,
+      clauseTitle: clause.clauseTitle,
+      score: clause.score,
+      finding: clause.finding || clause.gap || clause.evidence,
+    })))
+    .sort((left, right) => left.score - right.score)
+    .slice(0, 12);
+
+  return {
+    orgProfile: {
+      company: currentAssessment.orgProfile.companyName,
+      industry: currentAssessment.orgProfile.industrySector,
+      employees: currentAssessment.orgProfile.employeeCount,
+      scope: currentAssessment.orgProfile.assessmentScope,
+    },
+    uploadedDocuments,
+    overallScore: currentAssessment.overallScore,
+    maturityLevel: currentAssessment.overallMaturity,
+    executiveSummary: currentAssessment.executiveSummary,
+    evidenceSummary: currentAssessment.evidenceValidation?.summary,
+    standards: currentAssessment.standards.map((standard) => ({
+      code: standard.standardCode,
+      name: standard.standardName,
+      overallScore: standard.overallScore,
+      maturityLevel: standard.maturityLevel,
+      summary: standard.summary,
+    })),
+    clauseScores: weakestClauses,
+    gaps: currentAssessment.gaps.slice(0, 12).map((gap) => ({
+      id: gap.id,
+      standard: gap.standardCode,
+      clauseRef: gap.clauseId,
+      title: gap.title,
+      severity: gap.impact,
+      description: gap.description,
+    })),
+    remediationActions: currentAssessment.remediation.slice(0, 10).map((action) => ({
+      id: action.id,
+      title: action.title,
+      priority: action.priority,
+      phase: action.phase,
+      description: action.description,
+      standard: action.standards[0],
+      responsible: action.responsibleFunction,
+    })),
+    orchestration: {
+      provider: currentAssessment.orchestration?.provider,
+      executionCount: currentAssessment.orchestration?.executions.length,
+    },
+  };
+}
+
+function ResponseSection({
+  icon: Icon,
+  title,
+  children,
+}: {
+  icon: typeof ShieldCheck;
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="copilot-response-section">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+        <Icon size={14} style={{ color: 'var(--blue-700)' }} />
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--slate-500)' }}>{title}</div>
+      </div>
+      {children}
+    </section>
+  );
+}
+
 export default function ChatAssistant() {
-  const { isChatOpen, toggleChat, chatMessages, addChatMessage, currentAssessment } = useAppStore();
+  const {
+    isChatOpen,
+    toggleChat,
+    chatMessages,
+    addChatMessage,
+    currentAssessment,
+    activeAssessmentSessionId,
+    uploadedDocuments,
+  } = useAppStore();
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [streamingContent, setStreamingContent] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
-  }, [chatMessages, streamingContent]);
+  }, [chatMessages]);
 
   const handleSend = async (message?: string) => {
     const text = message || input.trim();
-    if (!text || isTyping) return;
+    if (!text || isTyping) {
+      return;
+    }
+
     setInput('');
 
-    const userMsg: ChatMessage = {
+    const userMessage: ChatMessage = {
       id: Date.now().toString(),
       role: 'user',
       content: text,
       timestamp: new Date().toISOString(),
     };
-    addChatMessage(userMsg);
+    addChatMessage(userMessage);
     setIsTyping(true);
-    setStreamingContent('');
 
     try {
-      const response = await fetch('/api/chat/stream', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: text,
-          context: currentAssessment
-            ? { overallScore: currentAssessment.overallScore, standards: currentAssessment.standards.map((s) => ({ code: s.standardCode, score: s.overallScore })), gapCount: currentAssessment.gaps.length }
-            : null,
-        }),
+      const structured = await copilotApi.askQuestion({
+        message: text,
+        assessmentId: activeAssessmentSessionId || currentAssessment?.sessionId || currentAssessment?.id || null,
+        conversationHistory: chatMessages.slice(-6).map((messageItem) => ({ role: messageItem.role, content: messageItem.content })),
+        context: buildCopilotContext(currentAssessment, uploadedDocuments),
       });
 
-      if (!response.ok) throw new Error('Stream failed');
-
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let fullText = '';
-
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split('\n');
-
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              try {
-                const data = JSON.parse(line.slice(6));
-                if (data.type === 'delta' && data.text) {
-                  fullText += data.text;
-                  setStreamingContent(fullText);
-                }
-                if (data.type === 'done') {
-                  break;
-                }
-                if (data.type === 'error') {
-                  fullText = `Error: ${data.message}`;
-                  break;
-                }
-              } catch {
-                // ignore parse errors
-              }
-            }
-          }
-        }
-      }
-
       const reply: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: fullText || 'I can help you with compliance questions. Try asking about your score, gaps, or remediation plan.',
+        content: structured.directAnswer,
         timestamp: new Date().toISOString(),
+        structuredResponse: structured,
       };
       addChatMessage(reply);
-      setStreamingContent('');
-    } catch {
-      // Fallback to demo responses
-      const demoResponses: Record<string, string> = {
-        "What's my biggest compliance risk?":
-          "Based on your assessment, your most critical risk is the **absence of a whistleblower mechanism** (ISO 37001 Clause 8.9) and **no due diligence framework** (Clause 8.2). Both carry significant legal liability exposure. I recommend establishing a whistleblower hotline within 30 days.",
-        "How do I fix Clause 8.2?":
-          "Clause 8.2 (Due Diligence) currently scores 0%. To address this:\n\n1. **Develop a risk-based due diligence policy** for all business associates\n2. **Create DD questionnaires** tiered by risk level\n3. **Implement screening** for top 50 business associates within 60 days\n4. **Set up ongoing monitoring** with annual re-assessments\n\nEstimated effort: 15 person-days.",
-        "What's my ISO 37001 maturity?":
-          "Your ISO 37001 maturity is at **Level 2 — Defined**. Key areas dragging you down:\n\n- Due diligence: 0%\n- Whistleblower mechanism: 0%\n- Training execution: 33%\n\nAddressing these three areas alone would elevate you to **Level 3 (Managed)** within 60-90 days.",
-        "Show me quick wins for this month":
-          "Top 3 quick wins for 30 days:\n\n1. 🎓 **Deploy Anti-Bribery Training** (5 days) — closes gaps in ISO 37001 & 37301\n2. 📞 **Launch Whistleblower Hotline** (10 days) — critical legal requirement\n3. 🎁 **Implement Gift Register** (3 days) — low effort, visible improvement\n\nProjected score improvement: +12% overall.",
-      };
-
+    } catch (error) {
       const reply: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: demoResponses[text] || `Based on your ${currentAssessment ? `assessment showing ${currentAssessment.overallScore}% overall compliance` : 'current data'}, I can help you understand specific clause requirements, identify priority gaps, and plan remediation actions.`,
+        content: error instanceof Error ? error.message : 'The copilot could not complete this request.',
         timestamp: new Date().toISOString(),
       };
       addChatMessage(reply);
-      setStreamingContent('');
     }
 
     setIsTyping(false);
   };
 
+  const contextSnapshot = currentAssessment ? {
+    company: currentAssessment.orgProfile.companyName,
+    documents: uploadedDocuments.length,
+    gaps: currentAssessment.gaps.length,
+    provider: currentAssessment.orchestration?.provider || 'local',
+  } : null;
+
   return (
     <>
-      {/* Floating button */}
       <AnimatePresence>
-        {!isChatOpen && (
+        {!isChatOpen ? (
           <motion.button
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            exit={{ scale: 0 }}
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
             onClick={toggleChat}
-            className="fixed bottom-6 right-6 w-14 h-14 rounded-full flex items-center justify-center z-50 shadow-lg"
-            style={{
-              background: 'linear-gradient(135deg, var(--color-accent-500), var(--color-accent-400))',
-              boxShadow: '0 0 30px rgba(134, 188, 37, 0.3)',
-            }}
+            className="copilot-fab"
+            aria-label="Open AI Compliance Copilot"
           >
-            <MessageCircle size={24} className="text-[var(--color-primary-900)]" />
+            <MessageCircle size={24} />
           </motion.button>
-        )}
+        ) : null}
       </AnimatePresence>
 
-      {/* Chat panel */}
       <AnimatePresence>
-        {isChatOpen && (
+        {isChatOpen ? (
           <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            initial={{ opacity: 0, y: 18, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-6 right-6 w-[420px] h-[600px] rounded-2xl z-50 flex flex-col overflow-hidden"
-            style={{
-              background: 'var(--color-primary-800)',
-              border: '1px solid var(--glass-border)',
-              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
-            }}
+            exit={{ opacity: 0, y: 18, scale: 0.98 }}
+            className="copilot-drawer"
           >
-            {/* Header */}
-            <div
-              className="flex items-center justify-between px-5 py-4"
-              style={{ borderBottom: '1px solid var(--glass-border)' }}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{ background: 'linear-gradient(135deg, var(--color-accent-500), var(--color-accent-400))' }}
-                >
-                  <Sparkles size={16} className="text-[var(--color-primary-900)]" />
+            <div className="copilot-header">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 38, height: 38, borderRadius: 14, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, var(--teal), var(--green))', color: 'white' }}>
+                    <Sparkles size={16} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--slate-900)' }}>AI Compliance Copilot</div>
+                    <div style={{ fontSize: 12, color: 'var(--slate-500)' }}>Structured, audit-friendly guidance grounded in the active workspace.</div>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-                    Compliance Assistant
-                  </h3>
-                  <span className="text-xs" style={{ color: 'var(--color-accent-500)' }}>
-                    Powered by Groq
-                  </span>
-                </div>
+                <button onClick={toggleChat} style={{ color: 'var(--slate-400)' }} aria-label="Close AI Compliance Copilot">
+                  <X size={18} />
+                </button>
               </div>
-              <button onClick={toggleChat} className="p-1.5 rounded-lg hover:bg-[var(--color-primary-700)] transition">
-                <X size={18} style={{ color: 'var(--color-text-muted)' }} />
-              </button>
             </div>
 
-            {/* Messages */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-              {chatMessages.length === 0 && (
-                <div className="space-y-3">
-                  <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                    Ask me anything about your compliance assessment, gaps, or remediation plan.
-                  </p>
-                  <div className="space-y-2">
-                    {suggestedQuestions.map((q) => (
-                      <button
-                        key={q}
-                        onClick={() => handleSend(q)}
-                        className="w-full text-left text-sm px-3 py-2 rounded-lg transition-all"
-                        style={{
-                          background: 'var(--color-primary-700)',
-                          color: 'var(--color-text-secondary)',
-                          border: '1px solid var(--glass-border)',
-                        }}
-                      >
-                        {q}
-                      </button>
-                    ))}
+            <div className="copilot-context">
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                <span className="badge badge-pending">Conversation interface</span>
+                <span className="badge badge-compliant">Structured responses</span>
+                {contextSnapshot ? <span className="badge badge-partial">{contextSnapshot.provider} pipeline context</span> : null}
+              </div>
+
+              {contextSnapshot ? (
+                <div className="copilot-context-grid">
+                  <div className="copilot-context-card">
+                    <div className="summary-stat-label">Org</div>
+                    <div className="summary-stat-copy" style={{ marginTop: 4, color: 'var(--slate-900)' }}>{contextSnapshot.company}</div>
+                  </div>
+                  <div className="copilot-context-card">
+                    <div className="summary-stat-label">Docs</div>
+                    <div className="summary-stat-copy" style={{ marginTop: 4, color: 'var(--slate-900)' }}>{contextSnapshot.documents}</div>
+                  </div>
+                  <div className="copilot-context-card">
+                    <div className="summary-stat-label">Open gaps</div>
+                    <div className="summary-stat-copy" style={{ marginTop: 4, color: 'var(--slate-900)' }}>{contextSnapshot.gaps}</div>
+                  </div>
+                  <div className="copilot-context-card">
+                    <div className="summary-stat-label">Mode</div>
+                    <div className="summary-stat-copy" style={{ marginTop: 4, color: 'var(--slate-900)' }}>{contextSnapshot.provider}</div>
                   </div>
                 </div>
-              )}
-              {chatMessages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div
-                    className="max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap"
-                    style={{
-                      background:
-                        msg.role === 'user'
-                          ? 'linear-gradient(135deg, var(--color-accent-500), var(--color-accent-400))'
-                          : 'var(--color-primary-700)',
-                      color:
-                        msg.role === 'user'
-                          ? 'var(--color-primary-900)'
-                          : 'var(--color-text-primary)',
-                    }}
-                  >
-                    {msg.content}
-                  </div>
-                </div>
-              ))}
-              {isTyping && streamingContent && (
-                <div className="flex justify-start">
-                  <div
-                    className="max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap"
-                    style={{ background: 'var(--color-primary-700)', color: 'var(--color-text-primary)' }}
-                  >
-                    {streamingContent}
-                    <span className="inline-block w-1.5 h-4 ml-0.5 animate-pulse" style={{ background: 'var(--color-accent-500)' }} />
-                  </div>
-                </div>
-              )}
-              {isTyping && !streamingContent && (
-                <div className="flex justify-start">
-                  <div
-                    className="px-4 py-3 rounded-2xl flex items-center gap-1"
-                    style={{ background: 'var(--color-primary-700)' }}
-                  >
-                    <span className="w-2 h-2 rounded-full bg-[var(--color-accent-500)] animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="w-2 h-2 rounded-full bg-[var(--color-accent-500)] animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <span className="w-2 h-2 rounded-full bg-[var(--color-accent-500)] animate-bounce" style={{ animationDelay: '300ms' }} />
-                  </div>
-                </div>
-              )}
+              ) : null}
             </div>
 
-            {/* Input */}
-            <div
-              className="px-4 py-3 flex items-center gap-3"
-              style={{ borderTop: '1px solid var(--glass-border)' }}
-            >
+            <div ref={scrollRef} className="copilot-scroll">
+              {chatMessages.length === 0 ? (
+                <div className="copilot-empty-state">
+                  <div className="copilot-empty-card" style={{ padding: 16 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--slate-900)', marginBottom: 6 }}>Ask about your assessment, gaps, or ISO obligations</div>
+                    <div style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--slate-500)' }}>
+                      The copilot uses the active assessment, uploaded evidence, and remediation context to return concise answers with audit-trail metadata.
+                    </div>
+                  </div>
+                  {suggestedQuestions.map((question) => (
+                    <button key={question} className="copilot-followup" onClick={() => handleSend(question)} style={{ padding: 14, textAlign: 'left' }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--slate-900)' }}>{question}</div>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+
+              {chatMessages.map((message) => {
+                const structuredResponse = message.role === 'assistant' ? message.structuredResponse : undefined;
+
+                return (
+                  <div key={message.id} className={`copilot-message-row ${message.role === 'user' ? 'user' : 'assistant'}`}>
+                    <div className={`copilot-message ${message.role === 'user' ? 'user' : 'assistant'}`}>
+                      {structuredResponse ? (
+                        <div className="copilot-response-stack">
+                          <div>
+                            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--blue-700)', marginBottom: 6 }}>{structuredResponse.headline}</div>
+                            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--slate-900)', marginBottom: 6 }}>{structuredResponse.directAnswer}</div>
+                            <div>{structuredResponse.explanation}</div>
+                          </div>
+
+                          {structuredResponse.evidence.length > 0 ? (
+                            <ResponseSection icon={FileSearch} title="Evidence used">
+                              <div className="copilot-response-stack">
+                                {structuredResponse.evidence.slice(0, 4).map((item, index) => (
+                                  <div key={`${item.label}-${index}`} style={{ fontSize: 12, color: 'var(--slate-700)' }}>
+                                    <strong>{item.label}:</strong> {item.detail}
+                                  </div>
+                                ))}
+                              </div>
+                            </ResponseSection>
+                          ) : null}
+
+                          {structuredResponse.recommendedActions.length > 0 ? (
+                            <ResponseSection icon={ClipboardList} title="Recommended actions">
+                              <div className="copilot-response-stack">
+                                {structuredResponse.recommendedActions.map((action, index) => (
+                                  <div key={`${action.title}-${index}`} style={{ paddingBottom: index < structuredResponse.recommendedActions.length - 1 ? 10 : 0, borderBottom: index < structuredResponse.recommendedActions.length - 1 ? '1px solid rgba(19, 35, 58, 0.08)' : 'none' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                                      <strong>{action.title}</strong>
+                                      <span className={`badge badge-${action.priority === 'critical' ? 'critical' : action.priority === 'high' ? 'partial' : 'pending'}`}>{action.priority}</span>
+                                    </div>
+                                    <div style={{ fontSize: 12, marginTop: 4 }}>{action.rationale}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            </ResponseSection>
+                          ) : null}
+
+                          {structuredResponse.isoGuidance.length > 0 ? (
+                            <ResponseSection icon={Scale} title="ISO guidance">
+                              <div className="copilot-response-stack">
+                                {structuredResponse.isoGuidance.map((guidance, index) => (
+                                  <div key={`${guidance.standard}-${guidance.clause || index}`} style={{ fontSize: 12, color: 'var(--slate-700)' }}>
+                                    <strong>{guidance.standard}{guidance.clause ? ` clause ${guidance.clause}` : ''}:</strong> {guidance.requirement}
+                                    <div style={{ color: 'var(--slate-500)', marginTop: 4 }}>{guidance.guidance}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            </ResponseSection>
+                          ) : null}
+
+                          <ResponseSection icon={ShieldCheck} title="Audit trail">
+                            <div className="copilot-response-stack" style={{ gap: 6, fontSize: 12 }}>
+                              <div><strong>Response mode:</strong> {structuredResponse.auditTrail.responseMode}</div>
+                              <div><strong>Pipeline provider:</strong> {structuredResponse.auditTrail.pipelineProvider}</div>
+                              <div><strong>Context sources:</strong> {structuredResponse.auditTrail.contextSources.join(', ') || 'Not declared'}</div>
+                              {structuredResponse.auditTrail.caveats.map((caveat, index) => (
+                                <div key={`${caveat}-${index}`} style={{ color: 'var(--slate-500)' }}>{caveat}</div>
+                              ))}
+                            </div>
+                          </ResponseSection>
+
+                          {structuredResponse.followUpQuestions.length > 0 ? (
+                            <div className="copilot-followup-list">
+                              {structuredResponse.followUpQuestions.slice(0, 2).map((followUp) => (
+                                <button key={followUp} type="button" className="copilot-followup" onClick={() => handleSend(followUp)} style={{ padding: 12, textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+                                  <span>{followUp}</span>
+                                  <ArrowRight size={14} />
+                                </button>
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : (
+                        message.content
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {isTyping ? (
+                <div className="copilot-message-row assistant">
+                  <div className="copilot-message assistant" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span className="w-2 h-2 rounded-full bg-[var(--blue-700)] animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="w-2 h-2 rounded-full bg-[var(--blue-700)] animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="w-2 h-2 rounded-full bg-[var(--blue-700)] animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="copilot-input">
               <input
                 type="text"
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                placeholder="Ask about your compliance..."
-                className="flex-1 bg-transparent border-none outline-none text-sm"
-                style={{ color: 'var(--color-text-primary)' }}
+                onChange={(event) => setInput(event.target.value)}
+                onKeyDown={(event) => event.key === 'Enter' && handleSend()}
+                placeholder="Ask about your compliance posture..."
+                className="copilot-input-field"
               />
-              <button
-                onClick={() => handleSend()}
-                disabled={!input.trim()}
-                className="w-9 h-9 rounded-lg flex items-center justify-center transition-all disabled:opacity-30"
-                style={{
-                  background: 'linear-gradient(135deg, var(--color-accent-500), var(--color-accent-400))',
-                }}
-              >
-                <Send size={16} className="text-[var(--color-primary-900)]" />
+              <button onClick={() => handleSend()} disabled={!input.trim()} className="copilot-send" style={{ opacity: input.trim() ? 1 : 0.4 }}>
+                <Send size={16} />
               </button>
             </div>
           </motion.div>
-        )}
+        ) : null}
       </AnimatePresence>
     </>
   );
