@@ -2100,6 +2100,26 @@ textarea:focus-visible {
 .topbar-chip-brand { background: var(--teal-50); color: var(--teal-dark); border: 1px solid var(--teal-100); max-width: 190px; }
 .topbar-chip-warn { background: var(--risk-medium-bg); color: #92400E; border: 1px solid var(--risk-medium-border); text-transform: uppercase; letter-spacing: 0.05em; }
 
+.topbar-theme-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(19, 35, 58, 0.08);
+  background: rgba(255,255,255,0.9);
+  color: var(--slate-700);
+  font-size: 12px;
+  font-weight: 700;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.topbar-theme-switcher:hover {
+  background: var(--slate-50);
+  border-color: rgba(37, 99, 235, 0.16);
+  color: var(--blue-800);
+}
+
 .topbar-primary-action {
   flex-shrink: 0;
 }
@@ -2783,6 +2803,18 @@ textarea:focus-visible {
   color: var(--slate-700);
 }
 
+:root[data-theme='dark'] .topbar-theme-switcher {
+  background: rgba(23, 34, 51, 0.92);
+  border-color: rgba(100, 116, 139, 0.22);
+  color: var(--slate-700);
+}
+
+:root[data-theme='dark'] .topbar-theme-switcher:hover {
+  background: rgba(37, 99, 235, 0.12);
+  border-color: rgba(96, 165, 250, 0.24);
+  color: #BFDBFE;
+}
+
 :root[data-theme='dark'] .topbar-chip-brand {
   background: rgba(22, 93, 255, 0.12);
   color: var(--teal-light);
@@ -2810,6 +2842,10 @@ textarea:focus-visible {
   padding: 16px;
   border-radius: 14px;
   border: 1px dashed var(--slate-200);
+
+  .topbar-theme-switcher span {
+    display: none;
+  }
   background: var(--slate-50);
   font-size: 13px;
   color: var(--slate-500);

@@ -1,6 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Search, Plus, Sparkles } from 'lucide-react';
+import { Monitor, Moon, Plus, Search, Sparkles, Sun } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
+import type { ThemeMode } from '../../store/useAppStore';
 import NotificationsDropdown from '../NotificationsDropdown';
 import { pageMetaByPath } from '../../config/navigation';
 
@@ -13,7 +14,7 @@ function resolvePage(pathname: string) {
 export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isDemoMode, orgProfile, currentAssessment, selectedStandards } = useAppStore();
+  const { isDemoMode, orgProfile, currentAssessment, selectedStandards, themeMode, setThemeMode } = useAppStore();
   const page = resolvePage(location.pathname);
 
   const openSearch = () => {
@@ -21,6 +22,14 @@ export default function Navbar() {
   };
 
   const activeStandardCount = currentAssessment?.standards.length || selectedStandards.length;
+  const themeOrder: ThemeMode[] = ['light', 'dark', 'system'];
+  const nextThemeMode = themeOrder[(themeOrder.indexOf(themeMode) + 1) % themeOrder.length];
+  const themeMeta: Record<ThemeMode, { icon: typeof Sun; label: string }> = {
+    light: { icon: Sun, label: 'Light' },
+    dark: { icon: Moon, label: 'Dark' },
+    system: { icon: Monitor, label: 'System' },
+  };
+  const ThemeIcon = themeMeta[themeMode].icon;
 
   return (
     <header className="app-topbar">
@@ -64,6 +73,16 @@ export default function Navbar() {
           </span>
         </div>
       )}
+
+      <button
+        onClick={() => setThemeMode(nextThemeMode)}
+        className="topbar-theme-switcher"
+        title={`Theme: ${themeMeta[themeMode].label}. Click to switch to ${themeMeta[nextThemeMode].label}.`}
+        aria-label={`Theme mode ${themeMeta[themeMode].label}. Click to switch to ${themeMeta[nextThemeMode].label}.`}
+      >
+        <ThemeIcon size={15} />
+        <span>{themeMeta[themeMode].label}</span>
+      </button>
 
       <NotificationsDropdown />
 
