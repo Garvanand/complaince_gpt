@@ -138,11 +138,11 @@ export default function Dashboard() {
           alignItems: 'center',
           gap: 10,
           padding: '8px 16px',
-          background: '#FFFBEB',
-          border: '1px solid #FDE68A',
+          background: 'var(--surface-warning)',
+          border: '1px solid var(--risk-medium-border)',
           borderRadius: 'var(--radius-lg)',
           fontSize: 12,
-          color: '#92400E',
+          color: 'var(--risk-warning)',
         }}>
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--risk-medium)', flexShrink: 0 }} />
           <span><strong>Demo Mode</strong> — Displaying sample assessment data for {a.orgProfile.companyName}.</span>
@@ -212,8 +212,8 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height={260}>
               <RadarChart data={radarData} margin={{ top: 8, right: 20, bottom: 8, left: 20 }}>
                 <PolarGrid stroke="var(--chart-grid)" />
-                <PolarAngleAxis dataKey="standard" tick={{ fill: 'var(--chart-axis)', fontSize: 11 }} />
-                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: 'var(--chart-axis-muted)', fontSize: 10 }} />
+                <PolarAngleAxis dataKey="standard" tick={{ fill: 'var(--chart-axis)', fontSize: 12 }} />
+                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: 'var(--chart-axis-muted)', fontSize: 12 }} />
                 <Radar
                   name="Current"
                   dataKey="Current"
@@ -231,7 +231,7 @@ export default function Dashboard() {
                   strokeWidth={1.5}
                 />
                 <Tooltip {...tooltipStyle} />
-                <Legend wrapperStyle={{ fontSize: 11, color: 'var(--chart-axis)', paddingTop: 4 }} />
+                <Legend wrapperStyle={{ fontSize: 12, color: 'var(--chart-axis)', paddingTop: 8 }} />
               </RadarChart>
             </ResponsiveContainer>
           </div>

@@ -86,9 +86,9 @@ function ResponseSection({
 }) {
   return (
     <section className="copilot-response-section">
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
         <Icon size={14} style={{ color: 'var(--blue-700)' }} />
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--slate-500)' }}>{title}</div>
+        <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>{title}</div>
       </div>
       {children}
     </section>
@@ -198,8 +198,8 @@ export default function ChatAssistant() {
                     <Sparkles size={16} />
                   </div>
                   <div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--slate-900)' }}>AI Compliance Copilot</div>
-                    <div style={{ fontSize: 12, color: 'var(--slate-500)' }}>Structured, audit-friendly guidance grounded in the active workspace.</div>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--slate-900)' }}>AI Compliance Copilot</div>
+                    <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, marginTop: 4 }}>Structured, audit-friendly guidance grounded in the active workspace.</div>
                   </div>
                 </div>
                 <button onClick={toggleChat} style={{ color: 'var(--slate-400)' }} aria-label="Close AI Compliance Copilot">
@@ -219,19 +219,19 @@ export default function ChatAssistant() {
                 <div className="copilot-context-grid">
                   <div className="copilot-context-card">
                     <div className="summary-stat-label">Org</div>
-                    <div className="summary-stat-copy" style={{ marginTop: 4, color: 'var(--slate-900)' }}>{contextSnapshot.company}</div>
+                    <div className="summary-stat-copy" style={{ marginTop: 8, color: 'var(--slate-900)', fontSize: 15 }}>{contextSnapshot.company}</div>
                   </div>
                   <div className="copilot-context-card">
                     <div className="summary-stat-label">Docs</div>
-                    <div className="summary-stat-copy" style={{ marginTop: 4, color: 'var(--slate-900)' }}>{contextSnapshot.documents}</div>
+                    <div className="summary-stat-copy" style={{ marginTop: 8, color: 'var(--slate-900)', fontSize: 15 }}>{contextSnapshot.documents}</div>
                   </div>
                   <div className="copilot-context-card">
                     <div className="summary-stat-label">Open gaps</div>
-                    <div className="summary-stat-copy" style={{ marginTop: 4, color: 'var(--slate-900)' }}>{contextSnapshot.gaps}</div>
+                    <div className="summary-stat-copy" style={{ marginTop: 8, color: 'var(--slate-900)', fontSize: 15 }}>{contextSnapshot.gaps}</div>
                   </div>
                   <div className="copilot-context-card">
                     <div className="summary-stat-label">Mode</div>
-                    <div className="summary-stat-copy" style={{ marginTop: 4, color: 'var(--slate-900)' }}>{contextSnapshot.provider}</div>
+                    <div className="summary-stat-copy" style={{ marginTop: 8, color: 'var(--slate-900)', fontSize: 15 }}>{contextSnapshot.provider}</div>
                   </div>
                 </div>
               ) : null}
@@ -241,14 +241,14 @@ export default function ChatAssistant() {
               {chatMessages.length === 0 ? (
                 <div className="copilot-empty-state">
                   <div className="copilot-empty-card" style={{ padding: 16 }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--slate-900)', marginBottom: 6 }}>Ask about your assessment, gaps, or ISO obligations</div>
-                    <div style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--slate-500)' }}>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--slate-900)', marginBottom: 8 }}>Ask about your assessment, gaps, or ISO obligations</div>
+                    <div style={{ fontSize: 15, lineHeight: 1.75, color: 'var(--text-secondary)' }}>
                       The copilot uses the active assessment, uploaded evidence, and remediation context to return concise answers with audit-trail metadata.
                     </div>
                   </div>
                   {suggestedQuestions.map((question) => (
-                    <button key={question} className="copilot-followup" onClick={() => handleSend(question)} style={{ padding: 14, textAlign: 'left' }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--slate-900)' }}>{question}</div>
+                    <button key={question} className="copilot-followup" onClick={() => handleSend(question)} style={{ padding: 16, textAlign: 'left' }}>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--slate-900)', lineHeight: 1.5 }}>{question}</div>
                     </button>
                   ))}
                 </div>
@@ -263,8 +263,8 @@ export default function ChatAssistant() {
                       {structuredResponse ? (
                         <div className="copilot-response-stack">
                           <div>
-                            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--blue-700)', marginBottom: 6 }}>{structuredResponse.headline}</div>
-                            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--slate-900)', marginBottom: 6 }}>{structuredResponse.directAnswer}</div>
+                            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--blue-700)', marginBottom: 8 }}>{structuredResponse.headline}</div>
+                            <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--slate-900)', marginBottom: 8, lineHeight: 1.35 }}>{structuredResponse.directAnswer}</div>
                             <div>{structuredResponse.explanation}</div>
                           </div>
 
@@ -272,7 +272,7 @@ export default function ChatAssistant() {
                             <ResponseSection icon={FileSearch} title="Evidence used">
                               <div className="copilot-response-stack">
                                 {structuredResponse.evidence.slice(0, 4).map((item, index) => (
-                                  <div key={`${item.label}-${index}`} style={{ fontSize: 12, color: 'var(--slate-700)' }}>
+                                  <div key={`${item.label}-${index}`} style={{ fontSize: 14, color: 'var(--slate-700)', lineHeight: 1.65 }}>
                                     <strong>{item.label}:</strong> {item.detail}
                                   </div>
                                 ))}
@@ -284,12 +284,12 @@ export default function ChatAssistant() {
                             <ResponseSection icon={ClipboardList} title="Recommended actions">
                               <div className="copilot-response-stack">
                                 {structuredResponse.recommendedActions.map((action, index) => (
-                                  <div key={`${action.title}-${index}`} style={{ paddingBottom: index < structuredResponse.recommendedActions.length - 1 ? 10 : 0, borderBottom: index < structuredResponse.recommendedActions.length - 1 ? '1px solid rgba(19, 35, 58, 0.08)' : 'none' }}>
+                                  <div key={`${action.title}-${index}`} style={{ paddingBottom: index < structuredResponse.recommendedActions.length - 1 ? 16 : 0, borderBottom: index < structuredResponse.recommendedActions.length - 1 ? '1px solid var(--border-subtle)' : 'none' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
                                       <strong>{action.title}</strong>
                                       <span className={`badge badge-${action.priority === 'critical' ? 'critical' : action.priority === 'high' ? 'partial' : 'pending'}`}>{action.priority}</span>
                                     </div>
-                                    <div style={{ fontSize: 12, marginTop: 4 }}>{action.rationale}</div>
+                                    <div style={{ fontSize: 14, marginTop: 8, lineHeight: 1.65 }}>{action.rationale}</div>
                                   </div>
                                 ))}
                               </div>
@@ -300,9 +300,9 @@ export default function ChatAssistant() {
                             <ResponseSection icon={Scale} title="ISO guidance">
                               <div className="copilot-response-stack">
                                 {structuredResponse.isoGuidance.map((guidance, index) => (
-                                  <div key={`${guidance.standard}-${guidance.clause || index}`} style={{ fontSize: 12, color: 'var(--slate-700)' }}>
+                                  <div key={`${guidance.standard}-${guidance.clause || index}`} style={{ fontSize: 14, color: 'var(--slate-700)', lineHeight: 1.65 }}>
                                     <strong>{guidance.standard}{guidance.clause ? ` clause ${guidance.clause}` : ''}:</strong> {guidance.requirement}
-                                    <div style={{ color: 'var(--slate-500)', marginTop: 4 }}>{guidance.guidance}</div>
+                                    <div style={{ color: 'var(--text-secondary)', marginTop: 8 }}>{guidance.guidance}</div>
                                   </div>
                                 ))}
                               </div>
@@ -310,12 +310,12 @@ export default function ChatAssistant() {
                           ) : null}
 
                           <ResponseSection icon={ShieldCheck} title="Audit trail">
-                            <div className="copilot-response-stack" style={{ gap: 6, fontSize: 12 }}>
+                            <div className="copilot-response-stack" style={{ gap: 8, fontSize: 14, lineHeight: 1.65 }}>
                               <div><strong>Response mode:</strong> {structuredResponse.auditTrail.responseMode}</div>
                               <div><strong>Pipeline provider:</strong> {structuredResponse.auditTrail.pipelineProvider}</div>
                               <div><strong>Context sources:</strong> {structuredResponse.auditTrail.contextSources.join(', ') || 'Not declared'}</div>
                               {structuredResponse.auditTrail.caveats.map((caveat, index) => (
-                                <div key={`${caveat}-${index}`} style={{ color: 'var(--slate-500)' }}>{caveat}</div>
+                                <div key={`${caveat}-${index}`} style={{ color: 'var(--text-secondary)' }}>{caveat}</div>
                               ))}
                             </div>
                           </ResponseSection>
@@ -323,7 +323,7 @@ export default function ChatAssistant() {
                           {structuredResponse.followUpQuestions.length > 0 ? (
                             <div className="copilot-followup-list">
                               {structuredResponse.followUpQuestions.slice(0, 2).map((followUp) => (
-                                <button key={followUp} type="button" className="copilot-followup" onClick={() => handleSend(followUp)} style={{ padding: 12, textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+                                <button key={followUp} type="button" className="copilot-followup" onClick={() => handleSend(followUp)} style={{ padding: 16, textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
                                   <span>{followUp}</span>
                                   <ArrowRight size={14} />
                                 </button>

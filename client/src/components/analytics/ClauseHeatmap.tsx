@@ -9,7 +9,7 @@ export default function ClauseHeatmap({ standards }: ClauseHeatmapProps) {
   return (
     <div className="space-y-5 overflow-x-auto">
       {standards.map((std) => (
-        <div key={std.standardCode} style={{ border: '1px solid rgba(19, 35, 58, 0.08)', borderRadius: 18, padding: 16, background: 'linear-gradient(180deg, #ffffff, #f9fbfd)' }}>
+        <div key={std.standardCode} style={{ border: '1px solid var(--border-subtle)', borderRadius: 18, padding: 16, background: 'linear-gradient(180deg, var(--card), var(--surface-elevated))' }}>
           <div className="flex items-center gap-2 mb-2">
             <span className="text-sm font-semibold" style={{ color: 'var(--slate-900)', fontFamily: 'var(--font-display)' }}>
               {std.standardCode.replace('ISO', 'ISO ')}
@@ -42,7 +42,7 @@ export default function ClauseHeatmap({ standards }: ClauseHeatmapProps) {
                   {/* Tooltip */}
                   <div
                     className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10"
-                    style={{ background: 'var(--color-primary-700)', border: '1px solid var(--glass-border)' }}
+                    style={{ background: 'var(--surface-overlay-strong)', border: '1px solid var(--border-subtle)' }}
                   >
                     <div className="font-semibold" style={{ color: 'var(--color-text-primary)' }}>
                       {clause.clauseId}: {clause.clauseTitle}

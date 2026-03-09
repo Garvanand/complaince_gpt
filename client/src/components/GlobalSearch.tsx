@@ -32,11 +32,11 @@ const typeIcons = {
 };
 
 const typeColors = {
-  clause: 'var(--color-accent-500)',
+  clause: 'var(--accent)',
   gap: 'var(--color-risk-critical)',
-  standard: '#00ABBD',
-  remediation: '#FFD32A',
-  page: 'var(--color-text-secondary)',
+  standard: 'var(--chart-2)',
+  remediation: 'var(--risk-warning)',
+  page: 'var(--text-secondary)',
 };
 
 export default function GlobalSearch() {
@@ -183,8 +183,8 @@ export default function GlobalSearch() {
             transition={{ duration: 0.15 }}
             className="fixed top-[12%] left-1/2 -translate-x-1/2 w-[640px] max-w-[92vw] z-[61] rounded-2xl overflow-hidden"
             style={{
-              background: 'var(--white)',
-              border: '1px solid var(--border)',
+              background: 'var(--surface-overlay-strong)',
+              border: '1px solid var(--border-subtle)',
               boxShadow: 'var(--shadow-xl)',
             }}
           >
@@ -201,11 +201,11 @@ export default function GlobalSearch() {
                 onKeyDown={handleKeyDown}
                 placeholder="Search clauses, gaps, standards, pages..."
                 className="flex-1 bg-transparent border-none outline-none text-base"
-                style={{ color: 'var(--slate-900)' }}
+                style={{ color: 'var(--text-primary)' }}
               />
               <kbd
-                className="text-[10px] font-mono px-1.5 py-0.5 rounded"
-                style={{ background: 'var(--slate-100)', color: 'var(--slate-500)', border: '1px solid var(--border)' }}
+                className="text-xs font-mono px-2 py-1 rounded"
+                style={{ background: 'var(--surface-muted)', color: 'var(--slate-500)', border: '1px solid var(--border-subtle)' }}
               >
                 ESC
               </kbd>
@@ -227,7 +227,7 @@ export default function GlobalSearch() {
                     onMouseEnter={() => setSelectedIndex(i)}
                     className="w-full flex items-center gap-3 px-5 py-3 text-left transition-colors"
                     style={{
-                      background: i === selectedIndex ? 'var(--slate-50)' : 'transparent',
+                      background: i === selectedIndex ? 'var(--surface-muted)' : 'transparent',
                     }}
                   >
                     <div
@@ -245,7 +245,7 @@ export default function GlobalSearch() {
                       </div>
                     </div>
                     <span
-                      className="text-[10px] px-1.5 py-0.5 rounded capitalize flex-shrink-0"
+                      className="text-xs px-2 py-1 rounded capitalize flex-shrink-0"
                       style={{ background: `${typeColors[item.type]}15`, color: typeColors[item.type] }}
                     >
                       {item.type}
@@ -257,8 +257,8 @@ export default function GlobalSearch() {
 
             {/* Footer */}
             <div
-              className="flex items-center justify-between px-5 py-2.5 text-[10px]"
-              style={{ borderTop: '1px solid var(--border)', color: 'var(--color-text-muted)', background: 'var(--slate-50)' }}
+              className="flex items-center justify-between px-5 py-3 text-xs"
+              style={{ borderTop: '1px solid var(--border-subtle)', color: 'var(--color-text-muted)', background: 'var(--surface-muted)' }}
             >
               <span>↑↓ Navigate &nbsp; ↵ Select &nbsp; ESC Close</span>
               <span>{searchItems.length} items indexed</span>
@@ -276,13 +276,13 @@ export function SearchTrigger({ onClick }: { onClick: () => void }) {
     <button
       onClick={onClick}
       className="flex items-center gap-2 px-4 py-2 rounded-xl transition-all"
-      style={{ background: 'var(--white)', border: '1px solid var(--border)' }}
+      style={{ background: 'var(--surface-overlay-strong)', border: '1px solid var(--border-subtle)' }}
     >
       <Search size={16} style={{ color: 'var(--color-text-muted)' }} />
       <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Search...</span>
       <kbd
-        className="text-[10px] font-mono px-1.5 py-0.5 rounded ml-4"
-        style={{ background: 'var(--slate-100)', color: 'var(--color-text-muted)', border: '1px solid var(--border)' }}
+        className="text-xs font-mono px-2 py-1 rounded ml-4"
+        style={{ background: 'var(--surface-muted)', color: 'var(--color-text-muted)', border: '1px solid var(--border-subtle)' }}
       >
         Ctrl K
       </kbd>

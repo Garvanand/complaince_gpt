@@ -35,7 +35,7 @@ export default function Sidebar() {
                     <>
                       <item.icon
                         size={16}
-                        style={{ flexShrink: 0, color: isActive ? 'var(--teal-dark)' : 'var(--slate-500)' }}
+                        style={{ flexShrink: 0, color: isActive ? 'var(--accent)' : 'var(--slate-500)' }}
                       />
                       {!sidebarCollapsed && (
                         <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
@@ -52,7 +52,7 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      <div style={{ borderTop: '1px solid rgba(19, 35, 58, 0.08)', padding: '10px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ borderTop: '1px solid var(--border-subtle)', padding: '10px', display: 'flex', flexDirection: 'column', gap: 8 }}>
         {!sidebarCollapsed && (
           <div className="sidebar-footer-card">
             <div className="sidebar-footer-label">Guided workflow</div>

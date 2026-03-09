@@ -3,9 +3,9 @@ import { FileText, Download, ChevronDown, ChevronRight, CheckCircle2, PenLine, B
 import type { PolicyDocument, PolicySection } from '../../types';
 
 const statusMeta: Record<string, { bg: string; color: string; label: string; icon: typeof CheckCircle2 }> = {
-  new:      { bg: '#F0FDF4', color: '#16A34A', label: 'New',      icon: PenLine },
-  revised:  { bg: '#FFFBEB', color: '#D97706', label: 'Revised',  icon: PenLine },
-  retained: { bg: '#EFF6FF', color: '#2563EB', label: 'Retained', icon: Bookmark },
+  new:      { bg: 'var(--surface-success)', color: 'var(--risk-success)', label: 'New',      icon: PenLine },
+  revised:  { bg: 'var(--surface-warning)', color: 'var(--risk-warning)', label: 'Revised',  icon: PenLine },
+  retained: { bg: 'var(--accent-soft)', color: 'var(--accent)', label: 'Retained', icon: Bookmark },
 };
 
 function SectionRow({ section }: { section: PolicySection }) {
@@ -19,7 +19,7 @@ function SectionRow({ section }: { section: PolicySection }) {
         aria-expanded={expanded}
         className="disclosure-trigger"
       >
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, color: '#0076A8', minWidth: 28 }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, color: 'var(--accent)', minWidth: 28 }}>
           {section.sectionNumber}
         </span>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -27,8 +27,8 @@ function SectionRow({ section }: { section: PolicySection }) {
           <div style={{ fontSize: 11, color: 'var(--slate-500)', marginTop: 1 }}>Clause: {section.clauseRef}</div>
         </div>
         <span style={{
-          fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em',
-          padding: '2px 6px', borderRadius: 2, background: s.bg, color: s.color,
+          fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em',
+          padding: '4px 8px', borderRadius: 4, background: s.bg, color: s.color,
         }}>{s.label}</span>
         {expanded ? <ChevronDown size={14} style={{ color: 'var(--slate-400)' }} /> : <ChevronRight size={14} style={{ color: 'var(--slate-400)' }} />}
       </button>
@@ -90,24 +90,24 @@ function PolicyCard({ doc }: { doc: PolicyDocument }) {
   };
 
   return (
-    <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', background: 'var(--white)', overflow: 'hidden' }}>
+    <div style={{ border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)', background: 'var(--surface-overlay-strong)', overflow: 'hidden' }}>
       <div style={{ padding: '16px', display: 'flex', alignItems: 'center', gap: 12 }}>
         <div style={{
           width: 40, height: 40, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: '#E6F4FA', color: '#0076A8', flexShrink: 0,
+          background: 'var(--accent-soft)', color: 'var(--accent)', flexShrink: 0,
         }}>
           <FileText size={20} />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--slate-800)' }}>{doc.title}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2, flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 600, color: '#0076A8' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 600, color: 'var(--accent)' }}>
               {doc.standardCode.replace('ISO', 'ISO ')}
             </span>
             <span style={{ fontSize: 11, color: 'var(--slate-500)' }}>v{doc.version}</span>
             <span style={{
-              fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 2,
-              background: '#F0FDF4', color: '#16A34A',
+              fontSize: 12, fontWeight: 700, padding: '4px 8px', borderRadius: 4,
+              background: 'var(--surface-success)', color: 'var(--risk-success)',
             }}>
               {doc.complianceScore}% Compliant
             </span>
@@ -122,7 +122,7 @@ function PolicyCard({ doc }: { doc: PolicyDocument }) {
             aria-expanded={expanded}
             style={{
               padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 600,
-              border: '1px solid var(--border)', background: 'var(--white)', color: 'var(--slate-600)',
+              border: '1px solid var(--border-subtle)', background: 'var(--surface-overlay-strong)', color: 'var(--slate-600)',
               cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
             }}
           >
@@ -133,7 +133,7 @@ function PolicyCard({ doc }: { doc: PolicyDocument }) {
             onClick={handleDownload}
             style={{
               padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 600,
-              border: '1px solid #0076A8', background: '#0076A8', color: '#FFFFFF',
+              border: '1px solid var(--accent)', background: 'var(--accent)', color: 'var(--text-inverse)',
               cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
             }}
           >
@@ -143,10 +143,10 @@ function PolicyCard({ doc }: { doc: PolicyDocument }) {
       </div>
 
       {expanded && (
-        <div style={{ borderTop: '1px solid var(--border)', padding: '12px 16px' }}>
+        <div style={{ borderTop: '1px solid var(--border-subtle)', padding: '12px 16px' }}>
           <div style={{
-            padding: '10px 14px', background: '#F0FDF4', borderRadius: 'var(--radius-lg)',
-            border: '1px solid #BBF7D0', fontSize: 13, color: '#166534', lineHeight: 1.6, marginBottom: 12,
+            padding: '10px 14px', background: 'var(--surface-success)', borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--risk-low-border)', fontSize: 13, color: 'var(--risk-success)', lineHeight: 1.6, marginBottom: 12,
           }}>
             {doc.summary}
           </div>
@@ -218,12 +218,12 @@ export default function PolicyGeneratorPanel({ documents }: { documents: PolicyD
   };
 
   const summaryCards = [
-    { label: 'Policies Generated', value: documents.length, color: '#0076A8' },
-    { label: 'Total Sections', value: totalSections, color: '#5C5C5C' },
-    { label: 'Gaps Addressed', value: totalGapsAddressed, color: '#16A34A' },
-    { label: 'New Sections', value: newSections, color: '#16A34A' },
-    { label: 'Revised Sections', value: revisedSections, color: '#D97706' },
-    { label: 'Compliance Target', value: '100%', color: '#16A34A' },
+    { label: 'Policies Generated', value: documents.length, color: 'var(--accent)' },
+    { label: 'Total Sections', value: totalSections, color: 'var(--text-secondary)' },
+    { label: 'Gaps Addressed', value: totalGapsAddressed, color: 'var(--risk-success)' },
+    { label: 'New Sections', value: newSections, color: 'var(--risk-success)' },
+    { label: 'Revised Sections', value: revisedSections, color: 'var(--risk-warning)' },
+    { label: 'Compliance Target', value: '100%', color: 'var(--risk-success)' },
   ];
 
   return (
@@ -251,7 +251,7 @@ export default function PolicyGeneratorPanel({ documents }: { documents: PolicyD
           onClick={handleDownloadAll}
           style={{
             padding: '8px 18px', borderRadius: 999, fontSize: 13, fontWeight: 700,
-            border: '1px solid #0076A8', background: '#0076A8', color: '#FFFFFF',
+            border: '1px solid var(--accent)', background: 'var(--accent)', color: 'var(--text-inverse)',
             cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
           }}
         >

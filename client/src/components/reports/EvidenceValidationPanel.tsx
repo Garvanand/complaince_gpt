@@ -4,17 +4,17 @@ import { SectionHeader } from '../ui/EnterpriseComponents';
 import type { EvidenceValidation, EvidenceValidationItem } from '../../types';
 
 const validationColors: Record<string, { bg: string; color: string; label: string; icon: typeof ShieldCheck }> = {
-  sufficient:   { bg: '#F0FDF4', color: '#16A34A', label: 'Sufficient',   icon: ShieldCheck },
-  partial:      { bg: '#FFFBEB', color: '#D97706', label: 'Partial',      icon: MinusCircle },
-  insufficient: { bg: '#FFF7ED', color: '#EA580C', label: 'Insufficient', icon: AlertTriangle },
-  missing:      { bg: '#FEF2F2', color: '#DC2626', label: 'Missing',      icon: XCircle },
+  sufficient:   { bg: 'var(--surface-success)', color: 'var(--risk-success)', label: 'Sufficient',   icon: ShieldCheck },
+  partial:      { bg: 'var(--surface-warning)', color: 'var(--risk-warning)', label: 'Partial',      icon: MinusCircle },
+  insufficient: { bg: 'var(--risk-high-bg)', color: 'var(--risk-high)', label: 'Insufficient', icon: AlertTriangle },
+  missing:      { bg: 'var(--surface-critical)', color: 'var(--risk-critical)', label: 'Missing',      icon: XCircle },
 };
 
 const qualityColors: Record<string, string> = {
-  direct:    '#16A34A',
-  indirect:  '#D97706',
-  anecdotal: '#EA580C',
-  none:      '#DC2626',
+  direct:    'var(--risk-success)',
+  indirect:  'var(--risk-warning)',
+  anecdotal: 'var(--risk-high)',
+  none:      'var(--risk-critical)',
 };
 
 function EvidenceRow({ item }: { item: EvidenceValidationItem }) {
@@ -32,15 +32,15 @@ function EvidenceRow({ item }: { item: EvidenceValidationItem }) {
         <Icon size={16} style={{ color: v.color, flexShrink: 0 }} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 600, color: '#0076A8' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 600, color: 'var(--accent)' }}>
               {item.standardCode.replace('ISO', 'ISO ')} § {item.clauseId}
             </span>
             <span style={{
-              fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em',
-              padding: '2px 6px', borderRadius: 2, background: v.bg, color: v.color,
+              fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em',
+              padding: '4px 8px', borderRadius: 4, background: v.bg, color: v.color,
             }}>{v.label}</span>
             <span style={{
-              fontSize: 10, fontWeight: 600, color: qualityColors[item.qualityLevel] || '#767676',
+              fontSize: 12, fontWeight: 600, color: qualityColors[item.qualityLevel] || 'var(--text-secondary)',
               textTransform: 'capitalize',
             }}>
               {item.qualityLevel} evidence
@@ -67,7 +67,7 @@ function EvidenceRow({ item }: { item: EvidenceValidationItem }) {
           <div style={{ paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
             {item.issues.length > 0 && (
               <div>
-                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--slate-500)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Issues Found</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--slate-500)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Issues Found</div>
                 <ul style={{ margin: 0, paddingLeft: 16, display: 'flex', flexDirection: 'column', gap: 2 }}>
                   {item.issues.map((issue, i) => (
                     <li key={i} style={{ fontSize: 13, color: 'var(--slate-700)', lineHeight: 1.5 }}>{issue}</li>
@@ -77,18 +77,18 @@ function EvidenceRow({ item }: { item: EvidenceValidationItem }) {
             )}
             {item.recommendation && (
               <div>
-                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--slate-500)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Recommendation</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--slate-500)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Recommendation</div>
                 <p style={{ fontSize: 13, color: 'var(--slate-700)', lineHeight: 1.5 }}>{item.recommendation}</p>
               </div>
             )}
             {item.crossStandardReuse.length > 0 && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                <ArrowRightLeft size={12} style={{ color: '#0076A8' }} />
-                <span style={{ fontSize: 11, fontWeight: 600, color: '#0076A8' }}>Cross-standard reuse:</span>
+                <ArrowRightLeft size={12} style={{ color: 'var(--accent)' }} />
+                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--accent)' }}>Cross-standard reuse:</span>
                 {item.crossStandardReuse.map(s => (
                   <span key={s} style={{
                     fontSize: 11, fontWeight: 600, padding: '2px 6px',
-                    borderRadius: 2, background: '#E6F4FA', color: '#005A80',
+                    borderRadius: 2, background: 'var(--accent-soft)', color: 'var(--accent)',
                   }}>{s.replace('ISO', 'ISO ')}</span>
                 ))}
               </div>
@@ -108,12 +108,12 @@ export default function EvidenceValidationPanel({ data }: { data: EvidenceValida
     : data.evidenceItems.filter(i => i.validationResult === filter);
 
   const summaryCards = [
-    { label: 'Evidence Score', value: `${data.overallEvidenceScore}%`, color: data.overallEvidenceScore >= 60 ? '#16A34A' : data.overallEvidenceScore >= 40 ? '#D97706' : '#DC2626' },
-    { label: 'Sufficient', value: data.sufficientCount, color: '#16A34A' },
-    { label: 'Partial', value: data.partialCount, color: '#D97706' },
-    { label: 'Insufficient', value: data.insufficientCount, color: '#EA580C' },
-    { label: 'Missing', value: data.missingCount, color: '#DC2626' },
-    { label: 'Reuse Opportunities', value: data.crossStandardOpportunities, color: '#0076A8' },
+    { label: 'Evidence Score', value: `${data.overallEvidenceScore}%`, color: data.overallEvidenceScore >= 60 ? 'var(--risk-success)' : data.overallEvidenceScore >= 40 ? 'var(--risk-warning)' : 'var(--risk-critical)' },
+    { label: 'Sufficient', value: data.sufficientCount, color: 'var(--risk-success)' },
+    { label: 'Partial', value: data.partialCount, color: 'var(--risk-warning)' },
+    { label: 'Insufficient', value: data.insufficientCount, color: 'var(--risk-high)' },
+    { label: 'Missing', value: data.missingCount, color: 'var(--risk-critical)' },
+    { label: 'Reuse Opportunities', value: data.crossStandardOpportunities, color: 'var(--accent)' },
   ];
 
   const filters = [

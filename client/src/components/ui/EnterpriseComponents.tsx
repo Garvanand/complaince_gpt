@@ -70,11 +70,11 @@ export function ScoreBadge({ score }: { score: number }) {
       className="score-display"
       style={{
         display: 'inline-block',
-        padding: '2px 8px',
+        padding: '4px 10px',
         background: bg,
         color,
         borderRadius: 'var(--radius-sm)',
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 700,
       }}
     >
@@ -108,11 +108,11 @@ interface SectionHeaderProps {
 
 export function SectionHeader({ label, title, description, action }: SectionHeaderProps) {
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 16 }}>
+    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 24 }}>
       <div>
         {label && <span className="section-label">{label}</span>}
-        <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--slate-900)', lineHeight: 1.3 }}>{title}</h3>
-        {description && <p style={{ fontSize: 12, color: 'var(--slate-500)', marginTop: 2 }}>{description}</p>}
+        <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--slate-900)', lineHeight: 1.3 }}>{title}</h3>
+        {description && <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 8, lineHeight: 1.65 }}>{description}</p>}
       </div>
       {action && <div style={{ flexShrink: 0 }}>{action}</div>}
     </div>

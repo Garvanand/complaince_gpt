@@ -34,7 +34,7 @@ export default function RemediationTimeline({ actions }: RemediationTimelineProp
             )}
           </div>
 
-          <div className="pb-4 flex-1" style={{ padding: '10px 14px', border: '1px solid rgba(19, 35, 58, 0.08)', borderRadius: 16, background: 'linear-gradient(180deg, #ffffff, #f9fbfd)' }}>
+          <div className="pb-4 flex-1" style={{ padding: '10px 14px', border: '1px solid var(--border-subtle)', borderRadius: 16, background: 'linear-gradient(180deg, var(--card), var(--surface-elevated))' }}>
             <div className="flex items-center gap-2 mb-1">
               <span
                 className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full"

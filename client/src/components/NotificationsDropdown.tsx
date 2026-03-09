@@ -4,10 +4,10 @@ import { Bell, Check, CheckCheck, Trash2, AlertTriangle, Info, CheckCircle, XCir
 import { useAppStore } from '../store/useAppStore';
 
 const typeConfig = {
-  info: { icon: Info, color: '#00ABBD', bg: 'rgba(74, 144, 255, 0.1)' },
-  success: { icon: CheckCircle, color: '#86BC25', bg: 'rgba(134, 188, 37, 0.1)' },
-  warning: { icon: AlertTriangle, color: '#FFD32A', bg: 'rgba(255, 211, 42, 0.1)' },
-  error: { icon: XCircle, color: '#E53E3E', bg: 'rgba(255, 71, 87, 0.1)' },
+  info: { icon: Info, color: 'var(--accent)', bg: 'var(--surface-info)' },
+  success: { icon: CheckCircle, color: 'var(--risk-success)', bg: 'var(--surface-success)' },
+  warning: { icon: AlertTriangle, color: 'var(--risk-warning)', bg: 'var(--surface-warning)' },
+  error: { icon: XCircle, color: 'var(--risk-critical)', bg: 'var(--surface-critical)' },
 };
 
 export default function NotificationsDropdown() {
@@ -40,14 +40,14 @@ export default function NotificationsDropdown() {
       <button
         onClick={() => setOpen(!open)}
         className="relative p-2.5 rounded-xl transition-all"
-        style={{ background: 'var(--color-primary-700)', border: '1px solid var(--glass-border)' }}
+        style={{ background: 'var(--surface-overlay-strong)', border: '1px solid var(--border-subtle)' }}
       >
         <Bell size={18} style={{ color: 'var(--color-text-secondary)' }} />
         {unreadCount > 0 && (
           <motion.span
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            className="absolute -top-1 -right-1 w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center"
+            className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full text-xs font-bold flex items-center justify-center"
             style={{ background: 'var(--color-risk-critical)', color: 'white' }}
           >
             {unreadCount > 9 ? '9+' : unreadCount}
@@ -64,15 +64,15 @@ export default function NotificationsDropdown() {
             transition={{ duration: 0.15 }}
             className="absolute right-0 top-full mt-2 w-[380px] rounded-2xl overflow-hidden z-50"
             style={{
-              background: 'var(--color-primary-800)',
-              border: '1px solid var(--glass-border)',
+              background: 'var(--surface-overlay-strong)',
+              border: '1px solid var(--border-subtle)',
               boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
             }}
           >
             {/* Header */}
             <div
               className="flex items-center justify-between px-4 py-3"
-              style={{ borderBottom: '1px solid var(--glass-border)' }}
+              style={{ borderBottom: '1px solid var(--border-subtle)' }}
             >
               <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
                 Notifications
@@ -86,7 +86,7 @@ export default function NotificationsDropdown() {
                 {unreadCount > 0 && (
                   <button
                     onClick={markAllNotificationsRead}
-                    className="p-1.5 rounded-lg transition-colors hover:bg-[var(--color-primary-700)]"
+                    className="p-1.5 rounded-lg transition-colors hover:bg-[var(--surface-muted)]"
                     title="Mark all read"
                   >
                     <CheckCheck size={14} style={{ color: 'var(--color-text-muted)' }} />
@@ -95,7 +95,7 @@ export default function NotificationsDropdown() {
                 {notifications.length > 0 && (
                   <button
                     onClick={clearNotifications}
-                    className="p-1.5 rounded-lg transition-colors hover:bg-[var(--color-primary-700)]"
+                    className="p-1.5 rounded-lg transition-colors hover:bg-[var(--surface-muted)]"
                     title="Clear all"
                   >
                     <Trash2 size={14} style={{ color: 'var(--color-text-muted)' }} />
@@ -118,10 +118,10 @@ export default function NotificationsDropdown() {
                   <button
                     key={n.id}
                     onClick={() => markNotificationRead(n.id)}
-                    className="w-full flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--color-primary-700)]"
+                    className="w-full flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--surface-muted)]"
                     style={{
-                      background: n.read ? 'transparent' : 'rgba(134, 188, 37, 0.02)',
-                      borderBottom: '1px solid var(--glass-border)',
+                      background: n.read ? 'transparent' : 'var(--accent-soft)',
+                      borderBottom: '1px solid var(--border-subtle)',
                     }}
                   >
                     <div
@@ -142,7 +142,7 @@ export default function NotificationsDropdown() {
                       <p className="text-xs mt-0.5 line-clamp-2" style={{ color: 'var(--color-text-secondary)' }}>
                         {n.message}
                       </p>
-                      <span className="text-[10px] mt-1 block" style={{ color: 'var(--color-text-muted)' }}>
+                      <span className="text-xs mt-2 block" style={{ color: 'var(--color-text-muted)' }}>
                         {formatTime(n.timestamp)}
                       </span>
                     </div>

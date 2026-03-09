@@ -318,14 +318,14 @@ export default function Analytics() {
               <BarChart data={maturityData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-primary-600)" />
                 <XAxis dataKey="standard" tick={{ fill: 'var(--chart-axis)', fontSize: 12 }} />
-                <YAxis tick={{ fill: 'var(--chart-axis-muted)', fontSize: 10 }} />
+                <YAxis tick={{ fill: 'var(--chart-axis-muted)', fontSize: 12 }} />
                 <Tooltip {...tooltipStyle} />
-                <Legend wrapperStyle={{ fontSize: 11, color: 'var(--chart-axis)' }} />
-                <Bar dataKey="level1" stackId="a" fill="#E53E3E" name="Level 1" />
-                <Bar dataKey="level2" stackId="a" fill="#DD6B20" name="Level 2" />
-                <Bar dataKey="level3" stackId="a" fill="#FFD32A" name="Level 3" />
-                <Bar dataKey="level4" stackId="a" fill="#86BC25" name="Level 4" />
-                <Bar dataKey="level5" stackId="a" fill="#A8D048" name="Level 5" radius={[4, 4, 0, 0]} />
+                <Legend wrapperStyle={{ fontSize: 12, color: 'var(--chart-axis)' }} />
+                <Bar dataKey="level1" stackId="a" fill="var(--chart-6)" name="Level 1" />
+                <Bar dataKey="level2" stackId="a" fill="var(--chart-5)" name="Level 2" />
+                <Bar dataKey="level3" stackId="a" fill="var(--risk-warning)" name="Level 3" />
+                <Bar dataKey="level4" stackId="a" fill="var(--chart-3)" name="Level 4" />
+                <Bar dataKey="level5" stackId="a" fill="var(--risk-success)" name="Level 5" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </Panel>
@@ -363,15 +363,15 @@ export default function Analytics() {
             <ResponsiveContainer width="100%" height={280}>
               <LineChart data={trendData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-primary-600)" />
-                <XAxis dataKey="label" tick={{ fill: 'var(--chart-axis)', fontSize: 11 }} />
-                <YAxis domain={[0, 100]} tick={{ fill: 'var(--chart-axis-muted)', fontSize: 10 }} />
+                <XAxis dataKey="label" tick={{ fill: 'var(--chart-axis)', fontSize: 12 }} />
+                <YAxis domain={[0, 100]} tick={{ fill: 'var(--chart-axis-muted)', fontSize: 12 }} />
                 <Tooltip {...tooltipStyle} />
-                <Legend wrapperStyle={{ fontSize: 11, color: 'var(--chart-axis)' }} />
+                <Legend wrapperStyle={{ fontSize: 12, color: 'var(--chart-axis)' }} />
                 <Line type="monotone" dataKey="overall" stroke="var(--color-accent-500)" strokeWidth={2.5} dot={{ r: 3 }} name="Overall" />
-                <Line type="monotone" dataKey="ISO37001" stroke="#DD6B20" strokeWidth={2} dot={{ r: 2 }} name="ISO 37001" />
-                <Line type="monotone" dataKey="ISO37301" stroke="#86BC25" strokeWidth={2} dot={{ r: 2 }} name="ISO 37301" />
-                <Line type="monotone" dataKey="ISO27001" stroke="#00ABBD" strokeWidth={2} dot={{ r: 2 }} name="ISO 27001" />
-                <Line type="monotone" dataKey="ISO9001" stroke="#FFD32A" strokeWidth={2} dot={{ r: 2 }} name="ISO 9001" />
+                <Line type="monotone" dataKey="ISO37001" stroke="var(--chart-5)" strokeWidth={2} dot={{ r: 2 }} name="ISO 37001" />
+                <Line type="monotone" dataKey="ISO37301" stroke="var(--chart-3)" strokeWidth={2} dot={{ r: 2 }} name="ISO 37301" />
+                <Line type="monotone" dataKey="ISO27001" stroke="var(--chart-2)" strokeWidth={2} dot={{ r: 2 }} name="ISO 27001" />
+                <Line type="monotone" dataKey="ISO9001" stroke="var(--risk-warning)" strokeWidth={2} dot={{ r: 2 }} name="ISO 9001" />
               </LineChart>
             </ResponsiveContainer>
           </Panel>
@@ -383,9 +383,9 @@ export default function Analytics() {
               <BarChart data={benchmarkData} barGap={8}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-primary-600)" />
                 <XAxis dataKey="standard" tick={{ fill: 'var(--chart-axis)', fontSize: 12 }} />
-                <YAxis domain={[0, 100]} tick={{ fill: 'var(--chart-axis-muted)', fontSize: 10 }} />
+                <YAxis domain={[0, 100]} tick={{ fill: 'var(--chart-axis-muted)', fontSize: 12 }} />
                 <Tooltip {...tooltipStyle} />
-                <Legend wrapperStyle={{ fontSize: 11, color: 'var(--chart-axis)' }} />
+                <Legend wrapperStyle={{ fontSize: 12, color: 'var(--chart-axis)' }} />
                 <Bar dataKey="yours" fill="var(--color-accent-500)" name="Your Score" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="benchmark" fill="var(--color-primary-600)" name="Industry Avg" radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -518,7 +518,7 @@ function MaturitySimulator({ assessment }: { assessment: AssessmentResult }) {
       <div className="flex gap-2 mb-4 flex-wrap">
         <button
           onClick={() => setSelectedGapIds(new Set())}
-          className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+          className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
           style={{ background: selectedGapIds.size === 0 ? 'rgba(134, 188, 37, 0.15)' : 'var(--color-primary-700)', border: `1px solid ${selectedGapIds.size === 0 ? 'var(--color-accent-500)' : 'var(--glass-border)'}`, color: selectedGapIds.size === 0 ? 'var(--color-accent-400)' : 'var(--color-text-secondary)' }}
         >
           Current State
@@ -527,7 +527,7 @@ function MaturitySimulator({ assessment }: { assessment: AssessmentResult }) {
           <button
             key={phase}
             onClick={() => selectPhase(phase as 1 | 2 | 3)}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+            className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
             style={{ background: 'var(--color-primary-700)', border: '1px solid var(--glass-border)', color: 'var(--color-text-secondary)' }}
           >
             Phase {phase}
@@ -535,7 +535,7 @@ function MaturitySimulator({ assessment }: { assessment: AssessmentResult }) {
         ))}
         <button
           onClick={() => setSelectedGapIds(new Set(assessment.gaps.map((gap) => gap.id)))}
-          className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+          className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
           style={{ background: 'var(--color-primary-700)', border: '1px solid var(--glass-border)', color: 'var(--color-text-secondary)' }}
         >
           Fix All Gaps
@@ -562,8 +562,8 @@ function MaturitySimulator({ assessment }: { assessment: AssessmentResult }) {
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-semibold truncate" style={{ color: 'var(--color-text-primary)' }}>{gap.title}</div>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-full" style={{ background: `${impactColor}15`, color: impactColor }}>{gap.impact}</span>
-                    <span className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>{gap.standardCode.replace('ISO', 'ISO ')}</span>
+                    <span className="text-xs font-bold uppercase px-2 py-1 rounded-full" style={{ background: `${impactColor}15`, color: impactColor }}>{gap.impact}</span>
+                    <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{gap.standardCode.replace('ISO', 'ISO ')}</span>
                   </div>
                 </div>
               </label>
@@ -584,7 +584,7 @@ function MaturitySimulator({ assessment }: { assessment: AssessmentResult }) {
                 </div>
                 <div className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>{item.standard}</div>
                 {item.projected > item.current && (
-                  <div className="text-[10px] mt-0.5" style={{ color: 'var(--color-accent-400)' }}>+{item.projected - item.current}%</div>
+                  <div className="text-xs mt-1" style={{ color: 'var(--color-accent-400)' }}>+{item.projected - item.current}%</div>
                 )}
               </div>
             ))}

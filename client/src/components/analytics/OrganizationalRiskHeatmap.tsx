@@ -29,11 +29,11 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 function getCellColor(exposure: number): string {
-  if (exposure >= 20) return 'rgba(255, 71, 87, 0.22)';
-  if (exposure >= 15) return 'rgba(221, 107, 32, 0.18)';
-  if (exposure >= 10) return 'rgba(255, 211, 42, 0.18)';
-  if (exposure >= 6) return 'rgba(0, 171, 189, 0.14)';
-  return 'rgba(134, 188, 37, 0.14)';
+  if (exposure >= 20) return 'var(--heat-risk-critical)';
+  if (exposure >= 15) return 'var(--heat-risk-high)';
+  if (exposure >= 10) return 'var(--heat-risk-medium)';
+  if (exposure >= 6) return 'var(--heat-risk-low)';
+  return 'var(--heat-risk-minimal)';
 }
 
 function getExposureTone(exposure: number): 'critical' | 'high' | 'medium' | 'low' {
