@@ -11,79 +11,82 @@
 
 ---
 
-## Overview
+## What is ComplianceGPT?
 
-ComplianceGPT is a **production-grade enterprise web application** that transforms how organizations approach regulatory compliance. Clients upload policy documents and receive **instant readiness scores, gap analysis, evidence validation, maturity levels, and phased remediation roadmaps** across multiple ISO standards simultaneously — powered by 9 specialized AI agents and a 3-tier hybrid scoring engine.
+ComplianceGPT is a **production-grade enterprise application** that transforms how organizations approach regulatory compliance. Upload your policy documents and receive **instant readiness scores, gap analysis, evidence validation, maturity levels, and phased remediation roadmaps** across multiple ISO standards simultaneously — powered by a pipeline of specialized AI agents and a 3-tier hybrid scoring engine.
 
-The current assessment stack uses **Groq Cloud with `openai/gpt-oss-120b`** plus a structured ISO questionnaire knowledge base covering legal-grade audit questions, governance guidance, and recent governance and ethics standards including ISO 37000 and ISO 37002.
+**Supported Standards**: ISO 37001 (Anti-Bribery) · ISO 37301 (Compliance) · ISO 27001 (InfoSec) · ISO 9001 (Quality) · ISO 37000 (Governance) · ISO 37002 (Whistleblowing)
 
-### What Makes It Novel
+---
 
-| Differentiator | Description |
+## Key Differentiators
+
+| Innovation | Description |
 |---|---|
-| **9-Agent Orchestrated Pipeline** | Not a single LLM prompt — a coordinated team of specialized AI agents, each with domain expertise, that hand off context through a structured pipeline |
-| **3-Tier Hybrid Scoring Engine** | ML semantic scoring (sentence-transformers) → Groq AI enhancement → keyword+NLP fallback. Gracefully degrades so it always works |
-| **Evidence Validation Agent** | Industry-first: validates whether cited evidence actually supports compliance claims. Checks sufficiency, quality (direct/indirect/anecdotal), chain of custody, and cross-standard evidence reuse |
-| **Policy Generator Agent** | Generates 100% compliant, ready-to-adopt policy documents addressing all identified gaps — users download updated policies instantly, reducing workload |
-| **Cross-Standard Synergy Detection** | Identifies where a single remediation action satisfies requirements across multiple ISO standards, reducing cost |
-| **Real-Time Agent Streaming** | SSE-based live progress as each agent works, not a black-box "processing…" spinner |
-| **GenW.AI Platform Integration** | Architected for Deloitte's GenW.AI infrastructure with a clean bridge layer for production deployment |
+| **7-Agent Orchestrated Pipeline** | Coordinated team of specialized AI agents that hand off structured context through a sequential pipeline |
+| **3-Tier Hybrid Scoring** | ML semantic scoring → Groq AI enhancement → keyword+NLP fallback with graceful degradation |
+| **Evidence Validation** | Validates whether cited evidence actually supports compliance claims — checks sufficiency, quality, and cross-standard reuse |
+| **Policy Generation** | Generates compliant policy documents addressing all identified gaps for immediate download |
+| **Cross-Standard Synergy** | Identifies where a single remediation action satisfies requirements across multiple standards |
+| **Real-Time Streaming** | SSE-based live progress as each agent executes |
+| **GenW.AI Integration** | Architected for Deloitte's GenW.AI infrastructure with transparent fallback |
 
-### Supported Standards
-- **ISO 37001:2025** — Anti-Bribery Management Systems
-- **ISO 37301:2021** — Compliance Management Systems
-- **ISO 27001:2022** — Information Security Management Systems
-- **ISO 9001:2015** — Quality Management Systems
-- **ISO 37000:2021** — Governance of Organizations guidance
-- **ISO 37002:2021** — Whistleblowing Management Systems guidance
+---
 
-### Key Features
-- **9 Specialized AI Agents** orchestrated via sequential-parallel multi-agent architecture
-- **3-Tier Hybrid Scoring** — ML → Groq AI → keyword+NLP fallback with graceful degradation
-- **Evidence Validation** — AI-powered evidence sufficiency and quality assessment
-- **Real-time Visual Dashboard** with radar charts, heatmaps, and gap priority matrices
-- **Multi-format Document Processing** (PDF, DOCX, TXT) with structural understanding
-- **Cross-standard Gap Analysis** with synergy detection and overlap mapping
-- **Phased Remediation Roadmaps** with effort estimates and responsible functions
-- **Structured ISO Questionnaires** translating ISO clauses into auditable legal-style questions
-- **AI-Powered Chat Assistant** for interactive compliance guidance
-- **Executive Report Generation** with PDF export
-- **Demo Mode** for instant exploration without API keys
+## Quick Start
+
+### Prerequisites
+
+- **Node.js** 18+ and **npm** 9+
+- **Groq API key** (optional — demo mode works without it)
+- **Python 3.9+** (optional — for ML scoring)
+
+### Install and Run
+
+```bash
+# Server
+cd server
+npm install
+cp .env.example .env          # Add your GROQ_API_KEY
+npm run dev                    # → http://localhost:3001
+
+# Client (separate terminal)
+cd client
+npm install
+npm run dev                    # → http://localhost:5173
+```
+
+### Demo Mode
+
+Click **"Try Demo"** in the navbar to load a complete sample assessment with all agents' output — no API keys or uploads required.
 
 ---
 
 ## Tech Stack
 
-### Frontend
-| Technology | Purpose |
-|---|---|
-| React 19 + TypeScript | UI framework with strict typing |
-| Vite 6 | Build tool with HMR |
-| Tailwind CSS v4 | Utility-first styling with native CSS variables |
-| Framer Motion | Page transitions and micro-animations |
-| Recharts | Radar charts, bar charts, data visualizations |
-| Zustand | Lightweight state management |
-| React Router v6 | Client-side routing with lazy loading |
-| Lucide React | Consistent icon system |
-| jsPDF + html2canvas | Client-side PDF report generation |
+| Layer | Technologies |
+|-------|-------------|
+| **Frontend** | React 19, TypeScript, Vite 6, Tailwind CSS 4, Framer Motion, Recharts, Zustand, React Router 7 |
+| **Backend** | Express 5, TypeScript, Groq SDK, pdf-parse, mammoth, Multer, SSE |
+| **AI/ML** | Groq Cloud (`openai/gpt-oss-120b`), sentence-transformers (Python), GenW.AI platform |
+| **Tooling** | ESLint, tsx (watch mode), jsPDF, D3, Fuse.js |
 
-### Backend
-| Technology | Purpose |
-|---|---|
-| Node.js + Express 5 | API server with TypeScript |
-| Groq SDK | `openai/gpt-oss-120b` integration via Groq Cloud |
-| pdf-parse + mammoth | PDF and DOCX document parsing |
-| Multer | Multi-file upload handling (max 10 × 20MB) |
-| SSE (Server-Sent Events) | Real-time agent progress streaming |
-| uuid | Assessment ID generation |
+---
 
-### AI & Scoring
-| Component | Role |
-|---|---|
-| Groq `openai/gpt-oss-120b` | Agent analysis, scoring enhancement, chat |
-| sentence-transformers (Python) | Tier 1 ML semantic similarity scoring |
-| HybridScoringService | 3-tier orchestration with graceful degradation |
-| ISO Questionnaire Knowledge Base | Legal-grade structured audit questions and evidence requirements |
+## Architecture at a Glance
+
+```
+Client (React)  ──HTTP/SSE──▶  Express API  ──▶  AI Pipeline (7 agents)
+                                    │                    │
+                                    ├──▶ Groq Cloud      ├──▶ Document Parsing
+                                    ├──▶ GenW.AI         ├──▶ Standard Scoring (×4)
+                                    └──▶ Python ML       ├──▶ Gap Analysis
+                                                         ├──▶ Evidence Validation
+                                                         ├──▶ Remediation Planning
+                                                         └──▶ Policy Generation
+```
+
+The pipeline uses a **3-tier provider cascade** — GenW.AI → Groq Cloud → local generation — so every agent produces results regardless of external service availability.
 
 ---
 
@@ -91,262 +94,76 @@ The current assessment stack uses **Groq Cloud with `openai/gpt-oss-120b`** plus
 
 ```
 compliancegpt/
-├── client/                         # React 19 frontend
-│   ├── src/
-│   │   ├── components/             # Reusable UI components
-│   │   │   ├── layout/             # Sidebar, Navbar, AppLayout
-│   │   │   ├── dashboard/          # Score ring, KPI cards, chat assistant
-│   │   │   ├── analytics/          # Heatmap, gap matrix, benchmarks
-│   │   │   ├── agents/             # Agent activity feed
-│   │   │   └── reports/            # Remediation timeline, evidence validation panel
-│   │   ├── pages/                  # 8 route pages (lazy-loaded)
-│   │   ├── store/                  # Zustand state store
-│   │   ├── data/                   # ISO standards data + demo assessment data
-│   │   ├── hooks/                  # Custom React hooks
-│   │   ├── types/                  # TypeScript interfaces (20+ types)
-│   │   ├── utils/                  # Helper functions
-│   │   └── styles/                 # Global CSS + Deloitte design system
-│   └── index.html
-├── server/                         # Express 5 backend
+├── client/                     # React 19 frontend
 │   └── src/
-│       ├── agents/                 # Agent runner + orchestrator (9 agents)
-│       ├── routes/                 # 6 API route modules
-│       ├── services/               # HybridScoringService, DocumentParser, GenWAIBridge
-│       ├── middleware/             # File upload middleware
-│       └── data/                   # Enhanced ISO standards with clauses & keywords
-├── docs/                           # Architecture & design documentation
-│   ├── AGENT_DESIGN.md            # Multi-agent pipeline specification
-│   ├── API_REFERENCE.md           # Complete API endpoint reference
-│   ├── ARCHITECTURE.md            # System architecture deep-dive
-│   ├── EVIDENCE_VALIDATION.md     # Evidence Validation Agent guide
-│   ├── GENW_AI_INTEGRATION.md     # GenW.AI platform integration
-│   ├── NOVELTY.md                 # Value proposition & differentiators
-│   ├── SCORING_ENGINE.md          # 3-tier hybrid scoring documentation
-│   └── WIREFRAMES.md             # UI flow wireframes & design tokens
+│       ├── components/         # Layout, dashboard, analytics, reports, UI primitives
+│       ├── pages/              # 13 route pages
+│       ├── store/              # Zustand state management
+│       ├── hooks/              # Custom React hooks
+│       ├── utils/              # API client, helpers, report generation
+│       ├── data/               # Standards data, demo assessment data
+│       └── types/              # TypeScript interfaces
+├── server/                     # Express 5 backend
+│   └── src/
+│       ├── agents/             # Agent runner + orchestrator
+│       ├── services/           # Pipeline, scoring, copilot, GenW bridge
+│       ├── routes/             # 8 API route modules
+│       ├── data/               # ISO standards, questionnaires, knowledge base
+│       └── middleware/         # File upload handling
+├── docs/                       # Comprehensive documentation (13 sections)
 └── .env.example
 ```
 
 ---
 
-## Quick Start
-
-### Prerequisites
-- Node.js ≥ 18
-- npm ≥ 9
-- Groq API key (optional — demo mode and keyword+NLP scoring work without it)
-- Python 3.9+ with sentence-transformers (optional — for Tier 1 ML scoring)
-
-### Installation
-
-```bash
-# Clone and enter the repository
-cd compliancegpt
-
-# Install frontend dependencies
-cd client
-npm install
-
-# Install backend dependencies
-cd ../server
-npm install
-
-# Configure environment
-cd ..
-cp .env.example .env
-# Edit .env and add your GROQ_API_KEY
-```
-
-### Development
-
-```bash
-# Terminal 1: Start frontend (port 5173)
-cd client
-npm run dev
-
-# Terminal 2: Start backend (port 3001)
-cd server
-npm run dev
-
-# Terminal 3 (optional): Start ML scoring service (port 5001)
-cd ml-service
-python app.py
-```
-
-| Service | URL |
-|---|---|
-| Frontend | http://localhost:5173 |
-| Backend API | http://localhost:3001 |
-| ML Service | http://localhost:5001 (optional) |
-
-### Demo Mode
-
-Click the **"Try Demo"** pill button in the navbar to instantly load a complete sample assessment (Acme Corp) with all 9 agents' output pre-computed — no API key or document uploads required.
-
----
-
-## Pages
-
-| Page | Route | Description |
-|---|---|---|
-| Landing | `/` | Deloitte-branded hero, features showcase, standards overview, GenW.AI section |
-| Dashboard | `/dashboard` | KPI cards, radar chart, compliance heatmap, gap priority matrix, evidence validation panel, remediation timeline, chat assistant |
-| Assessment | `/assessment` | 4-step wizard: org profile → document upload → AI processing (live) → results |
-| Standards | `/standards` | Standards library browser with clause-level detail and keyword tags |
-| Agent Workflow | `/agents` | Visual 9-agent orchestration diagram with IO specifications |
-| Analytics | `/analytics` | Maturity trends, industry benchmarks, cross-standard analysis |
-| Reports | `/reports` | Executive report builder with PDF export |
-| Settings | `/settings` | API key configuration, ML service health, preferences |
-
----
-
-## AI Agent Architecture
-
-ComplianceGPT employs a **sequential-parallel orchestration pattern** with **9 specialized agents**:
-
-```
-┌──────────────────┐
-│  Document Agent   │  Step 1 — Parse & structure documents
-└────────┬─────────┘
-         │
-  ┌──────┼──────┬──────────┐
-  │      │      │          │
-  ▼      ▼      ▼          ▼
-┌─────┐┌─────┐┌─────┐┌─────┐
-│Brib.││Gov. ││Sec. ││Qual.│  Step 2 — Parallel standard scoring
-│37001││37301││27001││9001 │         via HybridScoringService
-└──┬──┘└──┬──┘└──┬──┘└──┬──┘
-   └──────┼──────┴──────┘
-          │
-  ┌───────┴────────┐
-  │ Gap Analysis    │  Step 3 — Cross-standard gaps & synergies
-  └───────┬────────┘
-          │
-  ┌───────┴────────┐
-  │ Evidence        │  Step 4 — Validate evidence sufficiency
-  │ Validation      │         & quality (NOVEL)
-  └───────┬────────┘
-          │
-  ┌───────┴────────┐
-  │ Remediation     │  Step 5 — Phased roadmap generation
-  └───────┬────────┘
-          │
-  ┌───────┴────────┐
-  │ Policy          │  Step 6 — Generate 100% compliant
-  │ Generator       │         downloadable policies (NOVEL)
-  └────────────────┘
-```
-
-| # | Agent | Standard/Role | GenW.AI Module |
-|---|---|---|---|
-| 1 | Document Agent | Document parsing & NLP | Document Intelligence |
-| 2 | Bribery Risk Agent | ISO 37001 | Risk Analytics Engine |
-| 3 | Governance Agent | ISO 37301 | Compliance Knowledge Graph |
-| 4 | Security Agent | ISO 27001 | Risk Analytics Engine |
-| 5 | Quality Agent | ISO 9001 | Compliance Knowledge Graph |
-| 6 | Gap Analysis Agent | Cross-standard analysis | Compliance Knowledge Graph |
-| 7 | Evidence Validation Agent | Evidence sufficiency & quality | Evidence Validation Engine |
-| 8 | Remediation Agent | Phased roadmap planning | Remediation Planning Engine |
-| 9 | Policy Generator Agent | 100% compliant policy generation | Policy Generation Engine |
-
-> See [docs/AGENT_DESIGN.md](docs/AGENT_DESIGN.md) for full agent specifications.
-
----
-
-## 3-Tier Hybrid Scoring Engine
-
-The `HybridScoringService` implements a novel multi-tiered scoring approach that gracefully degrades:
-
-| Tier | Method | Confidence | Requirements |
-|---|---|---|---|
-| **Tier 1** | ML semantic similarity (sentence-transformers) | High | Python ML microservice running |
-| **Tier 2** | Groq AI enhancement | High | Groq API key configured |
-| **Tier 3** | Keyword+NLP fallback | Medium-Low | None (always available) |
-
-**Scoring Flow:**
-1. Try ML scoring → if available, enhance with Groq → return `ml+groq` scores
-2. If ML unavailable → try keyword+NLP scoring enhanced by Groq → return `groq-enhanced` scores
-3. If Groq unavailable → return `keyword+nlp` scores
-
-> See [docs/SCORING_ENGINE.md](docs/SCORING_ENGINE.md) for complete scoring documentation.
-
----
-
-## Evidence Validation (Novel Feature)
-
-The **Evidence Validation Agent** is an industry-first capability that validates whether the evidence cited for each compliance clause actually supports the compliance claim:
-
-- **Sufficiency Rating**: `sufficient` | `partial` | `insufficient` | `missing`
-- **Quality Assessment**: `direct` (policy text) | `indirect` (inferred) | `anecdotal` | `none`
-- **Chain of Custody**: Verifies evidence traceability
-- **Cross-Standard Reuse**: Identifies evidence that satisfies multiple standards simultaneously
-
-> See [docs/EVIDENCE_VALIDATION.md](docs/EVIDENCE_VALIDATION.md) for the full evidence validation specification.
-
----
-
-## GenW.AI Integration
-
-ComplianceGPT now exposes a GenW-powered orchestration layer through a clean bridge and pipeline service architecture. The assessment backend routes each pipeline stage through GenW when available and falls back to local scoring and local agent execution when GenW is unavailable.
-
-| GenW.AI Module | ComplianceGPT Pipeline Agent(s) | Capability |
-|---|---|---|
-| Document Intelligence | Document Parsing Agent | Multi-format parsing with structural understanding |
-| Compliance Knowledge Graph | Clause Mapping Agent, Gap Detection Agent | Standards cross-referencing and clause mapping |
-| Evidence Validation Engine | Evidence Validation Agent | AI-powered evidence sufficiency analysis |
-| Risk Analytics Engine | Compliance Scoring Agent | Clause readiness scoring and confidence calculation |
-| Remediation Planning Engine | Remediation Planning Agent | Phased roadmap generation with cost estimation |
-| Policy Generation Engine | Policy Generation Agent | Drafting compliant policy sections to close gaps |
-| Audit Trail | Platform support module | Reserved for immutable audit logging and evidence governance |
-
-Operational discovery endpoints are also available:
-
-| Endpoint | Purpose |
-|---|---|
-| `/api/genw/status` | Returns GenW configuration, connectivity, fallback state, and pipeline runtime status |
-| `/api/genw/modules` | Returns the GenW module catalog used by the bridge layer |
-| `/api/genw/pipeline` | Returns the ordered 7-agent GenW pipeline definition |
-
-> See [docs/GENW_AI_INTEGRATION.md](docs/GENW_AI_INTEGRATION.md) for the integration architecture.
-
----
-
-## Design System
-
-ComplianceGPT uses a **Deloitte-inspired professional design system**:
-
-| Token | Value |
-|---|---|
-| Primary | Teal `#0076A8` |
-| Secondary | Deloitte Green `#86BC25` |
-| Background | Black `#000000` (sidebar/landing), White (app pages) |
-| Display Font | Libre Baskerville (serif) |
-| Body Font | Source Sans 3 |
-| Code Font | JetBrains Mono |
-| Border Radius (buttons) | `999px` (pill-shaped) |
-| Border Radius (cards) | `6px` |
-| Animations | Framer Motion spring/ease with staggered reveals |
-
----
-
 ## Documentation
+
+ComplianceGPT includes a comprehensive documentation system covering every aspect of the platform.
+
+### Architecture & Design
 
 | Document | Description |
 |---|---|
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture, data flow, design decisions |
-| [AGENT_DESIGN.md](docs/AGENT_DESIGN.md) | 9-agent pipeline specification and orchestration logic |
-| [SCORING_ENGINE.md](docs/SCORING_ENGINE.md) | 3-tier hybrid scoring engine deep-dive |
-| [EVIDENCE_VALIDATION.md](docs/EVIDENCE_VALIDATION.md) | Evidence Validation Agent specification |
-| [API_REFERENCE.md](docs/API_REFERENCE.md) | Complete REST API reference with schemas |
-| [GENW_AI_INTEGRATION.md](docs/GENW_AI_INTEGRATION.md) | GenW.AI platform integration guide |
-| [WIREFRAMES.md](docs/WIREFRAMES.md) | UI flow wireframes and design tokens |
-| [NOVELTY.md](docs/NOVELTY.md) | Value proposition and differentiators |
+| [01 — Project Overview](docs/01-PROJECT-OVERVIEW.md) | Problem statement, target users, capabilities, supported standards |
+| [02 — System Architecture](docs/02-SYSTEM-ARCHITECTURE.md) | Layer architecture, data flow diagrams, design decisions |
+| [03 — AI Agent Pipeline](docs/03-AI-AGENT-PIPELINE.md) | All 7 pipeline agents with inputs, processing, outputs, and prompt patterns |
+| [04 — Frontend Architecture](docs/04-FRONTEND-ARCHITECTURE.md) | Component system, routing, state management, design system |
+| [05 — Backend Services](docs/05-BACKEND-SERVICES.md) | Service catalog, pipeline orchestration, scoring engine, GenW bridge |
+
+### Reference
+
+| Document | Description |
+|---|---|
+| [06 — API Documentation](docs/06-API-DOCUMENTATION.md) | All endpoints with request/response examples |
+| [07 — Data Model](docs/07-DATA-MODEL.md) | Entity definitions, TypeScript interfaces, ER diagrams |
+| [08 — Analytics & Scoring](docs/08-ANALYTICS-AND-SCORING.md) | Scoring algorithms, confidence calculation, forecasting |
+
+### Operations & Planning
+
+| Document | Description |
+|---|---|
+| [09 — Security & Data Handling](docs/09-SECURITY-AND-DATA-HANDLING.md) | Upload controls, data privacy, audit logging, dependency security |
+| [10 — Deployment Guide](docs/10-DEPLOYMENT.md) | Local setup, production build, Docker, environment configuration |
+| [11 — Future Roadmap](docs/11-FUTURE-ROADMAP.md) | Planned features across 5 phases |
+| [12 — Contributing Guide](docs/12-CONTRIBUTING-GUIDE.md) | How to add standards, agents, analytics modules, and endpoints |
+
+### Legacy Documentation
+
+| Document | Description |
+|---|---|
+| [Agent Design](docs/AGENT_DESIGN.md) | Original multi-agent pipeline specification |
+| [API Reference](docs/API_REFERENCE.md) | Original API endpoint reference |
+| [Architecture](docs/ARCHITECTURE.md) | Original system architecture document |
+| [Evidence Validation](docs/EVIDENCE_VALIDATION.md) | Evidence Validation Agent specification |
+| [GenW.AI Integration](docs/GENW_AI_INTEGRATION.md) | GenW.AI platform integration guide |
+| [Novelty](docs/NOVELTY.md) | Value proposition and differentiators |
+| [Scoring Engine](docs/SCORING_ENGINE.md) | 3-tier hybrid scoring documentation |
+| [Wireframes](docs/WIREFRAMES.md) | UI flow wireframes and design tokens |
 
 ---
 
 ## License
 
 Proprietary — Built for Deloitte Hacksplosion 2026
-
----
 
 **ComplianceGPT™** — *Where AI Meets Compliance Excellence*
