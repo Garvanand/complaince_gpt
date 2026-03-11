@@ -1,4 +1,4 @@
-# ComplianceGPT™
+# TrustIQ™
 
 > **Agentic AI-Powered Multi-Standard Compliance Assessment Platform**  
 > Built for Deloitte's Hacksplosion 2026 | Powered by GenW.AI™
@@ -11,9 +11,9 @@
 
 ---
 
-## What is ComplianceGPT?
+## What is TrustIQ?
 
-ComplianceGPT is a **production-grade enterprise application** that transforms how organizations approach regulatory compliance. Upload your policy documents and receive **instant readiness scores, gap analysis, evidence validation, maturity levels, and phased remediation roadmaps** across multiple ISO standards simultaneously — powered by a pipeline of specialized AI agents and a 3-tier hybrid scoring engine.
+TrustIQ is a **production-grade enterprise application** that transforms how organizations approach regulatory compliance. Upload your policy documents and receive **instant readiness scores, gap analysis, evidence validation, maturity levels, and phased remediation roadmaps** across multiple ISO standards simultaneously — powered by a pipeline of specialized AI agents and a 3-tier hybrid scoring engine.
 
 **Supported Standards**: ISO 37001 (Anti-Bribery) · ISO 37301 (Compliance) · ISO 27001 (InfoSec) · ISO 9001 (Quality) · ISO 37000 (Governance) · ISO 37002 (Whistleblowing)
 
@@ -40,6 +40,7 @@ ComplianceGPT is a **production-grade enterprise application** that transforms h
 - **Node.js** 18+ and **npm** 9+
 - **Groq API key** (optional — demo mode works without it)
 - **Python 3.9+** (optional — for ML scoring)
+- **PostgreSQL 14+** (optional — for persisted assessment sessions/results)
 
 ### Install and Run
 
@@ -47,7 +48,7 @@ ComplianceGPT is a **production-grade enterprise application** that transforms h
 # Server
 cd server
 npm install
-cp .env.example .env          # Add your GROQ_API_KEY
+cp .env.example .env          # Add your GROQ_API_KEY and optional DATABASE_URL
 npm run dev                    # → http://localhost:3001
 
 # Client (separate terminal)
@@ -55,6 +56,22 @@ cd client
 npm install
 npm run dev                    # → http://localhost:5173
 ```
+
+### Optional Postgres Persistence
+
+If you want assessment sessions, logs, uploaded-document metadata, and final results to survive server restarts, set `DATABASE_URL` in `.env`:
+
+```bash
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/trustiq
+```
+
+You can start a local Postgres instance from the repo root with:
+
+```bash
+docker compose up -d postgres
+```
+
+When `DATABASE_URL` is present, the server bootstraps the required `assessment_sessions` table automatically on startup. If it is absent, the backend continues using the existing in-memory runtime store.
 
 ### Demo Mode
 
@@ -67,7 +84,7 @@ Click **"Try Demo"** in the navbar to load a complete sample assessment with all
 | Layer | Technologies |
 |-------|-------------|
 | **Frontend** | React 19, TypeScript, Vite 6, Tailwind CSS 4, Framer Motion, Recharts, Zustand, React Router 7 |
-| **Backend** | Express 5, TypeScript, Groq SDK, pdf-parse, mammoth, Multer, SSE |
+| **Backend** | Express 5, TypeScript, Groq SDK, pg, pdf-parse, mammoth, Multer, SSE |
 | **AI/ML** | Groq Cloud (`openai/gpt-oss-120b`), sentence-transformers (Python), GenW.AI platform |
 | **Tooling** | ESLint, tsx (watch mode), jsPDF, D3, Fuse.js |
 
@@ -93,7 +110,7 @@ The pipeline uses a **3-tier provider cascade** — GenW.AI → Groq Cloud → l
 ## Project Structure
 
 ```
-compliancegpt/
+trustiq/
 ├── client/                     # React 19 frontend
 │   └── src/
 │       ├── components/         # Layout, dashboard, analytics, reports, UI primitives
@@ -118,7 +135,7 @@ compliancegpt/
 
 ## Documentation
 
-ComplianceGPT includes a comprehensive documentation system covering every aspect of the platform.
+TrustIQ includes a comprehensive documentation system covering every aspect of the platform.
 
 ### Architecture & Design
 
@@ -166,4 +183,4 @@ ComplianceGPT includes a comprehensive documentation system covering every aspec
 
 Proprietary — Built for Deloitte Hacksplosion 2026
 
-**ComplianceGPT™** — *Where AI Meets Compliance Excellence*
+**TrustIQ™** — *Where Integrity Meets Compliance Intelligence*

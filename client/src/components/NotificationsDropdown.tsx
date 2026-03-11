@@ -39,16 +39,17 @@ export default function NotificationsDropdown() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="relative p-2.5 rounded-xl transition-all"
-        style={{ background: 'var(--surface-overlay-strong)', border: '1px solid var(--border-subtle)' }}
+        className={['top-navbar-icon-button', 'notification-bell-trigger', open ? 'active' : ''].join(' ')}
+        aria-label={unreadCount > 0 ? `${unreadCount} unread notifications` : 'Open notifications'}
+        aria-haspopup="menu"
+        aria-expanded={open}
       >
-        <Bell size={18} style={{ color: 'var(--color-text-secondary)' }} />
+        <Bell size={17} />
         {unreadCount > 0 && (
           <motion.span
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full text-xs font-bold flex items-center justify-center"
-            style={{ background: 'var(--color-risk-critical)', color: 'white' }}
+            className="notification-bell-badge"
           >
             {unreadCount > 9 ? '9+' : unreadCount}
           </motion.span>
@@ -62,7 +63,7 @@ export default function NotificationsDropdown() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-2 w-[380px] rounded-2xl overflow-hidden z-50"
+            className="absolute right-0 top-full mt-2 w-[380px] max-w-[calc(100vw-24px)] rounded-2xl overflow-hidden z-50"
             style={{
               background: 'var(--surface-overlay-strong)',
               border: '1px solid var(--border-subtle)',

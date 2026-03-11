@@ -286,7 +286,7 @@ function buildAuditFriendlyFallback(question: string, context: CopilotResolvedCo
   }
 
   return {
-    headline: 'AI Compliance Copilot Response',
+    headline: 'TrustIQ Copilot Response',
     directAnswer,
     explanation: [
       weakestStandard ? `${weakestStandard.name} is the main exposure domain in the current assessment.` : null,
@@ -377,7 +377,7 @@ function buildPrompt(request: ComplianceCopilotRequest, context: CopilotResolved
     orchestrationProvider: context.orchestrationProvider,
   };
 
-  return `You are the AI Compliance Copilot for an enterprise compliance workspace.
+  return `You are the TrustIQ Copilot for an enterprise compliance workspace.
 Your job is to answer questions about compliance assessments, explain weak scores, recommend remediation actions, summarize reports, and guide users through ISO requirements.
 All responses must be structured, audit-friendly, and grounded in the provided context only.
 Do not claim evidence you do not have. If evidence is missing, say so explicitly in the audit trail caveats.

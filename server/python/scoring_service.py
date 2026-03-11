@@ -1,5 +1,5 @@
 """
-ComplianceGPT Local ML Scoring Service
+TrustIQ Local ML Scoring Service
 Uses sentence-transformers for semantic similarity scoring.
 Runs on port 5001 as a Flask microservice.
 
@@ -134,7 +134,7 @@ def health():
         "status": "ok",
         "model": _model_name,
         "modelLoaded": model is not None,
-        "service": "ComplianceGPT ML Scoring",
+        "service": "TrustIQ ML Scoring",
         "version": "1.0.0",
     })
 
@@ -205,5 +205,5 @@ def score_all():
 
 if __name__ == '__main__':
     port = int(os.environ.get('ML_SERVICE_PORT', 5001))
-    logger.info(f"Starting ComplianceGPT ML Scoring Service on port {port}")
+    logger.info(f"Starting TrustIQ ML Scoring Service on port {port}")
     app.run(host='0.0.0.0', port=port, debug=False)

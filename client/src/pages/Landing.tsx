@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { AlertTriangle, ArrowRight, BarChart3, Bot, CheckCircle2, ChevronRight, Cog, FileText, Shield, Target, Upload } from 'lucide-react';
+import Footer from '../components/layout/Footer';
 
 const standards = [
   { code: 'ISO 37001', name: 'Anti-bribery', focus: 'Controls for bribery prevention, speak-up channels, third-party due diligence, and investigation readiness.', clauses: 33, color: 'var(--blue-700)' },
@@ -28,7 +29,7 @@ const steps = [
   { icon: Upload, step: 'Step 1', title: 'Upload governance documents', desc: 'Bring policies, procedures, registers, committee papers, and supporting evidence into one governed workspace.' },
   { icon: Bot, step: 'Step 2', title: 'AI agents analyze ISO compliance', desc: 'Specialized agents interpret evidence, map it to clauses, validate sufficiency, and score readiness across selected standards.' },
   { icon: AlertTriangle, step: 'Step 3', title: 'Identify gaps and risks', desc: 'The platform highlights weak controls, missing evidence, clause exposure, and the issues most likely to slow certification or audit confidence.' },
-  { icon: Target, step: 'Step 4', title: 'Generate remediation roadmap', desc: 'ComplianceGPT turns findings into prioritized remediation actions with ownership, effort estimates, and phased execution guidance.' },
+  { icon: Target, step: 'Step 4', title: 'Generate remediation roadmap', desc: 'TrustIQ turns findings into prioritized remediation actions with ownership, effort estimates, and phased execution guidance.' },
   { icon: FileText, step: 'Step 5', title: 'Produce audit-ready compliance reports', desc: 'Generate executive summaries, clause findings, policy outputs, and reports that are ready for audit, board, and control-owner review.' },
 ];
 
@@ -62,11 +63,11 @@ export default function Landing() {
   const navigate = useNavigate();
 
   return (
-    <div className="landing-shell">
+    <div className="landing-shell" id="top">
       <nav className="landing-nav">
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'linear-gradient(135deg, var(--teal), var(--green))' }} />
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 700, color: 'var(--slate-900)' }}>ComplianceGPT</div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 700, color: 'var(--slate-900)' }}>TrustIQ</div>
         </div>
 
         <div className="landing-links" style={{ alignItems: 'center' }}>
@@ -96,7 +97,7 @@ export default function Landing() {
             </p>
 
             <p className="landing-copy landing-copy-secondary">
-              Upload policies and governance documents. ComplianceGPT analyzes them against ISO 37001, 37301, 27001, and 9001 frameworks to produce readiness scores, risk insights, and remediation roadmaps.
+              Upload policies and governance documents. TrustIQ analyzes them against ISO 37001, 37301, 27001, and 9001 frameworks to produce readiness scores, risk insights, and remediation roadmaps.
             </p>
 
             <div className="landing-actions">
@@ -165,7 +166,7 @@ export default function Landing() {
         <div className="landing-container">
           <div style={{ marginBottom: 28 }}>
             <div className="section-label">Product differentiation</div>
-            <h2 className="enterprise-hero-title" style={{ marginTop: 10, marginBottom: 0 }}>Why ComplianceGPT stands out</h2>
+            <h2 className="enterprise-hero-title" style={{ marginTop: 10, marginBottom: 0 }}>Why TrustIQ stands out</h2>
             <p className="enterprise-hero-copy landing-section-lead" style={{ marginTop: 10 }}>Designed for enterprise compliance teams and obvious enough for judges to understand in under a minute.</p>
           </div>
 
@@ -209,7 +210,7 @@ export default function Landing() {
       <section id="copilot" className="landing-section">
         <div className="landing-container">
           <div style={{ marginBottom: 28 }}>
-            <div className="section-label">AI Compliance Copilot</div>
+            <div className="section-label">TrustIQ Copilot</div>
             <h2 className="enterprise-hero-title" style={{ marginTop: 10, marginBottom: 0 }}>Ask compliance questions in plain language</h2>
             <p className="enterprise-hero-copy landing-section-lead" style={{ marginTop: 10 }}>The copilot explains scores, prioritizes fixes, and summarizes reports so executives and control owners do not need to interpret raw clause tables on their own.</p>
           </div>
@@ -231,7 +232,7 @@ export default function Landing() {
               <div className="landing-kicker">Copilot response style</div>
               <div className="action-card-title" style={{ marginTop: 10 }}>Clear answers tied to evidence and next actions</div>
               <div className="action-card-copy" style={{ marginTop: 10 }}>
-                ComplianceGPT explains why a score is low, which missing controls matter most, what should be fixed first, and how remediation will change readiness over time.
+                TrustIQ explains why a score is low, which missing controls matter most, what should be fixed first, and how remediation will change readiness over time.
               </div>
               <div className="landing-preview-list" style={{ marginTop: 18 }}>
                 <div className="landing-preview-item">
@@ -279,7 +280,7 @@ export default function Landing() {
           <div style={{ marginBottom: 28 }}>
             <div className="section-label">Standards coverage</div>
             <h2 className="enterprise-hero-title" style={{ marginTop: 10, marginBottom: 0 }}>Support for the standards enterprise teams care about most</h2>
-            <p className="enterprise-hero-copy landing-section-lead" style={{ marginTop: 10 }}>ComplianceGPT highlights how one governance environment performs across anti-bribery, compliance management, security, and quality frameworks.</p>
+            <p className="enterprise-hero-copy landing-section-lead" style={{ marginTop: 10 }}>TrustIQ highlights how one governance environment performs across anti-bribery, compliance management, security, and quality frameworks.</p>
           </div>
 
           <div className="landing-mapping-grid">
@@ -316,11 +317,10 @@ export default function Landing() {
             </div>
           </div>
 
-          <div className="landing-footer">
-            ComplianceGPT | AI-powered ISO compliance intelligence for enterprise governance teams.
-          </div>
         </div>
       </section>
+
+      <Footer />
     </div>
   );
 }

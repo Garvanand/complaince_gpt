@@ -2,7 +2,7 @@
 
 ## Scoring Overview
 
-ComplianceGPT uses a multi-layered scoring system that evaluates organizational compliance at three levels: clause, standard, and overall. Each level builds on the one below, with severity classification and confidence metrics layered on top.
+TrustIQ uses a multi-layered scoring system that evaluates organizational compliance at three levels: clause, standard, and overall. Each level builds on the one below, with severity classification and confidence metrics layered on top.
 
 ```mermaid
 graph TB

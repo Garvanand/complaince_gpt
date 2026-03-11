@@ -128,8 +128,13 @@ export default function GlobalSearch() {
       }
       if (e.key === 'Escape') setOpen(false);
     };
+    const openHandler = () => setOpen(true);
     window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    window.addEventListener('trustiq:open-search', openHandler);
+    return () => {
+      window.removeEventListener('keydown', handler);
+      window.removeEventListener('trustiq:open-search', openHandler);
+    };
   }, []);
 
   useEffect(() => {
@@ -199,9 +204,10 @@ export default function GlobalSearch() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Search clauses, gaps, standards, pages..."
+                placeholder="Search standards, gaps, policies..."
                 className="flex-1 bg-transparent border-none outline-none text-base"
                 style={{ color: 'var(--text-primary)' }}
+                aria-label="Search standards, gaps, policies, and pages"
               />
               <kbd
                 className="text-xs font-mono px-2 py-1 rounded"

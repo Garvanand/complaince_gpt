@@ -1,6 +1,6 @@
 /**
  * GenW.AI Bridge — Integration layer for Deloitte's GenW.AI platform
- * Maps ComplianceGPT agents to GenW.AI module capabilities
+ * Maps TrustIQ agents to GenW.AI module capabilities
  */
 
 import type { GenWAgentName, PipelineAgentName } from '../types/assessment';

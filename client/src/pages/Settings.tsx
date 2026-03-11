@@ -106,7 +106,7 @@ export default function Settings() {
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <Panel label="About" title="ComplianceGPT platform" description="Workspace, product, and model metadata for the current build.">
+          <Panel label="About" title="TrustIQ platform" description="Workspace, product, and model metadata for the current build.">
             <div className="stack-list">
               <div className="insight-row">
                 <div className="insight-kicker"><Info size={14} /></div>

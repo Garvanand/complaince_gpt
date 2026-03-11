@@ -2,7 +2,7 @@
 
 ## Pipeline Overview
 
-ComplianceGPT's core intelligence is delivered through a coordinated team of nine specialized AI agents. Seven agents execute sequentially in the assessment pipeline, each building on the output of the previous agent. Two additional agents (the AI Compliance Copilot and the orchestrator wrapper) operate outside the main pipeline.
+TrustIQ's core intelligence is delivered through a coordinated team of nine specialized AI agents. Seven agents execute sequentially in the assessment pipeline, each building on the output of the previous agent. Two additional agents (the TrustIQ Copilot and the orchestrator wrapper) operate outside the main pipeline.
 
 ```mermaid
 graph LR
@@ -504,7 +504,7 @@ For each assessed standard, the agent generates a policy document containing:
 
 ---
 
-## Agent 8: AI Compliance Copilot
+## Agent 8: TrustIQ Copilot
 
 **Role**: Context-aware compliance Q&A assistant that answers questions using assessment data, uploaded documents, and ISO knowledge.
 

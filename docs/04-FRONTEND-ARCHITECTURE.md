@@ -410,7 +410,7 @@ interface AppState {
 
 ### Persistence Strategy
 
-The store persists selectively to `localStorage` key `compliancegpt-store`:
+The store persists selectively to `localStorage` key `trustiq-store`:
 
 | Persisted | Not Persisted |
 |-----------|--------------|

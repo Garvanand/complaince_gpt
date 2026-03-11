@@ -2,7 +2,7 @@
 
 ## Overview
 
-ComplianceGPT integrates with Deloitte's GenW.AI platform as the enterprise orchestration layer for ISO governance assessments. The implementation now uses a dedicated GenW bridge, a GenW-aware pipeline service, and an orchestration discovery service so GenW execution, stage ordering, and fallback behavior are explicit and production-operable.
+TrustIQ integrates with Deloitte's GenW.AI platform as the enterprise orchestration layer for ISO governance assessments. The implementation now uses a dedicated GenW bridge, a GenW-aware pipeline service, and an orchestration discovery service so GenW execution, stage ordering, and fallback behavior are explicit and production-operable.
 
 The implemented GenW pipeline covers these agents:
 
@@ -18,7 +18,7 @@ Every stage attempts GenW execution first and falls back to local scoring or loc
 
 ## Module Mapping
 
-| GenW.AI Module | ID | ComplianceGPT Pipeline Agent(s) | Capability |
+| GenW.AI Module | ID | TrustIQ Pipeline Agent(s) | Capability |
 |---|---|---|---|
 | Document Intelligence | `genw-doc-intel` | Document Parsing Agent | Multi-format document parsing with structural understanding, entity extraction, and section classification |
 | Compliance Knowledge Graph | `genw-knowledge` | Clause Mapping Agent, Gap Detection Agent | Standards cross-referencing, clause mapping, and gap inference |
@@ -89,7 +89,7 @@ GenWAIBridge
 | `GENW_TIMEOUT_MS` | Per-request timeout for GenW stage execution |
 | `GENW_HEALTH_ENDPOINT` | Endpoint used for GenW health verification |
 
-If these values are unset, ComplianceGPT automatically runs in local fallback mode.
+If these values are unset, TrustIQ automatically runs in local fallback mode.
 
 ## Code Reference
 

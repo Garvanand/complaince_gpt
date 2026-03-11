@@ -239,6 +239,14 @@ export interface CopilotContextSnapshot {
   maturityLevel?: number;
   executiveSummary?: string;
   evidenceSummary?: string;
+  evidenceStats?: {
+    sufficientCount: number;
+    partialCount: number;
+    insufficientCount: number;
+    missingCount: number;
+    crossStandardOpportunities: number;
+    overallEvidenceScore: number;
+  };
   standards?: Array<{
     code: string;
     name: string;
@@ -274,6 +282,16 @@ export interface CopilotContextSnapshot {
     provider?: string;
     executionCount?: number;
   };
+  workspaceMetrics?: {
+    highRiskGapCount: number;
+    remediationCount: number;
+    activeStandardCount: number;
+    weakestStandard?: string;
+    weakestClause?: string;
+    targetScore?: number;
+    scoreGapToTarget?: number;
+  };
+  commandHints?: string[];
 }
 
 export interface ComplianceCopilotResponse {

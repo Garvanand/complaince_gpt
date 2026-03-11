@@ -10,12 +10,27 @@ import {
   registerAssessmentRuntimeResult,
   updateAssessmentRuntimeSession,
 } from '../services/AssessmentRuntimeStore';
+import {
+  findPersistedAssessmentSession,
+  persistAssessmentDocumentText,
+  persistAssessmentError,
+  persistAssessmentLog,
+  persistAssessmentResult,
+  persistAssessmentSessionStart,
+} from '../services/AssessmentPersistenceService';
 import type { AssessmentResult } from '../types/assessment';
 import type { UploadedDocumentReference } from '../types/copilot';
 
 export const assessmentRouter = Router();
 
 const sseClients = new Map<string, Response[]>();
+
+function persistAsync(operation: Promise<unknown>, label: string) {
+  void operation.catch((error) => {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`[postgres] ${label}: ${message}`);
+  });
+}
 
 assessmentRouter.post('/start', async (req: Request, res: Response) => {
   const { filePaths, standards, orgProfile, uploadedDocuments } = req.body as {
@@ -36,6 +51,14 @@ assessmentRouter.post('/start', async (req: Request, res: Response) => {
     orgProfile,
     uploadedDocuments: uploadedDocuments || [],
   });
+  persistAsync(
+    persistAssessmentSessionStart(assessmentId, {
+      standards,
+      orgProfile,
+      uploadedDocuments: uploadedDocuments || [],
+    }),
+    `persist start for ${assessmentId}`,
+  );
 
   res.json({ assessmentId, status: 'processing' });
 
@@ -50,6 +73,10 @@ assessmentRouter.post('/start', async (req: Request, res: Response) => {
         documentText = 'No documents uploaded. Using organizational profile for assessment.';
       }
       updateAssessmentRuntimeSession(assessmentId, { documentText });
+      persistAsync(
+        persistAssessmentDocumentText(assessmentId, documentText),
+        `persist document text for ${assessmentId}`,
+      );
 
       const sendSSE = (data: Record<string, unknown>) => {
         const clients = sseClients.get(assessmentId) || [];
@@ -66,6 +93,10 @@ assessmentRouter.post('/start', async (req: Request, res: Response) => {
         onAgentComplete: (agentName, result) => {
           sendSSE({ type: 'agent-complete', agent: agentName, timestamp: new Date().toISOString() });
           appendAssessmentRuntimeLog(assessmentId, `${agentName} completed`);
+          persistAsync(
+            persistAssessmentLog(assessmentId, `${agentName} completed`),
+            `persist completion log for ${assessmentId}`,
+          );
         },
         onAgentError: (agentName, error) => {
           sendSSE({ type: 'agent-error', agent: agentName, error, timestamp: new Date().toISOString() });
@@ -73,9 +104,17 @@ assessmentRouter.post('/start', async (req: Request, res: Response) => {
         onLog: (message) => {
           sendSSE({ type: 'log', message, timestamp: new Date().toISOString() });
           appendAssessmentRuntimeLog(assessmentId, message);
+          persistAsync(
+            persistAssessmentLog(assessmentId, message),
+            `persist log for ${assessmentId}`,
+          );
         },
         onComplete: (result) => {
           registerAssessmentRuntimeResult(assessmentId, result);
+          persistAsync(
+            persistAssessmentResult(assessmentId, result),
+            `persist result for ${assessmentId}`,
+          );
           sendSSE({ type: 'complete', assessmentId, result, timestamp: new Date().toISOString() });
 
           // Close SSE connections
@@ -88,6 +127,10 @@ assessmentRouter.post('/start', async (req: Request, res: Response) => {
       });
     } catch (error) {
       markAssessmentRuntimeError(assessmentId);
+      persistAsync(
+        persistAssessmentError(assessmentId),
+        `persist error state for ${assessmentId}`,
+      );
       const clients = sseClients.get(assessmentId) || [];
       const errMsg = error instanceof Error ? error.message : 'Unknown error';
       clients.forEach((client) => {
@@ -143,15 +186,30 @@ assessmentRouter.get('/:id/results', (req: Request, res: Response) => {
   const runtime = getAssessmentRuntimeSession(id);
   const entry = runtime?.session;
 
-  if (!entry) {
-    res.status(404).json({ error: 'Assessment not found' });
+  const respondFromSession = (session: NonNullable<typeof entry>) => {
+    if (session.status !== 'complete') {
+      res.json({ status: session.status, logs: session.logs });
+      return;
+    }
+
+    res.json({ status: 'complete', result: session.result });
+  };
+
+  if (entry) {
+    respondFromSession(entry);
     return;
   }
 
-  if (entry.status !== 'complete') {
-    res.json({ status: entry.status, logs: entry.logs });
-    return;
-  }
+  void (async () => {
+    const persisted = await findPersistedAssessmentSession(id);
+    if (!persisted) {
+      res.status(404).json({ error: 'Assessment not found' });
+      return;
+    }
 
-  res.json({ status: 'complete', result: entry.result });
+    respondFromSession(persisted.session);
+  })().catch((error) => {
+    const message = error instanceof Error ? error.message : 'Unknown persistence error';
+    res.status(500).json({ error: message });
+  });
 });

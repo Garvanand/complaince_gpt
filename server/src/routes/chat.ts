@@ -57,7 +57,7 @@ chatRouter.post('/stream', async (req: Request, res: Response) => {
   try {
     const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-    const systemPrompt = `You are ComplianceGPT Assistant, an AI expert in ISO compliance standards (ISO 37001, 37301, 27001, 9001, 37000, 37002).
+    const systemPrompt = `You are TrustIQ Assistant, an AI expert in ISO compliance standards (ISO 37001, 37301, 27001, 9001, 37000, 37002).
 You help users understand compliance requirements, assessment results, and remediation strategies.
 You operate with the rigor of a legal compliance advisor. All guidance must be precise and reference specific ISO clauses.
 ${context ? `Current assessment context: ${JSON.stringify(context)}` : ''}
@@ -113,7 +113,7 @@ chatRouter.post('/', async (req: Request, res: Response) => {
   try {
     const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-    const systemPrompt = `You are ComplianceGPT Assistant, an AI expert in ISO compliance standards (ISO 37001, 37301, 27001, 9001, 37000, 37002).
+    const systemPrompt = `You are TrustIQ Assistant, an AI expert in ISO compliance standards (ISO 37001, 37301, 27001, 9001, 37000, 37002).
 You help users understand compliance requirements, assessment results, and remediation strategies.
 You operate with the rigor of a legal compliance advisor. All guidance must be precise and reference specific ISO clauses.
 ${context ? `Current assessment context: ${JSON.stringify(context)}` : ''}

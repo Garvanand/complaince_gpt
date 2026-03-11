@@ -2,7 +2,7 @@
 
 ## Multi-Agent Architecture
 
-ComplianceGPT employs a **sequential-parallel orchestration pattern** where **9 specialized agents** work together to produce a comprehensive compliance assessment. This is not a single LLM call — it is a coordinated team of domain experts, each with distinct prompts, inputs, outputs, and error handling.
+TrustIQ employs a **sequential-parallel orchestration pattern** where **9 specialized agents** work together to produce a comprehensive compliance assessment. This is not a single LLM call — it is a coordinated team of domain experts, each with distinct prompts, inputs, outputs, and error handling.
 
 ## Agent Pipeline
 

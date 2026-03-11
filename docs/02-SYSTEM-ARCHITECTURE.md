@@ -2,7 +2,7 @@
 
 ## Architecture Overview
 
-ComplianceGPT follows a layered architecture separating concerns across presentation, API, orchestration, analysis, and data layers. The system is designed for graceful degradation — every AI-dependent feature has a local fallback, ensuring the platform delivers results regardless of external service availability.
+TrustIQ follows a layered architecture separating concerns across presentation, API, orchestration, analysis, and data layers. The system is designed for graceful degradation — every AI-dependent feature has a local fallback, ensuring the platform delivers results regardless of external service availability.
 
 ```mermaid
 graph TB
@@ -108,7 +108,7 @@ Express 5 provides the simplest path to a functional API with SSE streaming supp
 Assessment state is moderate in complexity (one active assessment, agent statuses, chat messages) without deep nesting or complex reducers. Zustand's single-store pattern with selective persistence middleware provides the right balance of simplicity and capability.
 
 **Why in-memory session storage?**  
-ComplianceGPT is designed as a single-session assessment tool where results are consumed immediately. In-memory storage eliminates database dependencies while providing the session lifecycle needed for SSE streaming during assessment execution. Assessment results are persisted client-side via Zustand's localStorage middleware.
+TrustIQ is designed as a single-session assessment tool where results are consumed immediately. In-memory storage eliminates database dependencies while providing the session lifecycle needed for SSE streaming during assessment execution. Assessment results are persisted client-side via Zustand's localStorage middleware.
 
 **Why a three-tier scoring cascade?**  
 Compliance scoring must always produce results — a system that fails when an API is unavailable is useless in enterprise environments. The three-tier cascade (ML → Groq → Keyword+NLP) ensures scoring works offline, during API outages, and without paid API keys (demo mode). Each tier adds fidelity but the fallback tier alone produces audit-defensible scores.

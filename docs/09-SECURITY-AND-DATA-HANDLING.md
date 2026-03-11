@@ -2,7 +2,7 @@
 
 ## Overview
 
-ComplianceGPT processes sensitive organizational governance documents and compliance data. This section documents the security practices, data handling procedures, and access control mechanisms implemented in the platform.
+TrustIQ processes sensitive organizational governance documents and compliance data. This section documents the security practices, data handling procedures, and access control mechanisms implemented in the platform.
 
 ---
 
@@ -65,7 +65,7 @@ Document text is combined using a separator marker (`--- DOCUMENT SEPARATOR ---`
 
 ### Current Architecture
 
-ComplianceGPT is currently deployed as a single-user application without authentication. It is designed for:
+TrustIQ is currently deployed as a single-user application without authentication. It is designed for:
 - Local development and demonstration
 - Single-organization assessment sessions
 - Hackathon evaluation environments
@@ -182,7 +182,7 @@ All high-sensitivity variables are:
 
 ### Client-Side Storage
 
-Assessment data persisted in `localStorage` (key: `compliancegpt-store`) includes:
+Assessment data persisted in `localStorage` (key: `trustiq-store`) includes:
 - Assessment results with scores and findings
 - Organization profile
 - Theme preferences

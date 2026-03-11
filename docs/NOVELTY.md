@@ -1,4 +1,4 @@
-# ComplianceGPT — Value Proposition & Novelty
+# TrustIQ — Value Proposition & Novelty
 
 ## The Problem
 
@@ -15,13 +15,13 @@ The result: compliance assessments cost **$50,000-$200,000+** per engagement, ta
 
 ## The Solution
 
-ComplianceGPT transforms compliance assessment from a weeks-long manual process into an **AI-powered, real-time, interactive experience** that produces richer, more actionable results.
+TrustIQ transforms compliance assessment from a weeks-long manual process into an **AI-powered, real-time, interactive experience** that produces richer, more actionable results.
 
 ## What Makes It Novel
 
 ### 1. Multi-Agent Orchestration (Not Just a Chatbot)
 
-Most "AI compliance" tools are thin wrappers around a single LLM prompt. ComplianceGPT implements a genuine **multi-agent architecture** with 9 specialized agents:
+Most "AI compliance" tools are thin wrappers around a single LLM prompt. TrustIQ implements a genuine **multi-agent architecture** with 9 specialized agents:
 
 - Each agent has a distinct domain, prompt, input/output schema, and error handling
 - Agents are orchestrated in a sequential-parallel pipeline with explicit dependencies
@@ -32,7 +32,7 @@ Most "AI compliance" tools are thin wrappers around a single LLM prompt. Complia
 
 ### 2. 3-Tier Hybrid Scoring Engine
 
-Instead of relying solely on LLM output (which is non-deterministic), ComplianceGPT implements a **three-tier scoring approach**:
+Instead of relying solely on LLM output (which is non-deterministic), TrustIQ implements a **three-tier scoring approach**:
 
 | Tier | Technology | Strength |
 |---|---|---|
@@ -48,7 +48,7 @@ The engine **gracefully degrades** — it works without the ML service, works wi
 
 Traditional compliance tools score clauses against documents but never ask: **"Does the evidence actually prove compliance?"**
 
-ComplianceGPT's Evidence Validation Agent:
+TrustIQ's Evidence Validation Agent:
 - Classifies evidence sufficiency: `sufficient` → `partial` → `insufficient` → `missing`
 - Rates evidence quality: `direct` → `indirect` → `anecdotal` → `none`
 - Verifies chain of custody and traceability
@@ -58,7 +58,7 @@ ComplianceGPT's Evidence Validation Agent:
 
 ### 3b. Policy Generator Agent (Novel — Reduces User Workload)
 
-After identifying gaps, validating evidence, and generating remediation actions, ComplianceGPT goes one step further: it **generates complete, 100% compliant policy documents** that organizations can download and adopt immediately.
+After identifying gaps, validating evidence, and generating remediation actions, TrustIQ goes one step further: it **generates complete, 100% compliant policy documents** that organizations can download and adopt immediately.
 
 - Generates a per-standard policy document with numbered sections mapped to clause references
 - Each section is classified as `new` (fills a gap), `revised` (updates existing), or `retained`
@@ -66,11 +66,11 @@ After identifying gaps, validating evidence, and generating remediation actions,
 - Users can download individual policies or all policies at once
 - Professional compliance language suitable for board-level approval
 
-**Why this matters**: Traditional compliance remediation tells you _what_ to fix but leaves the writing to you. ComplianceGPT generates the actual policy text — saving weeks of drafting and reducing compliance consultancy costs by an order of magnitude.
+**Why this matters**: Traditional compliance remediation tells you _what_ to fix but leaves the writing to you. TrustIQ generates the actual policy text — saving weeks of drafting and reducing compliance consultancy costs by an order of magnitude.
 
 ### 4. Cross-Standard Synergy Detection
 
-When assessing 4 ISO standards simultaneously, ComplianceGPT doesn't treat them in isolation. The Gap Analysis Agent identifies:
+When assessing 4 ISO standards simultaneously, TrustIQ doesn't treat them in isolation. The Gap Analysis Agent identifies:
 
 - **Overlapping requirements** across standards (e.g., risk assessment in 37001, 27001, and 9001)
 - **Single remediation actions** that satisfy multiple standards
@@ -90,7 +90,7 @@ The assessment isn't a black box. As each of the 9 agents works:
 
 ### 6. GenW.AI Platform Architecture
 
-ComplianceGPT is architected from day one for Deloitte's GenW.AI platform:
+TrustIQ is architected from day one for Deloitte's GenW.AI platform:
 - Clean bridge layer maps all 9 agents to GenW.AI modules
 - Module registry with endpoints, capabilities, and IDs
 - Zero-friction migration path from Claude to GenW.AI APIs
@@ -100,7 +100,7 @@ ComplianceGPT is architected from day one for Deloitte's GenW.AI platform:
 
 ## Quantified Impact
 
-| Metric | Traditional Assessment | ComplianceGPT |
+| Metric | Traditional Assessment | TrustIQ |
 |---|---|---|
 | Time to results | 4-8 weeks | < 2 hours |
 | Cost per assessment | $50,000-$200,000 | $50-$200 (API costs) |
@@ -113,7 +113,7 @@ ComplianceGPT is architected from day one for Deloitte's GenW.AI platform:
 
 ## Technical Quality
 
-ComplianceGPT is not a prototype — it's a production-grade application:
+TrustIQ is not a prototype — it's a production-grade application:
 
 - **TypeScript strict mode** across frontend and backend
 - **20+ typed interfaces** for assessment data, evidence validation, agent status
@@ -126,7 +126,7 @@ ComplianceGPT is not a prototype — it's a production-grade application:
 
 ## Target Users
 
-| User | How ComplianceGPT Helps |
+| User | How TrustIQ Helps |
 |---|---|
 | **Compliance Officers** | Instant gap analysis, evidence validation, remediation roadmaps |
 | **Internal Auditors** | Automated evidence sufficiency checking, cross-standard mapping |
@@ -136,7 +136,7 @@ ComplianceGPT is not a prototype — it's a production-grade application:
 
 ## Competitive Differentiation
 
-| Feature | Single-prompt AI tools | Manual consultants | ComplianceGPT |
+| Feature | Single-prompt AI tools | Manual consultants | TrustIQ |
 |---|---|---|---|
 | Multi-standard | Limited | Yes (expensive) | Yes (automated) |
 | Evidence validation | No | Manual | AI-automated |

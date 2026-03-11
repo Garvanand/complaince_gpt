@@ -2,7 +2,7 @@
 
 ## Overview
 
-ComplianceGPT uses a monorepo structure with separate `client/` and `server/` directories. The frontend is a Vite + React application and the backend is an Express + TypeScript API server. An optional Python microservice provides ML-based scoring.
+TrustIQ uses a monorepo structure with separate `client/` and `server/` directories. The frontend is a Vite + React application and the backend is an Express + TypeScript API server. An optional Python microservice provides ML-based scoring.
 
 ---
 
@@ -24,7 +24,7 @@ ComplianceGPT uses a monorepo structure with separate `client/` and `server/` di
 ```bash
 # Clone the repository
 git clone <repo-url>
-cd compliancegpt
+cd trustiq
 
 # Install server dependencies
 cd server
@@ -84,7 +84,7 @@ This runs `tsx watch src/index.ts` — the server starts on port 3001 with hot-r
 
 Expected output:
 ```
-🚀 ComplianceGPT Server running on port 3001
+🚀 TrustIQ Server running on port 3001
 📊 Assessment routes: /api/assessment/*
 💬 Chat routes: /api/chat/*
 📋 Standards routes: /api/standards/*
@@ -242,8 +242,8 @@ EXPOSE 80
 | Environment | `CLIENT_URL` | Server | Notes |
 |-------------|-------------|--------|-------|
 | Development | `http://localhost:5173` | `localhost:3001` | Vite proxy handles API routing |
-| Staging | `https://staging.compliancegpt.app` | Internal port | Behind reverse proxy with HTTPS |
-| Production | `https://compliancegpt.app` | Internal port | Behind reverse proxy with HTTPS |
+| Staging | `https://staging.trustiq.app` | Internal port | Behind reverse proxy with HTTPS |
+| Production | `https://trustiq.app` | Internal port | Behind reverse proxy with HTTPS |
 
 ---
 

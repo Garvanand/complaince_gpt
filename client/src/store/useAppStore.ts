@@ -217,7 +217,7 @@ export const useAppStore = create<AppState>()(
   clearNotifications: () => set({ notifications: [], unreadCount: 0 }),
     }),
     {
-      name: 'compliancegpt-store',
+      name: 'trustiq-store',
       partialize: (state) => ({
         currentAssessment: state.currentAssessment,
         assessmentHistory: state.assessmentHistory,

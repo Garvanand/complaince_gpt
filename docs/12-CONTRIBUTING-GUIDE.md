@@ -2,14 +2,14 @@
 
 ## Overview
 
-This guide covers how to extend ComplianceGPT — adding new compliance standards, building new AI agents, creating analytics modules, and working with the codebase.
+This guide covers how to extend TrustIQ — adding new compliance standards, building new AI agents, creating analytics modules, and working with the codebase.
 
 ---
 
 ## Project Structure
 
 ```
-compliancegpt/
+trustiq/
 ├── client/                     # React frontend
 │   └── src/
 │       ├── components/         # UI components

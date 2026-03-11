@@ -10,6 +10,7 @@ import { demoRouter } from './routes/demo';
 import { uploadRouter } from './routes/upload';
 import { policyRouter } from './routes/policy';
 import { genwRouter } from './routes/genw';
+import { getPostgresHealth, initializePostgres, isPostgresEnabled } from './services/PostgresService';
 
 dotenv.config();
 
@@ -38,11 +39,32 @@ app.use('/api/genw', genwRouter);
 
 // Health check
 app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  void (async () => {
+    const database = await getPostgresHealth();
+    res.json({
+      status: database === 'error' ? 'degraded' : 'ok',
+      timestamp: new Date().toISOString(),
+      database,
+    });
+  })().catch(() => {
+    res.json({ status: 'degraded', timestamp: new Date().toISOString(), database: 'error' });
+  });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 ComplianceGPT Server running on port ${PORT}`);
-});
+void (async () => {
+  if (isPostgresEnabled()) {
+    try {
+      await initializePostgres();
+      console.log('🐘 Postgres persistence enabled');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(`Postgres initialization failed: ${message}`);
+    }
+  }
+
+  app.listen(PORT, () => {
+    console.log(`🚀 TrustIQ Server running on port ${PORT}`);
+  });
+})();
 
 export default app;

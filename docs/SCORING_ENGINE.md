@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `HybridScoringService` is ComplianceGPT's novel scoring engine that implements a **multi-tiered approach to compliance clause scoring**. It gracefully degrades across three tiers, ensuring the application always produces meaningful results regardless of which external services are available.
+The `HybridScoringService` is TrustIQ's novel scoring engine that implements a **multi-tiered approach to compliance clause scoring**. It gracefully degrades across three tiers, ensuring the application always produces meaningful results regardless of which external services are available.
 
 This is fundamentally different from a single-LLM approach. Instead of asking one model to produce a score, the engine combines **machine learning semantic analysis**, **LLM-powered contextual refinement**, and **deterministic keyword matching** to produce high-confidence, auditable scores.
 

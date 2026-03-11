@@ -2,7 +2,7 @@
 
 ## Overview
 
-ComplianceGPT is designed as an extensible compliance intelligence platform. This roadmap outlines planned capabilities, architectural improvements, and expansion areas based on the current codebase foundation.
+TrustIQ is designed as an extensible compliance intelligence platform. This roadmap outlines planned capabilities, architectural improvements, and expansion areas based on the current codebase foundation.
 
 ---
 

@@ -30,11 +30,11 @@ Landing (/)
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│ [Logo] ComplianceGPT              [Get Started pill] │
+│ [Logo] TrustIQ                    [Get Started pill] │
 ├─────────────────────────────────────────────────────┤
 │                                                      │
 │        ┌──────────┐                                  │
-│        │ Score    │    ComplianceGPT™                │
+│        │ Score    │    TrustIQ™                      │
 │        │ Ring 87% │    Tagline text                  │
 │        └──────────┘    [Start Assessment] [Try Demo] │
 │                        (pill buttons, teal bg)       │

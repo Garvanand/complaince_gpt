@@ -2,7 +2,7 @@
 
 ## Overview
 
-The **Evidence Validation Agent** is ComplianceGPT's novel 8th agent — an industry-first capability that validates whether the evidence cited for each compliance clause actually supports the compliance claim. While traditional compliance tools stop at scoring clauses against documents, ComplianceGPT goes further by analyzing the **quality, sufficiency, and traceability** of the evidence itself.
+The **Evidence Validation Agent** is TrustIQ's novel 8th agent — an industry-first capability that validates whether the evidence cited for each compliance clause actually supports the compliance claim. While traditional compliance tools stop at scoring clauses against documents, TrustIQ goes further by analyzing the **quality, sufficiency, and traceability** of the evidence itself.
 
 This addresses a critical gap in compliance assessment: organizations often cite vague or indirect evidence to satisfy clause requirements. The Evidence Validation Agent catches these issues before an auditor does.
 

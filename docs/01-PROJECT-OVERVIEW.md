@@ -1,8 +1,8 @@
 # Project Overview
 
-## What Is ComplianceGPT
+## What Is TrustIQ
 
-ComplianceGPT is an enterprise AI-powered compliance intelligence platform that evaluates organizational readiness against multiple ISO standards. It replaces manual compliance assessments — traditionally weeks-long engagements requiring teams of auditors and consultants — with an automated, AI-driven pipeline that delivers clause-level analysis, gap detection, evidence validation, remediation roadmaps, and executive reporting in minutes.
+TrustIQ is an enterprise AI-powered compliance intelligence platform that evaluates organizational readiness against multiple ISO standards. It replaces manual compliance assessments — traditionally weeks-long engagements requiring teams of auditors and consultants — with an automated, AI-driven pipeline that delivers clause-level analysis, gap detection, evidence validation, remediation roadmaps, and executive reporting in minutes.
 
 The platform processes uploaded governance documents (policies, procedures, manuals) through a coordinated team of nine specialized AI agents, each responsible for a distinct phase of the compliance assessment lifecycle. The result is a structured, audit-defensible compliance posture report covering four ISO management system standards simultaneously.
 
@@ -16,7 +16,7 @@ Organizations pursuing ISO certification or maintaining compliance face signific
 - **Gap remediation** lacks structured prioritization, leading to effort wasted on low-impact areas while critical exposures remain unaddressed.
 - **Executive visibility** is limited — leadership receives static PDF reports with no interactive drill-down into the underlying analysis.
 
-Traditional compliance consulting engagements cost $50,000–$500,000+ depending on scope and involve 4–12 week timelines. ComplianceGPT compresses this into an automated pipeline that runs in minutes while maintaining audit-grade analysis quality.
+Traditional compliance consulting engagements cost $50,000–$500,000+ depending on scope and involve 4–12 week timelines. TrustIQ compresses this into an automated pipeline that runs in minutes while maintaining audit-grade analysis quality.
 
 ## Target Users
 
@@ -31,11 +31,11 @@ Traditional compliance consulting engagements cost $50,000–$500,000+ depending
 
 ## Key Innovation
 
-ComplianceGPT introduces several capabilities not found in existing compliance tools:
+TrustIQ introduces several capabilities not found in existing compliance tools:
 
 ### 1. Nine-Agent Orchestrated Pipeline
 
-Rather than submitting a single prompt to an LLM, ComplianceGPT coordinates nine specialized AI agents through a sequential pipeline. Each agent has domain expertise (document parsing, clause mapping, evidence validation, scoring, gap detection, remediation planning, policy generation) and passes structured context to the next. This produces deeper, more consistent analysis than monolithic prompt approaches.
+Rather than submitting a single prompt to an LLM, TrustIQ coordinates nine specialized AI agents through a sequential pipeline. Each agent has domain expertise (document parsing, clause mapping, evidence validation, scoring, gap detection, remediation planning, policy generation) and passes structured context to the next. This produces deeper, more consistent analysis than monolithic prompt approaches.
 
 ### 2. Three-Tier Hybrid Scoring Engine
 
@@ -51,7 +51,7 @@ An industry-first capability that examines whether cited evidence actually suppo
 
 ### 4. Cross-Standard Synergy Detection
 
-When organizations pursue multiple ISO certifications simultaneously, ComplianceGPT identifies overlapping requirements and shared remediation opportunities. Nine synergy areas are mapped with 35–70% efficiency gains, reducing the total cost and effort of multi-standard compliance programs.
+When organizations pursue multiple ISO certifications simultaneously, TrustIQ identifies overlapping requirements and shared remediation opportunities. Nine synergy areas are mapped with 35–70% efficiency gains, reducing the total cost and effort of multi-standard compliance programs.
 
 ### 5. GenW.AI Platform Integration
 
@@ -78,7 +78,7 @@ Architected with a clean bridge layer for Deloitte's GenW.AI infrastructure, ena
 - Professional PDF report generation with executive formatting
 
 ### Intelligence
-- AI Compliance Copilot for natural language compliance Q&A
+- TrustIQ Copilot for natural language compliance Q&A
 - Structured ISO questionnaire library with legal-grade audit questions
 - Knowledge base with maturity models and industry benchmarks
 - Cross-standard mapping and synergy identification
@@ -88,7 +88,7 @@ Architected with a clean bridge layer for Deloitte's GenW.AI infrastructure, ena
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                    ComplianceGPT Assessment Flow                    │
+│                       TrustIQ Assessment Flow                       │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
 │  1. UPLOAD DOCUMENTS                                                │
